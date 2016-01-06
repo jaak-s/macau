@@ -101,13 +101,13 @@ void Macau::run() {
     auto starti = tick();
 
 #pragma omp parallel for
-    for(int uu = 0; uu < num_cols; ++uu) {
-      sample_latent(sample_u, uu, Yt, mean_rating, sample_m, alpha, mu_u, Lambda_u, num_latent);
+    for(int row = 0; row < num_rows; ++row) {
+      sample_latent(sample_u, row, Yt, mean_rating, sample_m, alpha, mu_u, Lambda_u, num_latent);
     }
 
 #pragma omp parallel for
-    for(int mm = 0; mm < num_rows; ++mm) {
-      sample_latent(sample_m, mm, Y, mean_rating, sample_u, alpha, mu_m, Lambda_m, num_latent);
+    for(int col = 0; col < num_cols; ++col) {
+      sample_latent(sample_m, col, Y, mean_rating, sample_u, alpha, mu_m, Lambda_m, num_latent);
     }
 
     // Sample hyperparams
@@ -163,7 +163,6 @@ void sample_latent(MatrixXd &s, int mm, const SparseMatrix<double> &mat, double 
 
   Eigen::LLT<MatrixXd> chol = (Lambda_u + alpha * MM).llt();
   if(chol.info() != Eigen::Success) {
-    std::cout << "MM:\n" << MM << std::endl;
     throw std::runtime_error("Cholesky Decomposition failed!");
   }
 
