@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 from glob import glob
 
 from distutils.core import setup
@@ -46,12 +47,12 @@ class build_clibx(build_clib):
                                             output_dir = self.build_clib,
                                             debug=self.debug)
 
-
+inc = ['lib/macau-cpp', 'lib/eigen3', np.get_include(), "/usr/local/include"]
 
 libmacau = ('macau-cpp', dict(
     package='macau',
     sources = glob('lib/macau-cpp/*.cpp'),
-    include_dirs = ['lib/macau-cpp', 'lib/eigen3'],
+    include_dirs = inc,
     extra_compile_args = ['-fopenmp', '-O3', '-fstrict-aliasing', '-std=c++11'],
     extra_link_args = ['-fopenmp'],
     language = "c++"
@@ -60,8 +61,9 @@ libmacau = ('macau-cpp', dict(
 ext_modules=[
     Extension("macau", 
               sources = ["python/macau/macau.pyx"],
-              include_dirs = ["lib/macau-cpp"],
-              extra_compile_args = ['-std=c++11'],
+              include_dirs = inc,
+              extra_compile_args = ['-std=c++11', '-fopenmp'],
+              extra_link_args = ['-fopenmp'],
               language = "c++")
 ]
 
@@ -69,7 +71,7 @@ def main():
     setup(
         name = 'macau',
         version = "0.2",
-        install_requires = ['numpy', 'cython'],
+        requires = ['numpy', 'cython'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},

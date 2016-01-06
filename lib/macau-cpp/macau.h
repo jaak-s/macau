@@ -30,21 +30,29 @@ class Macau {
   Eigen::MatrixXd WI_u, WI_m;
   Eigen::VectorXd mu0_u, mu0_m;
 
+  int b0_u = 2;
+  int b0_m = 2;
+
+  int df_u;
+  int df_m;
+
   public:
-    Macau();
-    Macau(int num_latent);
+    Macau(int D) : num_latent{D}, df_u{D}, df_m{D} {}
+    Macau() : Macau(10) {}
     void setPrecision(double p);
     void setSamples(int burnin, int nsamples);
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols);
     void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols);
+    double getRmseTest();
     void init();
     void run();
-    void sum(double* X, double* Y, double* S, int N);
 };
 
 void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);
+
 std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, int n, Eigen::VectorXd & predictions, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, double mean_rating);
 
 void sample_latent(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<double> &mat, double mean_rating,
-    const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u);
+    const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u,
+    const int num_latent);
 #endif /* MACAU_H */
