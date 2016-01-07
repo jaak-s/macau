@@ -32,6 +32,7 @@ void Macau::setRelationData(int* rows, int* cols, double* values, int N, int nro
   Y.resize(nrows, ncols);
   sparseFromIJV(Y, rows, cols, values, N);
   Yt = Y.transpose();
+  mean_rating = Y.sum() / Y.nonZeros();
 }
 
 void Macau::setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) {
@@ -90,7 +91,6 @@ void Macau::run() {
 
   const int num_rows = Y.rows();
   const int num_cols = Y.cols();
-  printf("Size of Ytest: %d\n", Ytest.nonZeros());
   VectorXd predictions = VectorXd::Zero( Ytest.nonZeros() );
 
   auto start = tick();
