@@ -7,7 +7,7 @@ class TestBPMF(unittest.TestCase):
         self.assertTrue( macau.test() > 0 )
     def test_bpmf(self):
         X = scipy.sparse.rand(15, 10, 0.2)
-        macau.bpmf(rows = X.row, cols = X.col, values = X.data, num_latent = 10)
+        macau.bpmf(X, num_latent = 10)
 
 if __name__ == '__main__':
     unittest.main()
