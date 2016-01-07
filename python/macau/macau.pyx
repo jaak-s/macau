@@ -5,8 +5,8 @@ import scipy as sp
 
 cimport macau
 
-cpdef test():
-    return hello()
+cpdef test(np.ndarray[np.double_t] x, int nrows, int ncols):
+    return hello(&x[0], nrows, ncols)
 
 def bpmf(Y,
          Ytest = None,

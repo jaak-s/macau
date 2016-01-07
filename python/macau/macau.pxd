@@ -1,5 +1,5 @@
 cdef extern from "hello.h":
-    int hello()
+    double hello(double* x, int nrows, int ncols)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:                                                                                               
