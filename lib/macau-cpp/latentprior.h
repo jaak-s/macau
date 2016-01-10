@@ -3,7 +3,6 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include "macau.h"
 #include "mvnormal.h"
 
 /** interface */
@@ -51,5 +50,8 @@ class BPMFPrior : public ILatentPrior {
     void update_prior(const Eigen::MatrixXd &U);
 };
 
+void sample_latent(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<double> &mat, double mean_rating,
+    const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u,
+    const int num_latent);
 
 #endif /* LATENTPRIOR_H */
