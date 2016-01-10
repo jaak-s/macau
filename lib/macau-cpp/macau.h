@@ -4,7 +4,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/SparseExtra>
+#include "latentprior.h"
 
+// try adding num_latent as template parameter to Macau
 class Macau {
   int num_latent;
 
@@ -17,6 +19,7 @@ class Macau {
 
   double rmse_test  = .0;
   double rmse_train = .0;
+
 
   /** BPMF model */
   Eigen::VectorXd mu_u; 

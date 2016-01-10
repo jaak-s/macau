@@ -15,6 +15,7 @@
 #include "macau.h"
 #include "mvnormal.h"
 #include "utils.h"
+#include "latentprior.h"
 
 using namespace std; 
 using namespace Eigen;
