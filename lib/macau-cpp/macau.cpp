@@ -54,34 +54,10 @@ void sparseFromIJV(SparseMatrix<double> &X, int* rows, int* cols, double* values
 }
 
 void Macau::init() {
-  mu_u.resize(num_latent);
-  mu_m.resize(num_latent);
-  mu_u.setZero();
-  mu_m.setZero();
-
-  Lambda_u.resize(num_latent, num_latent);
-  Lambda_m.resize(num_latent, num_latent);
-  Lambda_u.setIdentity();
-  Lambda_m.setIdentity();
-  Lambda_u *= 10;
-  Lambda_m *= 10;
-
   sample_u.resize(num_latent, Y.rows());
   sample_m.resize(num_latent, Y.cols());
   sample_u.setZero(); 
   sample_m.setZero(); 
-
-  // parameters of Inv-Whishart distribution
-  WI_u.resize(num_latent, num_latent);
-  WI_u.setIdentity();
-  mu0_u.resize(num_latent);
-  mu0_u.setZero();
-
-  WI_m.resize(num_latent, num_latent);
-  WI_m.setIdentity();
-  mu0_m.resize(num_latent);
-  mu0_m.setZero();
-
 }
 
 inline double sqr(double x) { return x*x; }
@@ -101,19 +77,13 @@ void Macau::run() {
     }
     auto starti = tick();
 
-#pragma omp parallel for
-    for(int row = 0; row < num_rows; ++row) {
-      sample_latent(sample_u, row, Yt, mean_rating, sample_m, alpha, mu_u, Lambda_u, num_latent);
-    }
-
-#pragma omp parallel for
-    for(int col = 0; col < num_cols; ++col) {
-      sample_latent(sample_m, col, Y, mean_rating, sample_u, alpha, mu_m, Lambda_m, num_latent);
-    }
+    // sample latent vectors
+    prior_u.sample_latents(sample_u, Yt, mean_rating, sample_m, alpha, num_latent);
+    prior_m.sample_latents(sample_m, Y,  mean_rating, sample_u, alpha, num_latent);
 
     // Sample hyperparams
-    tie(mu_u, Lambda_u) = CondNormalWishart(sample_u, mu0_u, b0_u, WI_u, df_u);
-    tie(mu_m, Lambda_m) = CondNormalWishart(sample_m, mu0_m, b0_m, WI_m, df_m);
+    prior_u.update_prior(sample_u);
+    prior_m.update_prior(sample_m);
 
     auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, sample_m, sample_u, mean_rating);
 

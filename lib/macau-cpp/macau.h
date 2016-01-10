@@ -20,27 +20,14 @@ class Macau {
   double rmse_test  = .0;
   double rmse_train = .0;
 
-
   /** BPMF model */
-  Eigen::VectorXd mu_u; 
-  Eigen::VectorXd mu_m;
-  Eigen::MatrixXd Lambda_u;
-  Eigen::MatrixXd Lambda_m;
+  BPMFPrior prior_u;
+  BPMFPrior prior_m;
   Eigen::MatrixXd sample_u;
   Eigen::MatrixXd sample_m;
 
-  /** Hyper-parameters, Inv-Wishart */
-  Eigen::MatrixXd WI_u, WI_m;
-  Eigen::VectorXd mu0_u, mu0_m;
-
-  int b0_u = 2;
-  int b0_m = 2;
-
-  int df_u;
-  int df_m;
-
   public:
-    Macau(int D) : num_latent{D}, df_u{D}, df_m{D} {}
+    Macau(int D) : num_latent{D}, prior_u{D}, prior_m{D} {}
     Macau() : Macau(10) {}
     void setPrecision(double p);
     void setSamples(int burnin, int nsamples);
