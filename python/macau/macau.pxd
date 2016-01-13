@@ -1,8 +1,28 @@
+cdef extern from "Eigen/Dense" namespace "Eigen":
+    cdef cppclass MatrixXd:
+        MatrixXd(int nrow, int ncol)
+        int rows()
+        int cols()
+        double* data()
+    cdef cppclass VectorXd:
+        VectorXd(int n)
+        int size()
+        double* data()
+
 cdef extern from "hello.h":
     double hello(double* x, int nrows, int ncols)
+    void solve(double* Araw, double* braw, double* out, int n)
+
+cdef extern from "latentprior.h":
+    cdef cppclass BPMFPrior:
+        MatrixXd Lambda
+        VectorXd mu
+        BPMFPrior(int num_latent)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:                                                                                               
+        BPMFPrior prior_u
+        BPMFPrior prior_m
         Macau()
         Macau(int num_latent)
         void setPrecision(double p)

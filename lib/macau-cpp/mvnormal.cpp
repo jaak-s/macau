@@ -45,12 +45,26 @@ nrandn(int n) -> decltype( VectorXd::NullaryExpr(n, std::cref(randn)) )
     return VectorXd::NullaryExpr(n, std::cref(randn));
 }
 
+/** Normal(0, Lambda^-1) for nn columns */
+MatrixXd MvNormal_prec(const MatrixXd & Lambda, int nn = 1)
+{
+  int size = Lambda.rows(); // Dimensionality (rows)
+
+  LLT<MatrixXd> chol(Lambda);
+
+  // TODO: parallelize generating of random variables
+  MatrixXd r = MatrixXd::NullaryExpr(size, nn, std::cref(randn));
+	chol.matrixU().solveInPlace(r);
+  return r;
+}
+
 MatrixXd MvNormal_prec(const MatrixXd & Lambda, const VectorXd & mean, int nn = 1)
 {
   int size = mean.rows(); // Dimensionality (rows)
 
   LLT<MatrixXd> chol(Lambda);
 
+  // TODO: parallelize generating of random variables
   MatrixXd r = MatrixXd::NullaryExpr(size, nn, std::cref(randn));
 	chol.matrixU().solveInPlace(r);
   return r.colwise() + mean;
@@ -60,7 +74,7 @@ MatrixXd MvNormal_prec(const MatrixXd & Lambda, const VectorXd & mean, int nn = 
   Draw nn samples from a size-dimensional normal distribution
   with a specified mean and covariance
 */
-MatrixXd MvNormal(MatrixXd covar, VectorXd mean, int nn = 1) 
+MatrixXd MvNormal(const MatrixXd covar, const VectorXd mean, int nn = 1) 
 {
   int size = mean.rows(); // Dimensionality (rows)
   MatrixXd normTransform(size,size);
@@ -68,6 +82,7 @@ MatrixXd MvNormal(MatrixXd covar, VectorXd mean, int nn = 1)
   LLT<MatrixXd> cholSolver(covar);
   normTransform = cholSolver.matrixL();
 
+  // TODO: parallelize generating of random variables
   auto normSamples = MatrixXd::NullaryExpr(size, nn, std::cref(randn));
   MatrixXd samples = (normTransform * normSamples).colwise() + mean;
 

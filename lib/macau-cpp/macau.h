@@ -8,6 +8,7 @@
 
 // try adding num_latent as template parameter to Macau
 class Macau {
+  public:
   int num_latent;
 
   double alpha = 2.0; 
