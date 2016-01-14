@@ -7,6 +7,7 @@ from distutils.command.build_clib import build_clib
 from distutils.extension import Extension
 from distutils.errors import DistutilsSetupError
 from Cython.Distutils import build_ext
+from distutils.sysconfig import get_python_inc
 
 from distutils import log
 
@@ -47,7 +48,7 @@ class build_clibx(build_clib):
                                             output_dir = self.build_clib,
                                             debug=self.debug)
 
-inc = ['lib/macau-cpp', 'lib/eigen3', np.get_include(), "/usr/local/include"]
+inc = ['lib/macau-cpp', 'lib/eigen3', np.get_include(), get_python_inc(), "/usr/local/include"]
 
 libmacau = ('macau-cpp', dict(
     package='macau',
