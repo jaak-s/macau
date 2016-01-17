@@ -21,11 +21,11 @@ double hello(double* x, int nrows, int ncols) {
   return a(0, 0);
 }
 
-void solve(double* Araw, double* braw, double* out, int n) {
-  MatrixXd A = Eigen::Map<MatrixXd>(Araw, n, n);
-  VectorXd b = Eigen::Map<VectorXd>(braw, n);
-  VectorXd k = A.ldlt().solve(b);
-  for (int i = 0; i < n; i++) {
-    out[i] = k(i);
-  }
+MatrixXd getx() {
+  MatrixXd x(3,2);
+  x.setZero();
+  x(0,0) = 1;
+  x(1,0) = 2;
+  x(2,0) = 3;
+  return x;
 }

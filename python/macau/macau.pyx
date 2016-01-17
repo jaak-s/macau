@@ -12,19 +12,24 @@ cpdef test(np.ndarray[np.double_t] x, int nrows, int ncols):
 cpdef xtest():
     return hellotest()
 
-cpdef mysolve(np.ndarray[np.double_t, ndim=2] A, np.ndarray[np.double_t] b):
-    if A.shape[0] != A.shape[1]:
-        raise ValueError("A is not square")
-    if A.shape[0] != b.shape[0]:
-        raise ValueError("b length is not the same as A nrows.")
-    cdef np.ndarray[np.double_t] x = np.zeros(b.shape[0])
-    solve(&A[0,0], &b[0], &x[0], A.shape[0])
-    return x
+cpdef py_getx():
+    cdef MatrixXd m = getx()
+    cdef np.ndarray[np.double_t, ndim=2] A = matview(&m)
+    print(A)
+
+#cpdef mysolve(np.ndarray[np.double_t, ndim=2] A, np.ndarray[np.double_t] b):
+#    if A.shape[0] != A.shape[1]:
+#        raise ValueError("A is not square")
+#    if A.shape[0] != b.shape[0]:
+#        raise ValueError("b length is not the same as A nrows.")
+#    cdef np.ndarray[np.double_t] x = np.zeros(b.shape[0])
+#    solve(&A[0,0], &b[0], &x[0], A.shape[0])
+#    return x
 
 cdef matview(MatrixXd *A):
     cdef int nrow = A.rows()
     cdef int ncol = A.cols()
-    cdef np.double_t[:,:] view = <np.double_t[:nrow, :ncol]> A.data()
+    cdef np.double_t[:,:] view = <np.double_t[:nrow:1, :ncol]> A.data()
     return np.asarray(view)
 
 cdef vecview(VectorXd *v):
@@ -32,17 +37,19 @@ cdef vecview(VectorXd *v):
     cdef np.double_t[:] view = <np.double_t[:size]> v.data()
     return np.asarray(view)
 
-cdef void symsolve(MatrixXd *Aeig, VectorXd *beig, VectorXd *xeig):
-    cdef np.ndarray[np.double_t, ndim=2] A = matview(Aeig)
-    cdef np.ndarray[np.double_t] b = vecview(beig)
-    cdef np.ndarray[np.double_t] x = vecview(xeig)
-    x[:] = scipy.linalg.solve(A, b, sym_pos=True, check_finite=False)
-
-## needed functions:
+## API functions:
 ## 1) F'F
 ## 2) F*X (X is a matrix)
 ## 3) F'X (X is a matrix)
 ## 4) solve(A, b, sym_pos=True) where A is posdef
+
+## solves A * X = B for X, where A is sym_pos
+cdef api void py_solve_sympos(MatrixXd *cA, MatrixXd *cB, MatrixXd *cX):
+    cdef np.ndarray[np.double_t, ndim=2] A = matview(cA)
+    cdef np.ndarray[np.double_t, ndim=2] B = matview(cB)
+    cdef np.ndarray[np.double_t, ndim=2] X = matview(cX)
+    X[:] = scipy.linalg.solve(A, B, sym_pos=True, check_finite=False)
+
 
 cdef api double test1(VectorXd *x):
     cdef np.ndarray[np.double_t] myx = vecview(x)

@@ -1,17 +1,19 @@
 cdef extern from "Eigen/Dense" namespace "Eigen":
     cdef cppclass MatrixXd:
+        MatrixXd()
         MatrixXd(int nrow, int ncol)
         int rows()
         int cols()
         double* data()
     cdef cppclass VectorXd:
+        VectorXd()
         VectorXd(int n)
         int size()
         double* data()
 
 cdef extern from "hello.h":
     double hello(double* x, int nrows, int ncols)
-    void solve(double* Araw, double* braw, double* out, int n)
+    MatrixXd getx()
     double hellotest()
 
 cdef extern from "latentprior.h":
