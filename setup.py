@@ -11,7 +11,123 @@ from distutils.sysconfig import get_python_inc
 
 from distutils import log
 
+import os
+from textwrap import dedent
+
 ## how to test -fopenmp: https://github.com/hickford/primesieve-python/blob/master/setup.py
+def is_openblas_installed():
+    """check if the C module can be build by trying to compile a small 
+    program against the libyaml development library"""
+
+    import tempfile
+    import shutil
+
+    import distutils.sysconfig
+    import distutils.ccompiler
+    from distutils.errors import CompileError, LinkError
+
+    libraries = ['openblas', 'gfortran']
+
+    # write a temporary .cpp file to compile
+    c_code = dedent("""
+    #include <cblas.h>
+
+    int main(int argc, char* argv[])
+    {
+        int n = 3;
+        int nn = n*n;
+        double *A = new double[nn];
+        double *C = new double[nn];
+        A[0] = 0.5; A[1] = 1.4; A[2] = -0.1;
+        A[3] = 2.3; A[4] = -.4; A[5] = 19.1;
+        A[6] = -.72; A[7] = 0.6; A[8] = 12.3;
+
+        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,n,n,n,1,A, n, A, n, 0 ,C, n);
+
+        return 0;
+    }
+    """)
+    c_code_lapack = dedent("""
+    #include <lapacke.h>
+    #include<stdio.h>
+
+    int main(int argc, char* argv[])
+    {
+        int n = 3;
+        int nn = n*n;
+        int nrhs = 2;
+        int info;
+        const char lower = 'L';
+        double *A = new double[nn];
+        double *B = new double[nrhs*nn];
+        A[0] = 6.1;   A[1] = -0.65; A[2] = 5.1;
+        A[3] = -0.65; A[4] = 2.4;   A[5] = -0.4;
+        A[6] = 5.1;   A[7] = -0.4;  A[8] = 12.3;
+        B[0] = 5.2; B[1] = -0.4;
+        B[2] = 1.0; B[3] = 1.3;
+        B[4] = 0.2; B[5] = -0.15;
+
+        info = LAPACKE_dpotrf(LAPACK_COL_MAJOR, lower, n, A, n);
+        if(info != 0){ printf("c++ error: Cholesky decomp failed"); }
+        info = LAPACKE_dpotrs(LAPACK_COL_MAJOR, lower, n, nrhs, A, n, B, n);
+        if(info != 0){ printf("c++ error: Cholesky solve failed"); }
+
+        return 0;
+    }
+    """)
+    tmp_dir = tempfile.mkdtemp(prefix = 'tmp_blas_')
+    bin_file_name = os.path.join(tmp_dir, 'test_blas')
+    file_name = bin_file_name + '.cpp'
+    with open(file_name, 'w') as fp:
+        fp.write(c_code)
+
+    lapack_bin_file_name = os.path.join(tmp_dir, 'test_lapack')
+    lapack_file_name = lapack_bin_file_name + '.cpp'
+    with open(lapack_file_name, 'w') as fp:
+        fp.write(c_code_lapack)
+
+    # and try to compile it
+    compiler = distutils.ccompiler.new_compiler(verbose=5)
+    assert isinstance(compiler, distutils.ccompiler.CCompiler)
+    distutils.sysconfig.customize_compiler(compiler)
+    ldirs = ["/usr/lib/openblas-base", "/opt/OpenBLAS/lib", "/usr/local/lib"]
+
+    try:
+        compiler.link_executable(
+            compiler.compile([file_name]),
+            bin_file_name,
+            libraries = libraries,
+            library_dirs = ldirs,
+            target_lang = "c++"
+        )
+    except CompileError:
+        print('libopenblas compile error')
+        ret_val = False
+    except LinkError:
+        print('libopenblas link error')
+        ret_val = False
+    else:
+        ret_val = True
+
+    try:
+        compiler.link_executable(
+            compiler.compile([lapack_file_name]),
+            lapack_bin_file_name,
+            libraries = libraries,
+            library_dirs = ldirs,
+            target_lang = "c++"
+        )
+    except CompileError:
+        print('libopenblas lapack compile error')
+        ret_val = False
+    except LinkError:
+        print('libopenblas lapack link error')
+        ret_val = False
+    else:
+        ret_val = True
+
+    shutil.rmtree(tmp_dir)
+    return ret_val
 
 class build_clibx(build_clib):
     def build_libraries(self, libraries):
@@ -69,10 +185,16 @@ ext_modules=[
 ]
 
 def main():
+    if not is_openblas_installed():
+        print("OpenBLAS not found. Please install.")
+        sys.exit(1)
+    else:
+        print("OpenBLAS found.")
+
     setup(
         name = 'macau',
         version = "0.2",
-        requires = ['numpy', 'scipy', 'cython'],
+        requires = ['numpy', 'scipy', 'cython(>=0.16)'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},
