@@ -5,8 +5,12 @@ import scipy as sp
 
 cimport macau
 
-cpdef test(np.ndarray[np.double_t] x, int nrows, int ncols):
-    return hello(&x[0], nrows, ncols)
+cpdef mul_blas(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2] y):
+    if y.shape[0] != y.shape[1]:
+        raise ValueError("y must be square matrix.")
+    if x.shape[1] != y.shape[0]:
+        raise ValueError("num columns in x and y must be the same.")
+    hello(&x[0,0], &y[0,0], x.shape[1], x.shape[0])
 
 cpdef py_getx():
     cdef MatrixXd m = getx()

@@ -5,10 +5,9 @@
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-double hello(double* x, int nrows, int ncols) {
-  MatrixXd m = Eigen::Map<MatrixXd>(x, nrows, ncols);
-  MatrixXd a = m * m.transpose();
-  return a(0, 0);
+void hello(double* x, double* y, int n, int k) {
+  //cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, n, k, 1, x, k, x, k, 0, y, n);
+  cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, n, k, 1.0, x, k, 0.0, y, n);
 }
 
 MatrixXd getx() {

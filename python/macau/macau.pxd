@@ -12,7 +12,7 @@ cdef extern from "Eigen/Dense" namespace "Eigen":
         double* data()
 
 cdef extern from "hello.h":
-    double hello(double* x, int nrows, int ncols)
+    void hello(double* x, double* y, int n, int k)
     MatrixXd getx()
 
 cdef extern from "latentprior.h":
