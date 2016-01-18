@@ -177,8 +177,9 @@ libmacau = ('macau-cpp', dict(
 
 ext_modules=[
     Extension("macau", 
-              sources = ["python/macau/macau.pyx"],
+              sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
               include_dirs = inc,
+              libraries = ["blas"],
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")

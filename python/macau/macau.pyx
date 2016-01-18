@@ -2,7 +2,6 @@ cimport cython
 import numpy as np
 cimport numpy as np
 import scipy as sp
-import scipy.linalg
 
 cimport macau
 
