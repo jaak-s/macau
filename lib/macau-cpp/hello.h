@@ -1,5 +1,5 @@
 #include <Eigen/Dense>
 
-double hellotest();
 double hello(double* x, int nrows, int ncols);
 Eigen::MatrixXd getx();
+void At_mul_A(const Eigen::MatrixXd & A, Eigen::MatrixXd & C);

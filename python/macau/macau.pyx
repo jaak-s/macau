@@ -9,9 +9,6 @@ cimport macau
 cpdef test(np.ndarray[np.double_t] x, int nrows, int ncols):
     return hello(&x[0], nrows, ncols)
 
-cpdef xtest():
-    return hellotest()
-
 cpdef py_getx():
     cdef MatrixXd m = getx()
     cdef np.ndarray[np.double_t, ndim=2] A = matview(&m)
@@ -42,18 +39,6 @@ cdef vecview(VectorXd *v):
 ## 2) F*X (X is a matrix)
 ## 3) F'X (X is a matrix)
 ## 4) solve(A, b, sym_pos=True) where A is posdef
-
-## solves A * X = B for X, where A is sym_pos
-cdef api void py_solve_sympos(MatrixXd *cA, MatrixXd *cB, MatrixXd *cX):
-    cdef np.ndarray[np.double_t, ndim=2] A = matview(cA)
-    cdef np.ndarray[np.double_t, ndim=2] B = matview(cB)
-    cdef np.ndarray[np.double_t, ndim=2] X = matview(cX)
-    X[:] = scipy.linalg.solve(A, B, sym_pos=True, check_finite=False)
-
-
-cdef api double test1(VectorXd *x):
-    cdef np.ndarray[np.double_t] myx = vecview(x)
-    return myx[0]
 
 def bpmf(Y,
          Ytest = None,

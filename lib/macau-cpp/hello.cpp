@@ -1,19 +1,9 @@
 #include <Eigen/Dense>
 #include <stdio.h>
-
-#include <Python.h>
-#include "macau_api.h"
+#include <cblas.h>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-
-double hellotest() {
-  import_macau();
-  VectorXd x(10);
-  x.setZero();
-  x[0] = 18;
-  return test1(&x);
-}
 
 double hello(double* x, int nrows, int ncols) {
   MatrixXd m = Eigen::Map<MatrixXd>(x, nrows, ncols);
@@ -28,4 +18,11 @@ MatrixXd getx() {
   x(1,0) = 2;
   x(2,0) = 3;
   return x;
+}
+
+void At_mul_A(const Eigen::MatrixXd & A, Eigen::MatrixXd & C) {
+  const int n = A.cols();
+  if (n != C.rows()) { printf("A.cols() must equal C.rows()."); exit(1); }
+  if (C.rows() != C.cols()) { printf("C.rows() must equal C.cols()."); exit(1); }
+  cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, n, n, 1, A.data(), n, A.data(), n, 0, C.data(), n);
 }

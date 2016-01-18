@@ -14,7 +14,6 @@ cdef extern from "Eigen/Dense" namespace "Eigen":
 cdef extern from "hello.h":
     double hello(double* x, int nrows, int ncols)
     MatrixXd getx()
-    double hellotest()
 
 cdef extern from "latentprior.h":
     cdef cppclass BPMFPrior:
