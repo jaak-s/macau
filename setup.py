@@ -179,7 +179,7 @@ ext_modules=[
     Extension("macau", 
               sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
               include_dirs = inc,
-              libraries = ["blas"],
+              libraries = ["openblas"],
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")
@@ -195,7 +195,7 @@ def main():
     setup(
         name = 'macau',
         version = "0.2",
-        requires = ['numpy', 'scipy', 'cython(>=0.16)'],
+        requires = ['numpy', 'scipy', 'cython'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},
