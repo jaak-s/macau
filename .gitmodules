@@ -1,0 +1,3 @@
+[submodule "lib/libfastsparse"]
+	path = lib/libfastsparse
+	url = https://github.com/jaak-s/libfastsparse.git
