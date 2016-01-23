@@ -17,6 +17,9 @@ cpdef py_getx():
     cdef np.ndarray[np.double_t, ndim=2] A = matview(&m)
     print(A)
 
+cpdef py_eigenQR(np.ndarray[np.double_t, ndim=2] x):
+    eigenQR(& x[0,0], x.shape[0], x.shape[1])
+
 #cpdef mysolve(np.ndarray[np.double_t, ndim=2] A, np.ndarray[np.double_t] b):
 #    if A.shape[0] != A.shape[1]:
 #        raise ValueError("A is not square")
@@ -25,6 +28,13 @@ cpdef py_getx():
 #    cdef np.ndarray[np.double_t] x = np.zeros(b.shape[0])
 #    solve(&A[0,0], &b[0], &x[0], A.shape[0])
 #    return x
+
+cpdef blas_AtA(np.ndarray[np.double_t, ndim=2] X):
+    cdef MatrixXd Xeig = Map[MatrixXd](&X[0,0], X.shape[0], X.shape[1])
+    cdef np.ndarray[np.double_t, ndim=2] AtA = np.zeros((X.shape[1], X.shape[1]))
+    At_mul_A_blas(Xeig, & AtA[0,0])
+    return AtA
+#    return Xeig
 
 cdef matview(MatrixXd *A):
     cdef int nrow = A.rows()

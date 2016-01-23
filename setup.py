@@ -195,7 +195,7 @@ def main():
     setup(
         name = 'macau',
         version = "0.2",
-        requires = ['numpy', 'scipy', 'cython'],
+        requires = ['numpy', 'scipy', 'cython(>=0.21)'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},

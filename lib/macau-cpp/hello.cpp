@@ -2,12 +2,18 @@
 #include <stdio.h>
 #include <cblas.h>
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using namespace Eigen;
 
 void hello(double* x, double* y, int n, int k) {
   //cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, n, k, 1, x, k, x, k, 0, y, n);
   cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, n, k, 1.0, x, k, 0.0, y, n);
+}
+
+void eigenQR(double* x, int nrow, int ncol) {
+  MatrixXd X = Map<MatrixXd>(x, nrow, ncol);
+  HouseholderQR<MatrixXd> qr(X);
+  MatrixXd Q = qr.householderQ();
+  printf("Q(0,0) = %f\n", Q(0,0));
 }
 
 MatrixXd getx() {

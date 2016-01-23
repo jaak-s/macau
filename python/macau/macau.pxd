@@ -10,10 +10,15 @@ cdef extern from "Eigen/Dense" namespace "Eigen":
         VectorXd(int n)
         int size()
         double* data()
+    T Map[T](double* x, int nrows, int ncols)
 
 cdef extern from "hello.h":
     void hello(double* x, double* y, int n, int k)
     MatrixXd getx()
+    void eigenQR(double* X, int nrow, int ncol)
+
+cdef extern from "linop.h":
+    void At_mul_A_blas(MatrixXd & A, double* AtA)
 
 cdef extern from "latentprior.h":
     cdef cppclass BPMFPrior:
