@@ -5,6 +5,7 @@ import scipy as sp
 
 cimport macau
 
+
 cpdef mul_blas(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2] y):
     if y.shape[0] != y.shape[1]:
         raise ValueError("y must be square matrix.")
@@ -34,7 +35,26 @@ cpdef blas_AtA(np.ndarray[np.double_t, ndim=2] X):
     cdef np.ndarray[np.double_t, ndim=2] AtA = np.zeros((X.shape[1], X.shape[1]))
     At_mul_A_blas(Xeig, & AtA[0,0])
     return AtA
-#    return Xeig
+
+cpdef blockcg(X, np.ndarray[np.double_t, ndim=2] B, double reg, int row_block_size = 1024, int col_block_size = 1024, double tol = 1e-6):
+    if not np.isfortran(B):
+        raise ValueError("B must have order='F' (fortran)")
+    if B.shape[1] != X.shape[1]:
+        raise ValueError("B.shape[1] must equal X.shape[1]")
+    X = X.tocoo(copy=False)
+    cdef np.ndarray[np.double_t, ndim=2] result = np.zeros( (B.shape[0], B.shape[1]), order='F' )
+    cdef MatrixXd result_eig = Map[MatrixXd](&result[0,0], result.shape[0], result.shape[1])
+
+    cdef MatrixXd Beig = Map[MatrixXd](&B[0,0], B.shape[0], B.shape[1])
+    cdef MatrixXd out  = Map[MatrixXd](&B[0,0], B.shape[0], B.shape[1])
+    cdef np.ndarray[int] irows = X.row.astype(np.int32, copy=False)
+    cdef np.ndarray[int] icols = X.col.astype(np.int32, copy=False)
+    cdef SparseFeat K
+    print("Sorting sparse [%d x %d] matrix" % (X.shape[0], X.shape[1]))
+    K = SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0], True, row_block_size, col_block_size)
+    print("Running block-cg")
+    cdef int niter = solve(result_eig, K, reg, Beig, tol)
+    #cdef np.ndarray[np.double_t] ivals = X.data.astype(np.double, copy=False)
 
 cdef matview(MatrixXd *A):
     cdef int nrow = A.rows()

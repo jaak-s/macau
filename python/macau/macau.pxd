@@ -1,3 +1,5 @@
+from libcpp cimport bool
+
 cdef extern from "Eigen/Dense" namespace "Eigen":
     cdef cppclass MatrixXd:
         MatrixXd()
@@ -18,7 +20,11 @@ cdef extern from "hello.h":
     void eigenQR(double* X, int nrow, int ncol)
 
 cdef extern from "linop.h":
+    cdef cppclass SparseFeat:
+        SparseFeat()
+        SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols, bool sort, int row_block_size, int col_block_size)
     void At_mul_A_blas(MatrixXd & A, double* AtA)
+    int solve(MatrixXd & out, SparseFeat & K, double reg, MatrixXd & B, double tol)
 
 cdef extern from "latentprior.h":
     cdef cppclass BPMFPrior:

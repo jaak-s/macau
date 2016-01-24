@@ -33,6 +33,10 @@ void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA) {
   cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, A.cols(), A.rows(), 1.0, A.data(), A.rows(), 0.0, AtA, A.cols());
 }
 
+void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt) {
+  cblas_dsyrk(CblasColMajor, CblasLower, CblasNoTrans, A.rows(), A.cols(), 1.0, A.data(), A.rows(), 0.0, AAt, A.rows());
+}
+
 void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
   if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
   if (Y.cols() != B.cols()) {throw std::runtime_error("B.cols() must equal Y.cols()");}
@@ -44,16 +48,16 @@ void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::
   if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
   if (Y.cols() != B.rows()) {throw std::runtime_error("B.rows() must equal Y.cols()");}
   if (A.cols() != B.cols()) {throw std::runtime_error("B.cols() must equal A.cols()");}
-  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, A.rows(), B.cols(), A.cols(), 1, A.data(), A.rows(), B.data(), B.rows(), 0, Y.data(), Y.rows());
+  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, A.rows(), B.rows(), A.cols(), 1.0, A.data(), A.rows(), B.data(), B.rows(), 0.0, Y.data(), Y.rows());
 }
 
 // B is in transformed format: [nrhs x nfeat]
-int solve(Eigen::MatrixXd & out, SparseFeat & K, double reg, Eigen::MatrixXd & B, double tol) {
+int solve(Eigen::MatrixXd & X, SparseFeat & K, double reg, Eigen::MatrixXd & B, double tol) {
   // initialize
   const int nrhs  = B.rows();
   const int nfeat = B.cols();
 
-  if (nfeat != K.nfeat()) {throw std::runtime_error("B.rows() must equal K.nfeat()");}
+  if (nfeat != K.nfeat()) {throw std::runtime_error("B.cols() must equal K.nfeat()");}
 
   VectorXd norms(nrhs), inorms(nrhs); 
   norms.setZero();
@@ -69,7 +73,6 @@ int solve(Eigen::MatrixXd & out, SparseFeat & K, double reg, Eigen::MatrixXd & B
   }
   MatrixXd R(nrhs, nfeat);
   MatrixXd P(nrhs, nfeat);
-  MatrixXd X(nrhs, nfeat);
   X.setZero();
   // normalize R and P:
 #pragma omp parallel for schedule(static) collapse(2)
@@ -79,18 +82,19 @@ int solve(Eigen::MatrixXd & out, SparseFeat & K, double reg, Eigen::MatrixXd & B
       P(rhs, feat) = R(rhs, feat);
     }
   }
-
   MatrixXd* RtR = new MatrixXd(nrhs, nrhs);
   MatrixXd* RtR2 = new MatrixXd(nrhs, nrhs);
+  //RtR->setZero();
+  //RtR2->setZero();
   MatrixXd KP(nrhs, nfeat);
   MatrixXd KPtmp(nrhs, K.nsamples());
   MatrixXd A(nrhs, nrhs);
   MatrixXd PtKP(nrhs, nrhs);
 
-  At_mul_A_blas(R, RtR->data());
+  A_mul_At_blas(R, RtR->data());
 
   // CG iteration:
-  int iter;
+  int iter = 0;
   for (int iter = 0; iter < 100000; iter++) {
     // solution update:
     A_mul_Bt(KPtmp, K.M, P);
