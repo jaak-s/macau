@@ -2,6 +2,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 import scipy as sp
+import timeit
 
 cimport macau
 
@@ -53,7 +54,14 @@ cpdef blockcg(X, np.ndarray[np.double_t, ndim=2] B, double reg, int row_block_si
     print("Sorting sparse [%d x %d] matrix" % (X.shape[0], X.shape[1]))
     K = SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0], True, row_block_size, col_block_size)
     print("Running block-cg")
+    cdef double start = timeit.default_timer()
     cdef int niter = solve(result_eig, K, reg, Beig, tol)
+    cdef double end = timeit.default_timer()
+
+    cdef np.ndarray[np.double_t] v = np.zeros(2)
+    v[0] = niter
+    v[1] = end - start
+    return v
     #cdef np.ndarray[np.double_t] ivals = X.data.astype(np.double, copy=False)
 
 cdef matview(MatrixXd *A):

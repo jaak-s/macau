@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 
+#include "chol.h"
 #include "linop.h"
 
 using namespace Eigen;
@@ -44,6 +45,13 @@ void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::M
   cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, A.rows(), B.cols(), A.cols(), 1, A.data(), A.rows(), B.data(), B.rows(), 0, Y.data(), Y.rows());
 }
 
+void At_mul_B_blas(double beta, Eigen::MatrixXd & Y, double alpha, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
+  if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
+  if (Y.cols() != B.cols()) {throw std::runtime_error("B.cols() must equal Y.cols()");}
+  if (A.cols() != B.rows()) {throw std::runtime_error("B.rows() must equal A.cols()");}
+  cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, A.rows(), B.cols(), A.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
+}
+
 void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
   if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
   if (Y.cols() != B.rows()) {throw std::runtime_error("B.rows() must equal Y.cols()");}
@@ -51,11 +59,21 @@ void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::
   cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, A.rows(), B.rows(), A.cols(), 1.0, A.data(), A.rows(), B.data(), B.rows(), 0.0, Y.data(), Y.rows());
 }
 
+void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
+  cblas_dsymm(CblasColMajor, CblasLeft, CblasLower, Y.rows(), Y.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
+}
+
+void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
+  cblas_dsymm(CblasColMajor, CblasRight, CblasLower, Y.rows(), Y.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
+}
+
+
 // B is in transformed format: [nrhs x nfeat]
 int solve(Eigen::MatrixXd & X, SparseFeat & K, double reg, Eigen::MatrixXd & B, double tol) {
   // initialize
   const int nrhs  = B.rows();
   const int nfeat = B.cols();
+  double tolsq = tol*tol;
 
   if (nfeat != K.nfeat()) {throw std::runtime_error("B.cols() must equal K.nfeat()");}
 
@@ -73,6 +91,7 @@ int solve(Eigen::MatrixXd & X, SparseFeat & K, double reg, Eigen::MatrixXd & B, 
   }
   MatrixXd R(nrhs, nfeat);
   MatrixXd P(nrhs, nfeat);
+  MatrixXd Ptmp(nrhs, nfeat);
   X.setZero();
   // normalize R and P:
 #pragma omp parallel for schedule(static) collapse(2)
@@ -84,18 +103,26 @@ int solve(Eigen::MatrixXd & X, SparseFeat & K, double reg, Eigen::MatrixXd & B, 
   }
   MatrixXd* RtR = new MatrixXd(nrhs, nrhs);
   MatrixXd* RtR2 = new MatrixXd(nrhs, nrhs);
+
   //RtR->setZero();
   //RtR2->setZero();
   MatrixXd KP(nrhs, nfeat);
   MatrixXd KPtmp(nrhs, K.nsamples());
   MatrixXd A(nrhs, nrhs);
   MatrixXd PtKP(nrhs, nrhs);
+  MatrixXd Psi(nrhs, nrhs);
 
   A_mul_At_blas(R, RtR->data());
+  // copying A lower tri to upper tri
+  for (int i = 1; i < nrhs; i++) {
+    for (int j = 0; j < i; j++) {
+      (*RtR)(j, i) = (*RtR)(i, j);
+    }
+  }
 
   // CG iteration:
   int iter = 0;
-  for (int iter = 0; iter < 100000; iter++) {
+  for (iter = 0; iter < 100000; iter++) {
     // solution update:
     A_mul_Bt(KPtmp, K.M, P);
     // move KP += reg * P here with nowait from previous loop
@@ -104,8 +131,42 @@ int solve(Eigen::MatrixXd & X, SparseFeat & K, double reg, Eigen::MatrixXd & B, 
     KP.noalias() += reg * P; // TODO: check if += is parallelized by eigen
 
     A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
-    std::cout << PtKP << "\n";
-    break;
+    chol_decomp(PtKP);
+    A = *RtR;
+    chol_solve(PtKP, A);
+    
+    // X += A' * P (as X and P are already transposed)
+    At_mul_B_blas(1.0, X, 1.0, A, P);
+
+    // R -= A' * KP (as R and KP are already transposed)
+    At_mul_B_blas(1.0, R, -1.0, A, KP);
+
+    // convergence check:
+    A_mul_At_blas(R, RtR2->data());
+    // copying A lower tri to upper tri
+    for (int i = 1; i < nrhs; i++) {
+      for (int j = 0; j < i; j++) {
+        (*RtR2)(j, i) = (*RtR2)(i, j);
+      }
+    }
+
+    VectorXd d = RtR2->diagonal();
+    //std::cout << "[ iter " << iter << "] " << d.cwiseSqrt() << "\n";
+    if ( (d.array() < tolsq).all()) {
+      break;
+    }
+    // Psi = (R R') \ R2 R2'
+    chol_decomp(*RtR);
+    Psi = *RtR2;
+    chol_solve(*RtR, Psi);
+
+    // P = R + Psi' * P (P and R are already transposed)
+    At_mul_B_blas(0.0, Ptmp, 1.0, Psi, P);
+    P.noalias() = R + Ptmp;
+    // R R' = R2 R2'
+    std::swap(RtR, RtR2);
   }
+  delete RtR;
+  delete RtR2;
   return iter;
 }
