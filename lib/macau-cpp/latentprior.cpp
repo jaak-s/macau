@@ -1,6 +1,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <cblas.h>
 #include <math.h>
+#include <omp.h>
 
 #include "mvnormal.h"
 #include "macau.h"
@@ -8,14 +10,32 @@
 using namespace std; 
 using namespace Eigen;
 
+extern void openblas_set_num_threads(int num_threads);
+
+int get_nthreads() {
+  int nthreads = 1;
+#pragma omp parallel
+  {
+#pragma omp single
+    {
+      nthreads = omp_get_num_threads();
+    }
+  }
+  return nthreads;
+}
+
 /** BPMFPrior */
 void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
   const int N = U.cols();
+  int nthreads = nthreads;
+  
+  openblas_set_num_threads(1);
 #pragma omp parallel for
   for(int n = 0; n < N; n++) {
-    sample_latent(U, n, mat, mean_value, samples, alpha, mu, Lambda, num_latent);
+    sample_latent_blas(U, n, mat, mean_value, samples, alpha, mu, Lambda, num_latent);
   }
+  openblas_set_num_threads(nthreads);
 }
 
 void BPMFPrior::update_prior(const Eigen::MatrixXd &U) {
@@ -96,6 +116,33 @@ void sample_latent(MatrixXd &s, int mm, const SparseMatrix<double> &mat, double 
   }
 
   Eigen::LLT<MatrixXd> chol = (Lambda_u + alpha * MM).llt();
+  if(chol.info() != Eigen::Success) {
+    throw std::runtime_error("Cholesky Decomposition failed!");
+  }
+
+  rr.noalias() += Lambda_u * mu_u;
+  chol.matrixL().solveInPlace(rr);
+  for (int i = 0; i < num_latent; i++) {
+    rr[i] += randn0();
+  }
+  chol.matrixU().solveInPlace(rr);
+  s.col(mm).noalias() = rr;
+}
+
+void sample_latent_blas(MatrixXd &s, int mm, const SparseMatrix<double> &mat, double mean_rating,
+    const MatrixXd &samples, double alpha, const VectorXd &mu_u, const MatrixXd &Lambda_u,
+    const int num_latent)
+{
+  MatrixXd MM = Lambda_u;
+  VectorXd rr = VectorXd::Zero(num_latent);
+  for (SparseMatrix<double>::InnerIterator it(mat, mm); it; ++it) {
+    auto col = samples.col(it.row());
+    cblas_dsyr(CblasColMajor, CblasLower, num_latent, alpha, col.data(), 1, MM.data(), num_latent);
+    //MM.noalias() += alpha * col * col.transpose();
+    rr.noalias() += col * ((it.value() - mean_rating) * alpha);
+  }
+
+  Eigen::LLT<MatrixXd> chol = MM.llt();
   if(chol.info() != Eigen::Success) {
     throw std::runtime_error("Cholesky Decomposition failed!");
   }

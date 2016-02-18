@@ -101,10 +101,10 @@ def is_openblas_installed():
             target_lang = "c++"
         )
     except CompileError:
-        print('libopenblas compile error')
+        print('libopenblas compile error (please install OpenBLAS)')
         ret_val = False
     except LinkError:
-        print('libopenblas link error')
+        print('libopenblas link error (please install OpenBLAS)')
         ret_val = False
     else:
         ret_val = True
@@ -118,10 +118,10 @@ def is_openblas_installed():
             target_lang = "c++"
         )
     except CompileError:
-        print('libopenblas lapack compile error')
+        print('libopenblas lapack compile error (please install OpenBLAS)')
         ret_val = False
     except LinkError:
-        print('libopenblas lapack link error')
+        print('libopenblas lapack link error (please install OpenBLAS)')
         ret_val = False
     else:
         ret_val = True

@@ -85,6 +85,9 @@ class MacauPrior : public ILatentPrior {
 void sample_latent(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<double> &mat, double mean_rating,
     const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u,
     const int num_latent);
+void sample_latent_blas(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<double> &mat, double mean_rating,
+    const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u,
+    const int num_latent);
 
 template<typename T>
 void At_mul_A(Eigen::MatrixXd & result, const T & F);
