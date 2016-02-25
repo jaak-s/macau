@@ -25,6 +25,24 @@ void BPMFPrior::update_prior(const Eigen::MatrixXd &U) {
   tie(mu, Lambda) = CondNormalWishart(U, mu0, b0, WI, df);
 }
 
+
+void BPMFPrior::init(const int num_latent) {
+  mu.resize(num_latent);
+  mu.setZero();
+
+  Lambda.resize(num_latent, num_latent);
+  Lambda.setIdentity();
+  Lambda *= 10;
+
+  // parameters of Inv-Whishart distribution
+  WI.resize(num_latent, num_latent);
+  WI.setIdentity();
+  mu0.resize(num_latent);
+  mu0.setZero();
+  b0 = 2;
+  df = num_latent;
+}
+
 /** MacauPrior */
 void MacauPrior::init(const int num_latent, Eigen::MatrixXd & Fmat, bool comp_FtF) {
   mu.resize(num_latent);

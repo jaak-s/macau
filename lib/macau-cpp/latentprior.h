@@ -27,23 +27,7 @@ class BPMFPrior : public ILatentPrior {
   public:
     BPMFPrior(const int nlatent) { init(nlatent); }
     BPMFPrior() : BPMFPrior(10) {}
-
-    void init(const int num_latent) {
-      mu.resize(num_latent);
-      mu.setZero();
-
-      Lambda.resize(num_latent, num_latent);
-      Lambda.setIdentity();
-      Lambda *= 10;
-
-      // parameters of Inv-Whishart distribution
-      WI.resize(num_latent, num_latent);
-      WI.setIdentity();
-      mu0.resize(num_latent);
-      mu0.setZero();
-      b0 = 2;
-      df = num_latent;
-    }
+    void init(const int num_latent);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
