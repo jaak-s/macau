@@ -10,32 +10,15 @@
 using namespace std; 
 using namespace Eigen;
 
-extern void openblas_set_num_threads(int num_threads);
-
-int get_nthreads() {
-  int nthreads = 1;
-#pragma omp parallel
-  {
-#pragma omp single
-    {
-      nthreads = omp_get_num_threads();
-    }
-  }
-  return nthreads;
-}
-
 /** BPMFPrior */
 void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
   const int N = U.cols();
-  int nthreads = nthreads;
   
-  openblas_set_num_threads(1);
 #pragma omp parallel for
   for(int n = 0; n < N; n++) {
     sample_latent_blas(U, n, mat, mean_value, samples, alpha, mu, Lambda, num_latent);
   }
-  openblas_set_num_threads(nthreads);
 }
 
 void BPMFPrior::update_prior(const Eigen::MatrixXd &U) {
@@ -137,8 +120,7 @@ void sample_latent_blas(MatrixXd &s, int mm, const SparseMatrix<double> &mat, do
   VectorXd rr = VectorXd::Zero(num_latent);
   for (SparseMatrix<double>::InnerIterator it(mat, mm); it; ++it) {
     auto col = samples.col(it.row());
-    cblas_dsyr(CblasColMajor, CblasLower, num_latent, alpha, col.data(), 1, MM.data(), num_latent);
-    //MM.noalias() += alpha * col * col.transpose();
+    MM.triangularView<Eigen::Lower>() += alpha * col * col.transpose();
     rr.noalias() += col * ((it.value() - mean_rating) * alpha);
   }
 
