@@ -85,7 +85,7 @@ void Macau::run() {
     prior_u.update_prior(sample_u);
     prior_m.update_prior(sample_m);
 
-    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, sample_m, sample_u, mean_rating);
+    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin + 1), predictions, sample_m, sample_u, mean_rating);
 
     auto endi = tick();
     auto elapsed = endi - start;
