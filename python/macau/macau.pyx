@@ -6,6 +6,9 @@ import timeit
 
 cimport macau
 
+## using cysignals to catch CTRL-C interrupt
+include "cysignals/signals.pxi"
+
 
 cpdef mul_blas(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2] y):
     if y.shape[0] != y.shape[1]:
@@ -99,6 +102,7 @@ def bpmf(Y,
     cdef np.ndarray[int] icols = Y.col.astype(np.int32, copy=False)
     cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
 
+    sig_on()
     cdef Macau macau
     macau = Macau(np.int32(num_latent))
     macau.setPrecision(np.float64(precision))
@@ -115,6 +119,7 @@ def bpmf(Y,
         macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
 
     macau.run()
+    sig_off()
     #print("rows=%d, cols=%d" % ( macau.prior_u.Lambda.rows(), macau.prior_u.Lambda.cols()))
     #cdef np.ndarray[np.double_t, ndim=2] L = matview(&macau.prior_u.Lambda)
     #cdef np.ndarray[np.double_t] mu = vecview(&macau.prior_u.mu)

@@ -7,6 +7,7 @@ from distutils.command.build_clib import build_clib
 from distutils.extension import Extension
 from distutils.errors import DistutilsSetupError
 from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 from distutils.sysconfig import get_python_inc
 
 from distutils import log
@@ -195,7 +196,7 @@ def main():
     setup(
         name = 'macau',
         version = "0.2",
-        requires = ['numpy', 'scipy', 'cython(>=0.21)'],
+        requires = ['numpy', 'scipy', 'cython(>=0.21)', 'cysignals'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},
@@ -204,7 +205,7 @@ def main():
         license = "MIT",
         author_email = "jaak.simm@gmail.com",
         cmdclass = {'build_clib': build_clibx, 'build_ext': build_ext},
-        ext_modules = ext_modules
+        ext_modules = cythonize(ext_modules, include_path=sys.path)
     )
 
 if __name__ == '__main__':
