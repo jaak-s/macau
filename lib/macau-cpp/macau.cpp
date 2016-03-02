@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <chrono>
 
 #include <unsupported/Eigen/SparseExtra>
 #include <Eigen/Sparse>
@@ -54,6 +55,8 @@ void sparseFromIJV(SparseMatrix<double> &X, int* rows, int* cols, double* values
 }
 
 void Macau::init() {
+  unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+  init_bmrng(seed1);
   sample_u.resize(num_latent, Y.rows());
   sample_m.resize(num_latent, Y.cols());
   sample_u.setZero(); 

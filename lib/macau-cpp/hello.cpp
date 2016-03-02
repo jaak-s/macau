@@ -1,6 +1,7 @@
 #include <Eigen/Dense>
 #include <stdio.h>
 #include <cblas.h>
+#include "mvnormal.h"
 
 using namespace Eigen;
 
@@ -17,11 +18,9 @@ void eigenQR(double* x, int nrow, int ncol) {
 }
 
 MatrixXd getx() {
-  MatrixXd x(3,2);
-  x.setZero();
-  x(0,0) = 1;
-  x(1,0) = 2;
-  x(2,0) = 3;
+  init_bmrng(100099102);
+  MatrixXd x(1000,10);
+  bmrandn(x);
   return x;
 }
 

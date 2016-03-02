@@ -6,9 +6,14 @@
 
 #include <Eigen/Dense>                                                                                                 
 #include <Eigen/Sparse>
+#include <random>
 
 double randn0();
 double randn(double);
+
+void bmrandn(double* x, long n);
+void bmrandn(Eigen::MatrixXd & X);
+void init_bmrng(int seed);
 
 auto nrandn(int n) -> decltype( Eigen::VectorXd::NullaryExpr(n, std::cref(randn)) ); 
 

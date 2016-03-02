@@ -20,7 +20,8 @@ cpdef mul_blas(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2
 cpdef py_getx():
     cdef MatrixXd m = getx()
     cdef np.ndarray[np.double_t, ndim=2] A = matview(&m)
-    print(A)
+    #print(A)
+    return A.copy()
 
 cpdef py_eigenQR(np.ndarray[np.double_t, ndim=2] x):
     eigenQR(& x[0,0], x.shape[0], x.shape[1])
@@ -120,6 +121,7 @@ def bpmf(Y,
 
     macau.run()
     sig_off()
+
     #print("rows=%d, cols=%d" % ( macau.prior_u.Lambda.rows(), macau.prior_u.Lambda.cols()))
     #cdef np.ndarray[np.double_t, ndim=2] L = matview(&macau.prior_u.Lambda)
     #cdef np.ndarray[np.double_t] mu = vecview(&macau.prior_u.mu)

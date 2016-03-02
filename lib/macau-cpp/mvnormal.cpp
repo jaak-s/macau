@@ -13,6 +13,9 @@
 using namespace std;
 using namespace Eigen;
 
+std::mt19937 *bmrng;
+#pragma omp threadprivate(bmrng)
+
 /*
   We need a functor that can pretend it's const,
   but to be a good random number generator 
@@ -45,6 +48,40 @@ nrandn(int n) -> decltype( VectorXd::NullaryExpr(n, std::cref(randn)) )
     return VectorXd::NullaryExpr(n, std::cref(randn));
 }
 
+void init_bmrng(int seed) {
+#pragma omp parallel 
+  {
+    bmrng = new std::mt19937(seed + omp_get_thread_num() * 1999);
+  }
+}
+
+void bmrandn(double* x, long n) {
+#pragma omp parallel 
+  {
+    std::uniform_real_distribution<double> unif(-1.0, 1.0);
+#pragma omp for schedule(static)
+    for (long i = 0; i < n; i += 2) {
+      double x1, x2, w;
+      do {
+        x1 = unif(*bmrng);
+        x2 = unif(*bmrng);
+        w = x1 * x1 + x2 * x2;
+      } while ( w >= 1.0 );
+
+      w = sqrt( (-2.0 * log( w ) ) / w );
+      x[i] = x1 * w;
+      if (i + 1 < n) {
+        x[i+1] = x2 * w;
+      }
+    }
+  }
+}
+
+void bmrandn(MatrixXd & X) {
+  long n = X.rows() * (long)X.cols();
+  bmrandn(X.data(), n);
+}
+
 /** Normal(0, Lambda^-1) for nn columns */
 MatrixXd MvNormal_prec(const MatrixXd & Lambda, int nn = 1)
 {
@@ -52,7 +89,6 @@ MatrixXd MvNormal_prec(const MatrixXd & Lambda, int nn = 1)
 
   LLT<MatrixXd> chol(Lambda);
 
-  // TODO: parallelize generating of random variables
   MatrixXd r = MatrixXd::NullaryExpr(size, nn, std::cref(randn));
 	chol.matrixU().solveInPlace(r);
   return r;
@@ -60,13 +96,7 @@ MatrixXd MvNormal_prec(const MatrixXd & Lambda, int nn = 1)
 
 MatrixXd MvNormal_prec(const MatrixXd & Lambda, const VectorXd & mean, int nn = 1)
 {
-  int size = mean.rows(); // Dimensionality (rows)
-
-  LLT<MatrixXd> chol(Lambda);
-
-  // TODO: parallelize generating of random variables
-  MatrixXd r = MatrixXd::NullaryExpr(size, nn, std::cref(randn));
-	chol.matrixU().solveInPlace(r);
+  MatrixXd r = MvNormal_prec(Lambda, nn);
   return r.colwise() + mean;
 }
 
@@ -82,7 +112,6 @@ MatrixXd MvNormal(const MatrixXd covar, const VectorXd mean, int nn = 1)
   LLT<MatrixXd> cholSolver(covar);
   normTransform = cholSolver.matrixL();
 
-  // TODO: parallelize generating of random variables
   auto normSamples = MatrixXd::NullaryExpr(size, nn, std::cref(randn));
   MatrixXd samples = (normTransform * normSamples).colwise() + mean;
 
