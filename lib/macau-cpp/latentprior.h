@@ -4,6 +4,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "mvnormal.h"
+extern "C" {
+  #include <sparse.h>
+}
 
 /** interface */
 class ILatentPrior {
@@ -35,10 +38,11 @@ class BPMFPrior : public ILatentPrior {
 };
 
 /** Prior without side information (pure BPMF) */
+template<class FType>
 class MacauPrior : public ILatentPrior {
   private:
     Eigen::MatrixXd Uhat;
-    Eigen::MatrixXd F;    /* side information */
+    FType           F;    /* side information */
     Eigen::MatrixXd FtF;  /* F'F */
     Eigen::MatrixXd beta; /* link matrix */
     bool use_FtF;
@@ -55,10 +59,10 @@ class MacauPrior : public ILatentPrior {
     double tol = 1e-6;
 
   public:
-    MacauPrior(const int nlatent, Eigen::MatrixXd & Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
+    MacauPrior(const int nlatent, FType & Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
     MacauPrior() {}
 
-    void init(const int num_latent, Eigen::MatrixXd & Fmat, bool comp_FtF);
+    void init(const int num_latent, FType & Fmat, bool comp_FtF);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
@@ -66,9 +70,12 @@ class MacauPrior : public ILatentPrior {
     void sample_beta(const Eigen::MatrixXd &U);
 };
 
+template<> class MacauPrior<Eigen::MatrixXd>;
+
 void sample_latent(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<double> &mat, double mean_rating,
     const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u,
     const int num_latent);
+
 void sample_latent_blas(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<double> &mat, double mean_rating,
     const Eigen::MatrixXd &samples, double alpha, const Eigen::VectorXd &mu_u, const Eigen::MatrixXd &Lambda_u,
     const int num_latent);

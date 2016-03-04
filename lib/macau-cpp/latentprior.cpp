@@ -6,6 +6,9 @@
 
 #include "mvnormal.h"
 #include "macau.h"
+extern "C" {
+  #include <sparse.h>
+}
 
 using namespace std; 
 using namespace Eigen;
@@ -44,7 +47,8 @@ void BPMFPrior::init(const int num_latent) {
 }
 
 /** MacauPrior */
-void MacauPrior::init(const int num_latent, Eigen::MatrixXd & Fmat, bool comp_FtF) {
+template<class FType>
+void MacauPrior<FType>::init(const int num_latent, FType & Fmat, bool comp_FtF) {
   mu.resize(num_latent);
   mu.setZero();
 
@@ -74,29 +78,33 @@ void MacauPrior::init(const int num_latent, Eigen::MatrixXd & Fmat, bool comp_Ft
   beta.setZero();
 }
 
-void MacauPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
+template<class FType>
+void MacauPrior<FType>::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
   const int N = U.cols();
 #pragma omp parallel for
   for(int n = 0; n < N; n++) {
     // TODO: try moving mu + Uhat.col(n) inside sample_latent for speed
-    sample_latent(U, n, mat, mean_value, samples, alpha, mu + Uhat.col(n), Lambda, num_latent);
+    sample_latent_blas(U, n, mat, mean_value, samples, alpha, mu + Uhat.col(n), Lambda, num_latent);
   }
 }
 
-void MacauPrior::update_prior(const Eigen::MatrixXd &U) {
+template<class FType>
+void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {
   // residual:
-  Uhat = U - Uhat;
+  Uhat.noalias() = U - Uhat;
   tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * (beta.transpose() * beta), df + beta.rows());
   // update beta and Uhat:
   sample_beta(U);
 }
 
-void MacauPrior::sample_beta(const Eigen::MatrixXd &U) {
+template<class FType>
+void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
   const int num_feat = beta.rows();
   // Ft_y = (U .- mu + Normal(0, Lambda^-1)) * F + sqrt(lambda_beta) * Normal(0, Lambda^-1)
-  MatrixXd Ft_y = A_mul_B(U + MvNormal_prec(Lambda, -mu, U.cols()), F) + sqrt(lambda_beta) * MvNormal_prec(Lambda, num_feat);
+  MatrixXd Ft_y = A_mul_B( (U + MvNormal_prec_omp(Lambda, U.cols())).colwise() - mu, F) + sqrt(lambda_beta) * MvNormal_prec_omp(Lambda, num_feat);
 
+  // TODO
   if (use_FtF) {
   } else {
   }
@@ -157,9 +165,46 @@ void sample_latent_blas(MatrixXd &s, int mm, const SparseMatrix<double> &mat, do
 }
 
 void At_mul_A(Eigen::MatrixXd & result, const Eigen::MatrixXd & F) {
-  result = F.transpose() * F;
+  // TODO: use blas
+  result.triangularView<Eigen::Lower>() = F.transpose() * F;
 }
 
 Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
+  // TODO: use blas
   return A * B;
+}
+
+// for bsbm
+void At_mul_A(Eigen::MatrixXd & result, const BlockedSBM & A) {
+  result.setZero();
+  const int n0 = A.start_row[1] - A.start_row[0];
+  vector< vector<int> > rowfeat(n0, vector<int>(0));
+
+  for (int block = 0; block < A.nblocks; block++) {
+    int* rows = A.rows[block];
+    int* cols = A.cols[block];
+    int nnz   = A.nnz[block];
+    int nrows = A.start_row[block + 1] - A.start_row[block];
+    for (int i = 0; i < nrows; i++) {
+      rowfeat[i].clear();
+    }
+    // adding all non-zeros to respective rows:
+    for (int j = 0; j < nnz; j++) {
+      int row = rows[j] - A.start_row[block];
+      rowfeat[row].push_back(cols[j]);
+    }
+    for (auto v : rowfeat) {
+      for (unsigned i1 = 0; i1 < v.size(); i1++) {
+        result(v[i1], v[i1]) += 1;
+        for (unsigned i2 = i1 + 1; i2 < v.size(); i2++) {
+          // only storing to lower triangular part
+          if (v[i1] <= v[i2]) {
+            result(v[i2], v[i1]) += 1;
+          } else {
+            result(v[i1], v[i2]) += 1;
+          }
+        }
+      }
+    }
+  }
 }

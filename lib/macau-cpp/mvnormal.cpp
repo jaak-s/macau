@@ -100,6 +100,18 @@ MatrixXd MvNormal_prec(const MatrixXd & Lambda, const VectorXd & mean, int nn = 
   return r.colwise() + mean;
 }
 
+MatrixXd MvNormal_prec_omp(const MatrixXd & Lambda, int nn = 1)
+{
+  int size = Lambda.rows(); // Dimensionality (rows)
+
+  LLT<MatrixXd> chol(Lambda);
+
+  MatrixXd r(size, nn);
+  bmrandn(r);
+	chol.matrixU().solveInPlace(r);
+  return r;
+}
+
 /*
   Draw nn samples from a size-dimensional normal distribution
   with a specified mean and covariance

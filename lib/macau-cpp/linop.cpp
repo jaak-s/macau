@@ -1,7 +1,9 @@
 #include <Eigen/Dense>
 #include <math.h>
 #include <cblas.h>
-#include <sparse.h>
+extern "C" {
+  #include <sparse.h>
+}
 #include <iostream>
 
 #include <stdexcept>

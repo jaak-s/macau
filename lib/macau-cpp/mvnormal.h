@@ -21,6 +21,7 @@ std::pair<Eigen::VectorXd, Eigen::MatrixXd> CondNormalWishart(const Eigen::Matri
 
 Eigen::MatrixXd MvNormal_prec(const Eigen::MatrixXd & Lambda, int nn);
 Eigen::MatrixXd MvNormal_prec(const Eigen::MatrixXd & Lambda, const Eigen::VectorXd & mean, int nn);
+Eigen::MatrixXd MvNormal_prec_omp(const Eigen::MatrixXd & Lambda, int nn);
 Eigen::MatrixXd MvNormal(const Eigen::MatrixXd covar, const Eigen::VectorXd mean, int nn);
 
 #endif /* MVNORMAL_H */
