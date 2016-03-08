@@ -1,7 +1,7 @@
 #include <Eigen/Dense>
 #include <math.h>
-#include <cblas.h>
 extern "C" {
+  #include <cblas.h>
   #include <sparse.h>
 }
 #include <iostream>
@@ -12,9 +12,42 @@ extern "C" {
 #include "linop.h"
 
 using namespace Eigen;
+using namespace std;
 
-void At_mul_A(BlockedSBM & sbm, Eigen::MatrixXd & out) {
-  throw std::runtime_error("At_mul_A not implemented.");
+void At_mul_A(Eigen::MatrixXd & out, const SparseFeat & A) {
+  // TODO: make this approach parallel (by converting A.M and A.Mt into CSR)
+  out.setZero();
+  const int n0 = A.M.start_row[1] - A.M.start_row[0];
+  vector< vector<int> > rowfeat(n0, vector<int>(0));
+
+  for (int block = 0; block < A.M.nblocks; block++) {
+    int* rows = A.M.rows[block];
+    int* cols = A.M.cols[block];
+    int nnz   = A.M.nnz[block];
+    int nrows = A.M.start_row[block + 1] - A.M.start_row[block];
+    for (int i = 0; i < nrows; i++) {
+      rowfeat[i].clear();
+    }
+    // adding all non-zeros to respective rows:
+    for (int j = 0; j < nnz; j++) {
+      int row = rows[j] - A.M.start_row[block];
+      rowfeat[row].push_back(cols[j]);
+    }
+    for (int i = 0; i < nrows; i++) {
+      auto v = rowfeat[i];
+      for (unsigned i1 = 0; i1 < v.size(); i1++) {
+        out(v[i1], v[i1]) += 1;
+        for (unsigned i2 = i1 + 1; i2 < v.size(); i2++) {
+          // only storing to lower triangular part
+          if (v[i1] <= v[i2]) {
+            out(v[i2], v[i1]) += 1;
+          } else {
+            out(v[i1], v[i2]) += 1;
+          }
+        }
+      }
+    }
+  }
 }
 
 // out = sbm * b (for vectors)

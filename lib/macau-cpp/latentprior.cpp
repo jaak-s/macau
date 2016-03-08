@@ -174,37 +174,9 @@ Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
   return A * B;
 }
 
-// for bsbm
-void At_mul_A(Eigen::MatrixXd & result, const BlockedSBM & A) {
-  result.setZero();
-  const int n0 = A.start_row[1] - A.start_row[0];
-  vector< vector<int> > rowfeat(n0, vector<int>(0));
-
-  for (int block = 0; block < A.nblocks; block++) {
-    int* rows = A.rows[block];
-    int* cols = A.cols[block];
-    int nnz   = A.nnz[block];
-    int nrows = A.start_row[block + 1] - A.start_row[block];
-    for (int i = 0; i < nrows; i++) {
-      rowfeat[i].clear();
-    }
-    // adding all non-zeros to respective rows:
-    for (int j = 0; j < nnz; j++) {
-      int row = rows[j] - A.start_row[block];
-      rowfeat[row].push_back(cols[j]);
-    }
-    for (auto v : rowfeat) {
-      for (unsigned i1 = 0; i1 < v.size(); i1++) {
-        result(v[i1], v[i1]) += 1;
-        for (unsigned i2 = i1 + 1; i2 < v.size(); i2++) {
-          // only storing to lower triangular part
-          if (v[i1] <= v[i2]) {
-            result(v[i2], v[i1]) += 1;
-          } else {
-            result(v[i1], v[i2]) += 1;
-          }
-        }
-      }
-    }
-  }
+Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const BlockedSBM & B) {
+  // TODO: use blas
+  //return A * B;
+  return MatrixXd(1,1);
 }
+

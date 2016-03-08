@@ -19,6 +19,17 @@ cdef extern from "hello.h":
     MatrixXd getx()
     void eigenQR(double* X, int nrow, int ncol)
 
+#cdef extern from "sparse.h":
+#    struct SparseBinaryMatrix:
+#        int nrow
+#        int ncol
+#    struct BlockedSBM:
+#        int nrow
+#        int ncol
+#    SparseBinaryMatrix* new_sbm(long nrow, long ncol, long nnz, int* rows, int* cols)
+#    BlockedSBM* new_bsbm(SparseBinaryMatrix* A, int block_size)
+#    void sort_sbm(SparseBinaryMatrix* A)
+
 cdef extern from "linop.h":
     cdef cppclass SparseFeat:
         SparseFeat()
@@ -33,7 +44,7 @@ cdef extern from "latentprior.h":
         BPMFPrior(int num_latent)
 
 cdef extern from "macau.h":
-    cdef cppclass Macau:                                                                                               
+    cdef cppclass Macau:
         BPMFPrior prior_u
         BPMFPrior prior_m
         Macau()

@@ -29,10 +29,10 @@ class SparseFeat {
     int nsamples() {return M.nrow;}
 };
 
-void At_mul_A( Eigen::MatrixXd & out, BlockedSBM & sbm );
+void At_mul_A( Eigen::MatrixXd & out, const SparseFeat & A);
 
-void A_mul_B(  Eigen::VectorXd & out, BlockedSBM & sbm, Eigen::VectorXd & b);
-void A_mul_Bt( Eigen::MatrixXd & out, BlockedSBM & sbm, Eigen::MatrixXd & B);
+void A_mul_B(  Eigen::VectorXd & out, BlockedSBM & sbm, const Eigen::VectorXd & b);
+void A_mul_Bt( Eigen::MatrixXd & out, BlockedSBM & sbm, const Eigen::MatrixXd & B);
 int  solve(    Eigen::MatrixXd &   X, SparseFeat & sparseFeat, double reg, Eigen::MatrixXd & B, double tol);
 
 // some util functions:

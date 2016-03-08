@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <cblas.h>
 #include "mvnormal.h"
+extern "C" {
+#include <sparse.h>
+}
 
 using namespace Eigen;
 

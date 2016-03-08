@@ -169,10 +169,10 @@ inc = ['lib/macau-cpp', 'lib/eigen3', 'lib/libfastsparse', np.get_include(), get
 
 libmacau = ('macau-cpp', dict(
     package='macau',
-    sources = glob('lib/macau-cpp/*.cpp'),
+    sources = filter(lambda a: a.find("tests.cpp") < 0, glob('lib/macau-cpp/*.cpp')),
     include_dirs = inc,
     extra_compile_args = ['-fopenmp', '-O3', '-fstrict-aliasing', '-std=c++11'],
-    extra_link_args = ['-fopenmp'],
+    #extra_link_args = ['-fopenmp'],
     language = "c++"
     ))
 
@@ -180,7 +180,7 @@ ext_modules=[
     Extension("macau", 
               sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
               include_dirs = inc,
-              libraries = ["openblas"],
+              libraries = ["openblas", "pthread"],
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")

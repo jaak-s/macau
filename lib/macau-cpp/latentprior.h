@@ -4,9 +4,6 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "mvnormal.h"
-extern "C" {
-  #include <sparse.h>
-}
 
 /** interface */
 class ILatentPrior {
@@ -82,10 +79,12 @@ void sample_latent_blas(Eigen::MatrixXd &s, int mm, const Eigen::SparseMatrix<do
 
 template<typename T>
 void At_mul_A(Eigen::MatrixXd & result, const T & F);
+template<>
 void At_mul_A(Eigen::MatrixXd & result, const Eigen::MatrixXd & F);
 
 template<typename T>
 Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const T & B);
+template<>
 Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
 
 #endif /* LATENTPRIOR_H */
