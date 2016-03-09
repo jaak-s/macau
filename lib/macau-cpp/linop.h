@@ -4,26 +4,19 @@
 #include <Eigen/Dense>
 
 extern "C" {
-  #include <sparse.h>
+  #include <csr.h>
 }
 
 class SparseFeat {
   public:
-    BlockedSBM M;
-    BlockedSBM Mt;
+    BinaryCSR M;
+    BinaryCSR Mt;
 
     SparseFeat() {}
 
-    SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols, bool sort, int row_block_size = 1024, int col_block_size = 1024) {
-      SparseBinaryMatrix* sbm = new_sbm(nrow, ncol, nnz, rows, cols);
-      if (sort) {
-        sort_sbm(sbm);
-      }
-      M = * new_bsbm(sbm, row_block_size);
-      transpose(sbm);
-      Mt = * new_bsbm(sbm, col_block_size);
-      
-      free(sbm);
+    SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols) {
+      M  = * new_bcsr(nnz, nrow, ncol, rows, cols);
+      Mt = * new_bcsr(nnz, ncol, nrow, cols, rows);
     }
     int nfeat()    {return M.ncol;}
     int nsamples() {return M.nrow;}
@@ -31,8 +24,8 @@ class SparseFeat {
 
 void At_mul_A( Eigen::MatrixXd & out, const SparseFeat & A);
 
-void A_mul_B(  Eigen::VectorXd & out, BlockedSBM & sbm, const Eigen::VectorXd & b);
-void A_mul_Bt( Eigen::MatrixXd & out, BlockedSBM & sbm, const Eigen::MatrixXd & B);
+void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, const Eigen::VectorXd & b);
+void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, const Eigen::MatrixXd & B);
 int  solve(    Eigen::MatrixXd &   X, SparseFeat & sparseFeat, double reg, Eigen::MatrixXd & B, double tol);
 
 // some util functions:

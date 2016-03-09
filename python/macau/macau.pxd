@@ -19,21 +19,10 @@ cdef extern from "hello.h":
     MatrixXd getx()
     void eigenQR(double* X, int nrow, int ncol)
 
-#cdef extern from "sparse.h":
-#    struct SparseBinaryMatrix:
-#        int nrow
-#        int ncol
-#    struct BlockedSBM:
-#        int nrow
-#        int ncol
-#    SparseBinaryMatrix* new_sbm(long nrow, long ncol, long nnz, int* rows, int* cols)
-#    BlockedSBM* new_bsbm(SparseBinaryMatrix* A, int block_size)
-#    void sort_sbm(SparseBinaryMatrix* A)
-
 cdef extern from "linop.h":
     cdef cppclass SparseFeat:
         SparseFeat()
-        SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols, bool sort, int row_block_size, int col_block_size)
+        SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols)
     void At_mul_A_blas(MatrixXd & A, double* AtA)
     int solve(MatrixXd & out, SparseFeat & K, double reg, MatrixXd & B, double tol)
 

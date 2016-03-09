@@ -2,7 +2,7 @@
 #include <math.h>
 extern "C" {
   #include <cblas.h>
-  #include <sparse.h>
+  #include <csr.h>
 }
 #include <iostream>
 
@@ -15,54 +15,40 @@ using namespace Eigen;
 using namespace std;
 
 void At_mul_A(Eigen::MatrixXd & out, const SparseFeat & A) {
-  // TODO: make this approach parallel (by converting A.M and A.Mt into CSR)
   out.setZero();
-  const int n0 = A.M.start_row[1] - A.M.start_row[0];
-  vector< vector<int> > rowfeat(n0, vector<int>(0));
+  const int nfeat = A.M.ncol;
 
-  for (int block = 0; block < A.M.nblocks; block++) {
-    int* rows = A.M.rows[block];
-    int* cols = A.M.cols[block];
-    int nnz   = A.M.nnz[block];
-    int nrows = A.M.start_row[block + 1] - A.M.start_row[block];
-    for (int i = 0; i < nrows; i++) {
-      rowfeat[i].clear();
-    }
-    // adding all non-zeros to respective rows:
-    for (int j = 0; j < nnz; j++) {
-      int row = rows[j] - A.M.start_row[block];
-      rowfeat[row].push_back(cols[j]);
-    }
-    for (int i = 0; i < nrows; i++) {
-      auto v = rowfeat[i];
-      for (unsigned i1 = 0; i1 < v.size(); i1++) {
-        out(v[i1], v[i1]) += 1;
-        for (unsigned i2 = i1 + 1; i2 < v.size(); i2++) {
-          // only storing to lower triangular part
-          if (v[i1] <= v[i2]) {
-            out(v[i2], v[i1]) += 1;
-          } else {
-            out(v[i1], v[i2]) += 1;
-          }
+#pragma omp parallel for schedule(dynamic, 8)
+  for (int f1 = 0; f1 < nfeat; f1++) {
+    int end = A.Mt.row_ptr[f1 + 1];
+    out(f1, f1) = end - A.Mt.row_ptr[f1];
+    // looping over all non-zero rows of f1
+    for (int i = A.Mt.row_ptr[f1]; i < end; i++) {
+      int Mrow = A.Mt.cols[i]; /* row in M */
+      int end2 = A.M.row_ptr[Mrow + 1];
+      for (int j = A.M.row_ptr[Mrow]; j < end2; j++) {
+        int f2 = A.M.cols[j];
+        if (f1 < f2) {
+          out(f2, f1) += 1;
         }
       }
     }
   }
 }
 
-// out = sbm * b (for vectors)
-void A_mul_B(Eigen::VectorXd & out, BlockedSBM & sbm, Eigen::VectorXd & b) {
-  if (sbm.nrow != out.size()) {throw std::runtime_error("sbm.nrow must equal out.size()");}
-  if (sbm.ncol != b.size())   {throw std::runtime_error("sbm.ncol must equal b.size()");}
-  bsbm_A_mul_B( out.data(), & sbm, b.data() );
+// out = bcsr * b (for vectors)
+void A_mul_B(Eigen::VectorXd & out, BinaryCSR & csr, Eigen::VectorXd & b) {
+  if (csr.nrow != out.size()) {throw std::runtime_error("csr.nrow must equal out.size()");}
+  if (csr.ncol != b.size())   {throw std::runtime_error("csr.ncol must equal b.size()");}
+  bcsr_A_mul_B( out.data(), & csr, b.data() );
 }
 
-// out' = sbm * B' (for matrices)
-void A_mul_Bt(Eigen::MatrixXd & out, BlockedSBM & sbm, Eigen::MatrixXd & B) {
-  if (sbm.nrow != out.cols()) {throw std::runtime_error("sbm.nrow must equal out.cols()");}
-  if (sbm.ncol != B.cols())   {throw std::runtime_error("sbm.ncol must equal b.cols()");}
+// OUT' = bcsr * B' (for matrices)
+void A_mul_Bt(Eigen::MatrixXd & out, BinaryCSR & csr, Eigen::MatrixXd & B) {
+  if (csr.nrow != out.cols()) {throw std::runtime_error("csr.nrow must equal out.cols()");}
+  if (csr.ncol != B.cols())   {throw std::runtime_error("csr.ncol must equal b.cols()");}
   if (out.rows() != B.rows()) {throw std::runtime_error("out.rows() must equal B.rows()");}
-  bsbm_A_mul_Bn( out.data(), & sbm, B.data(), B.rows() );
+  bcsr_A_mul_Bn( out.data(), & csr, B.data(), B.rows() );
 }
 
 void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA) {

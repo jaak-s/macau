@@ -5,7 +5,7 @@
 TEST_CASE( "SparseFeat", "[At_mul_A]" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
   int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
-  SparseFeat sf(6, 4, 9, rows, cols, true, 4, 4);
+  SparseFeat sf(6, 4, 9, rows, cols);
 
   REQUIRE( sf.M.nrow == 6 );
   REQUIRE( sf.M.ncol == 4 );
