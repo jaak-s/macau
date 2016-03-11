@@ -35,6 +35,16 @@ void At_mul_A(Eigen::MatrixXd & out, const SparseFeat & A) {
     }
   }
 }
+/** computes uhat = sparseFeat * beta, where beta and uhat are row ordered */
+void compute_uhat(Eigen::MatrixXd & uhat, SparseFeat & sparseFeat, Eigen::MatrixXd & beta) {
+  // TODO: adding this causes unknown reference
+  //A_mul_Bt(uhat, sparseFeat.M, beta);
+}
+
+/** computes uhat = denseFeat * beta, where beta and uhat are row ordered */
+void compute_uhat(Eigen::MatrixXd & uhat, Eigen::MatrixXd & denseFeat, Eigen::MatrixXd & beta) {
+  A_mul_Bt_blas(uhat, beta, denseFeat);
+}
 
 // out = bcsr * b (for vectors)
 void A_mul_B(Eigen::VectorXd & out, BinaryCSR & csr, Eigen::VectorXd & b) {

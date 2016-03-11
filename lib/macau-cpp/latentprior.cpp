@@ -6,6 +6,8 @@
 
 #include "mvnormal.h"
 #include "macau.h"
+#include "chol.h"
+#include "linop.h"
 extern "C" {
   #include <sparse.h>
 }
@@ -74,7 +76,7 @@ void MacauPrior<FType>::init(const int num_latent, FType & Fmat, bool comp_FtF) 
   Uhat.resize(num_latent, F.rows());
   Uhat.setZero();
 
-  beta.resize(F.cols(), num_latent);
+  beta.resize(num_latent, F.cols());
   beta.setZero();
 }
 
@@ -93,20 +95,29 @@ template<class FType>
 void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {
   // residual:
   Uhat.noalias() = U - Uhat;
-  tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * (beta.transpose() * beta), df + beta.rows());
+  tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * (beta * beta.transpose()), df + beta.cols());
   // update beta and Uhat:
   sample_beta(U);
 }
 
+/** Update beta and Uhat */
 template<class FType>
 void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
-  const int num_feat = beta.rows();
+  const int num_feat = beta.cols();
   // Ft_y = (U .- mu + Normal(0, Lambda^-1)) * F + sqrt(lambda_beta) * Normal(0, Lambda^-1)
+  // Ft_y is [ D x F ] matrix
   MatrixXd Ft_y = A_mul_B( (U + MvNormal_prec_omp(Lambda, U.cols())).colwise() - mu, F) + sqrt(lambda_beta) * MvNormal_prec_omp(Lambda, num_feat);
 
-  // TODO
   if (use_FtF) {
+    MatrixXd K(FtF.rows(), FtF.cols());
+    K.triangularView<Eigen::Lower>() = FtF;
+    K.diagonal() += lambda_beta;
+    chol_decomp(K);
+    chol_solve_t(K, Ft_y);
+    beta = Ft_y;
+    compute_uhat(Uhat, F, beta);
   } else {
+    // TODO
   }
 }
 
@@ -174,7 +185,7 @@ Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
   return A * B;
 }
 
-Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const BlockedSBM & B) {
+Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const SparseFeat & B) {
   // TODO: use blas
   //return A * B;
   return MatrixXd(1,1);

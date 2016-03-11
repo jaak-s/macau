@@ -22,17 +22,22 @@ class SparseFeat {
     int nsamples() {return M.nrow;}
 };
 
+// for Sparse
 void At_mul_A( Eigen::MatrixXd & out, const SparseFeat & A);
-
-void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, const Eigen::VectorXd & b);
-void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, const Eigen::MatrixXd & B);
 int  solve(    Eigen::MatrixXd &   X, SparseFeat & sparseFeat, double reg, Eigen::MatrixXd & B, double tol);
+void compute_uhat( Eigen::MatrixXd & uhat, SparseFeat & sparseFeat, Eigen::MatrixXd & beta);
 
-// some util functions:
+// for Dense:
 void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA);
 void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt);
 void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
 void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
+void compute_uhat( Eigen::MatrixXd & uhat, Eigen::MatrixXd & denseFeat, Eigen::MatrixXd & beta);
+
+// util functions:
+void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, const Eigen::VectorXd & b);
+void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, const Eigen::MatrixXd & B);
+
 
 // Y = beta * Y + alpha * A * B (where B is symmetric)
 void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
