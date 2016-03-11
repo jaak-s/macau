@@ -108,6 +108,7 @@ MatrixXd MvNormal_prec_omp(const MatrixXd & Lambda, int nn = 1)
 
   MatrixXd r(size, nn);
   bmrandn(r);
+  // TODO: check if solveInPlace is parallelized:
 	chol.matrixU().solveInPlace(r);
   return r;
 }
