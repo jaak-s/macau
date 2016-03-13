@@ -35,8 +35,8 @@ void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::
 void compute_uhat( Eigen::MatrixXd & uhat, Eigen::MatrixXd & denseFeat, Eigen::MatrixXd & beta);
 
 // util functions:
-void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, const Eigen::VectorXd & b);
-void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, const Eigen::MatrixXd & B);
+void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, Eigen::VectorXd & b);
+void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, Eigen::MatrixXd & B);
 
 
 // Y = beta * Y + alpha * A * B (where B is symmetric)
