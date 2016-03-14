@@ -48,6 +48,26 @@ TEST_CASE( "SparseFeat/compute_uhat", "compute_uhat" ) {
   }
 }
 
+TEST_CASE( "MatrixXd/compute_uhat", "compute_uhat for MatrixXd" ) {
+  Eigen::MatrixXd beta(2, 4), feat(6, 4), uhat(2, 6), uhat_true(2, 6);
+  beta << 0.56,  0.55,  0.3 , -1.78,
+          1.63, -0.71,  0.8 , -0.28;
+  feat <<  -0.83,  -0.26,  -0.52,  -0.27,
+            0.91,  -0.48,   0.50,  -0.20,
+           -0.59,   1.94,  -1.09,   0.86,
+           -0.08,   0.62,  -1.10,   0.96,
+            1.44,   0.89,  -0.45,   0.2,
+           -1.33,  -1.42,   0.03,  -2.32;
+  uhat_true <<  -0.2832,  0.7516,  -1.1212,  -1.7426,  0.8049,   2.6128,
+                -1.5087,  2.2801,  -3.4519,  -1.7194,  1.2993,  -0.4861;
+  compute_uhat(uhat, feat, beta);
+  for (int i = 0; i < uhat.rows(); i++) {
+    for (int j = 0; j < uhat.cols(); j++) {
+      REQUIRE( uhat(i,j) == Approx(uhat_true(i,j)) );
+    }
+  }
+}
+
 TEST_CASE( "chol/chol_solve_t", "[chol_solve_t]" ) {
   Eigen::MatrixXd m(3,3), rhs(5,3), xopt(5,3);
   m << 7, 0, 0,

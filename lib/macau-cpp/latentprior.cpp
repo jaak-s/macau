@@ -96,8 +96,10 @@ void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {
   // residual:
   Uhat.noalias() = U - Uhat;
   tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * (beta * beta.transpose()), df + beta.cols());
-  // update beta and Uhat:
+  // update beta
   sample_beta(U);
+  // update Uhat
+  compute_uhat(Uhat, F, beta);
 }
 
 /** Update beta and Uhat */
@@ -115,9 +117,9 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
     chol_decomp(K);
     chol_solve_t(K, Ft_y);
     beta = Ft_y;
-    compute_uhat(Uhat, F, beta);
   } else {
-    // TODO
+    // BlockCG
+    solve(beta, F, lambda_beta, Ft_y, tol);
   }
 }
 
@@ -173,11 +175,6 @@ void sample_latent_blas(MatrixXd &s, int mm, const SparseMatrix<double> &mat, do
   }
   chol.matrixU().solveInPlace(rr);
   s.col(mm).noalias() = rr;
-}
-
-void At_mul_A(Eigen::MatrixXd & result, const Eigen::MatrixXd & F) {
-  // TODO: use blas
-  result.triangularView<Eigen::Lower>() = F.transpose() * F;
 }
 
 Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
