@@ -26,7 +26,9 @@ class SparseFeat {
 };
 
 template<typename T>
-int  solve(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol);
+void  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol, int blocksize);
+template<typename T>
+int  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol);
 template<typename T>
 void At_mul_A(Eigen::MatrixXd & out, T & A);
 template<typename T>
@@ -112,7 +114,30 @@ inline void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
 }
 
 template<typename T>
-inline int solve(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol) {
+inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol, const int blocksize) {
+  const int excess = 8;
+  if (B.rows() <= excess + blocksize) {
+    solve_blockcg(X, K, reg, B, tol);
+    return;
+  }
+  // split B into blocks of size <blocksize> (+ excess if needed)
+  Eigen::MatrixXd Xblock, Bblock;
+  for (int i = 0; i < B.rows(); i += blocksize) {
+    int nrows = blocksize;
+    if (i + blocksize + excess >= B.rows()) {
+      nrows = B.rows() - i;
+    }
+    Bblock.resize(nrows, B.cols());
+    Xblock.resize(nrows, X.cols());
+
+    Bblock = B.block(i, 0, nrows, B.cols());
+    solve_blockcg(Xblock, K, reg, Bblock, tol);
+    X.block(i, 0, nrows, X.cols()) = X;
+  }
+}
+
+template<typename T>
+inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol) {
   // initialize
   const int nrhs  = B.rows();
   const int nfeat = B.cols();
@@ -204,6 +229,13 @@ inline int solve(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, do
     P.noalias() = R + Ptmp;
     // R R' = R2 R2'
     std::swap(RtR, RtR2);
+  }
+  // unnormalizing X:
+#pragma omp parallel for schedule(static) collapse(2)
+  for (int feat = 0; feat < nfeat; feat++) {
+    for (int rhs = 0; rhs < nrhs; rhs++) {
+      X(rhs, feat) *= norms(rhs);
+    }
   }
   delete RtR;
   delete RtR2;

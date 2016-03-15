@@ -24,7 +24,7 @@ cdef extern from "linop.h":
         SparseFeat()
         SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols)
     void At_mul_A_blas(MatrixXd & A, double* AtA)
-    int solve(MatrixXd & out, SparseFeat & K, double reg, MatrixXd & B, double tol)
+    int solve_blockcg(MatrixXd & out, SparseFeat & K, double reg, MatrixXd & B, double tol)
 
 cdef extern from "latentprior.h":
     cdef cppclass BPMFPrior:

@@ -58,7 +58,7 @@ cpdef blockcg(X, np.ndarray[np.double_t, ndim=2] B, double reg, double tol = 1e-
     K = SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0])
     print("Running block-cg")
     cdef double start = timeit.default_timer()
-    cdef int niter = solve(result_eig, K, reg, Beig, tol)
+    cdef int niter = solve_blockcg(result_eig, K, reg, Beig, tol)
     cdef double end = timeit.default_timer()
 
     cdef np.ndarray[np.double_t] v = np.zeros(2)

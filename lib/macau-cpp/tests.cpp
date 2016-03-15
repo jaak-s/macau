@@ -48,6 +48,22 @@ TEST_CASE( "SparseFeat/compute_uhat", "compute_uhat" ) {
   }
 }
 
+TEST_CASE( "SparseFeat/solve_blockcg", "BlockCG solver (1rhs)" ) {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::MatrixXd B(1, 4), X(1, 4), X_true(1, 4);
+
+  B << 0.56,  0.55,  0.3 , -1.78;
+  X_true << 0.35555556,  0.40709677, -0.16444444, -0.87483871;
+  int niter = solve_blockcg(X, sf, 0.5, B, 1e-6);
+  for (int i = 0; i < X.rows(); i++) {
+    for (int j = 0; j < X.cols(); j++) {
+      REQUIRE( X(i,j) == Approx(X_true(i,j)) );
+    }
+  }
+}
+
 TEST_CASE( "MatrixXd/compute_uhat", "compute_uhat for MatrixXd" ) {
   Eigen::MatrixXd beta(2, 4), feat(6, 4), uhat(2, 6), uhat_true(2, 6);
   beta << 0.56,  0.55,  0.3 , -1.78,
