@@ -16,8 +16,8 @@ class SparseFeat {
     SparseFeat() {}
 
     SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols) {
-      M  = * new_bcsr(nnz, nrow, ncol, rows, cols);
-      Mt = * new_bcsr(nnz, ncol, nrow, cols, rows);
+      new_bcsr(&M,  nnz, nrow, ncol, rows, cols);
+      new_bcsr(&Mt, nnz, ncol, nrow, cols, rows);
     }
     int nfeat()    {return M.ncol;}
     int cols()     {return M.ncol;}
