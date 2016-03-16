@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "linop.h"
 #include "chol.h"
+#include "mvnormal.h"
 
 TEST_CASE( "SparseFeat/At_mul_A", "[At_mul_A]" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
@@ -110,3 +111,8 @@ TEST_CASE( "chol/chol_solve_t", "[chol_solve_t]" ) {
   }
 }
 
+TEST_CASE( "mvnormal/rgamma", "generaring random gamma variable" ) {
+  init_bmrng(1234);
+  double g = rgamma(100.0, 0.01);
+  REQUIRE( g > 0 );
+}

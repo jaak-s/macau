@@ -82,6 +82,13 @@ void bmrandn(MatrixXd & X) {
   bmrandn(X.data(), n);
 }
 
+/** returns random number according to Gamma distribution
+ *  with the given shape (k) and scale (theta). See wiki. */
+double rgamma(double shape, double scale) {
+  std::gamma_distribution<double> gamma(shape, scale);
+  return gamma(*bmrng);
+}
+
 /** Normal(0, Lambda^-1) for nn columns */
 MatrixXd MvNormal_prec(const MatrixXd & Lambda, int nn = 1)
 {

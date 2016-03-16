@@ -14,7 +14,7 @@ test: tests
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-OBJS = chol.o linop.o tests.o
+OBJS = mvnormal.o chol.o linop.o tests.o
 tests: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o tests $(OBJS) $(LDFLAGS)
 
