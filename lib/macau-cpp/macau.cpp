@@ -21,6 +21,10 @@
 using namespace std; 
 using namespace Eigen;
 
+void Macau::addPrior(ILatentPrior* prior) {
+  priors.push_back( prior );
+}
+
 void Macau::setPrecision(double p) {
   alpha = p;
 }
@@ -56,11 +60,22 @@ void sparseFromIJV(SparseMatrix<double> &X, int* rows, int* cols, double* values
 
 void Macau::init() {
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+  if (priors.size() != 2) {
+    throw std::runtime_error("Only 2 priors are supported.");
+  }
   init_bmrng(seed1);
-  sample_u.resize(num_latent, Y.rows());
-  sample_m.resize(num_latent, Y.cols());
-  sample_u.setZero(); 
-  sample_m.setZero(); 
+  MatrixXd* U = new MatrixXd(num_latent, Y.rows());
+  MatrixXd* V = new MatrixXd(num_latent, Y.cols());
+  U->setZero();
+  V->setZero();
+  samples.push_back(U);
+  samples.push_back(V);
+}
+
+Macau::~Macau() {
+  for (unsigned i = 0; i < samples.size(); i++) {
+    delete samples[i];
+  }
 }
 
 inline double sqr(double x) { return x*x; }
@@ -81,21 +96,21 @@ void Macau::run() {
     auto starti = tick();
 
     // sample latent vectors
-    prior_u.sample_latents(sample_u, Yt, mean_rating, sample_m, alpha, num_latent);
-    prior_m.sample_latents(sample_m, Y,  mean_rating, sample_u, alpha, num_latent);
+    priors[0]->sample_latents(*(samples[0]), Yt, mean_rating, *(samples[1]), alpha, num_latent);
+    priors[1]->sample_latents(*(samples[1]), Y,  mean_rating, *(samples[0]), alpha, num_latent);
 
     // Sample hyperparams
-    prior_u.update_prior(sample_u);
-    prior_m.update_prior(sample_m);
+    priors[0]->update_prior(*(samples[0]));
+    priors[1]->update_prior(*(samples[1]));
 
-    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin + 1), predictions, sample_m, sample_u, mean_rating);
+    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin + 1), predictions, *(samples[1]), *(samples[0]), mean_rating);
 
     auto endi = tick();
     auto elapsed = endi - start;
     double samples_per_sec = (i + 1) * (num_rows + num_cols) / elapsed;
     double elapsedi = endi - starti;
 
-    printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f\tFU(%1.3e) FV(%1.3e) [took %0.1fs, Samples/sec: %6.1f]\n", i, eval.first, eval.second, sample_u.norm(), sample_m.norm(), elapsedi, samples_per_sec);
+    printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f\tFU(%1.3e) FV(%1.3e) [took %0.1fs, Samples/sec: %6.1f]\n", i, eval.first, eval.second, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
     rmse_test = eval.second;
   }
 }

@@ -27,17 +27,19 @@ cdef extern from "linop.h":
     int solve_blockcg(MatrixXd & out, SparseFeat & K, double reg, MatrixXd & B, double tol)
 
 cdef extern from "latentprior.h":
-    cdef cppclass BPMFPrior:
+    cdef cppclass ILatentPrior:
+        pass
+    cdef cppclass BPMFPrior(ILatentPrior):
         MatrixXd Lambda
         VectorXd mu
+        BPMFPrior()
         BPMFPrior(int num_latent)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:
-        BPMFPrior prior_u
-        BPMFPrior prior_m
         Macau()
         Macau(int num_latent)
+        void addPrior(ILatentPrior* prior)
         void setPrecision(double p)
         void setSamples(int burnin, int nsamples)
         void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols)

@@ -22,14 +22,17 @@ class Macau {
   double rmse_train = .0;
 
   /** BPMF model */
-  BPMFPrior prior_u;
-  BPMFPrior prior_m;
-  Eigen::MatrixXd sample_u;
-  Eigen::MatrixXd sample_m;
+  std::vector<ILatentPrior*> priors;
+  std::vector<Eigen::MatrixXd*> samples;
+//  BPMFPrior prior_u;
+//  BPMFPrior prior_m;
+//  Eigen::MatrixXd sample_u;
+//  Eigen::MatrixXd sample_m;
 
   public:
-    Macau(int D) : num_latent{D}, prior_u{D}, prior_m{D} {}
+    Macau(int D) : num_latent{D} {}
     Macau() : Macau(10) {}
+    void addPrior(ILatentPrior* prior);
     void setPrecision(double p);
     void setSamples(int burnin, int nsamples);
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols);
@@ -37,6 +40,7 @@ class Macau {
     double getRmseTest();
     void init();
     void run();
+    ~Macau();
 };
 
 void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);

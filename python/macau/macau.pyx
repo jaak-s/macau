@@ -103,8 +103,13 @@ def bpmf(Y,
     cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
 
     sig_on()
+    cdef int D = np.int32(num_latent)
     cdef Macau macau
-    macau = Macau(np.int32(num_latent))
+    cdef ILatentPrior* prior_u = <ILatentPrior*> new BPMFPrior(D)
+    cdef ILatentPrior* prior_v = <ILatentPrior*> new BPMFPrior(D)
+    macau = Macau(D)
+    macau.addPrior(prior_u)
+    macau.addPrior(prior_v)
     macau.setPrecision(np.float64(precision))
     macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
