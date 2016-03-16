@@ -26,7 +26,7 @@ class SparseFeat {
 };
 
 template<typename T>
-void  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol, int blocksize);
+void  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol, const int blocksize, const int excess);
 template<typename T>
 int  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol);
 template<typename T>
@@ -113,9 +113,10 @@ inline void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
   out.triangularView<Eigen::Lower>() = A.transpose() * A;
 }
 
+/** good values for solve_blockcg are blocksize=32 an excess=8 */
 template<typename T>
-inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol, const int blocksize) {
-  const int excess = 8;
+inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol, const int blocksize, const int excess) {
+  X(0, 0) = 2;
   if (B.rows() <= excess + blocksize) {
     solve_blockcg(X, K, reg, B, tol);
     return;
@@ -132,7 +133,7 @@ inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
 
     Bblock = B.block(i, 0, nrows, B.cols());
     solve_blockcg(Xblock, K, reg, Bblock, tol);
-    X.block(i, 0, nrows, X.cols()) = X;
+    X.block(i, 0, nrows, X.cols()) = Xblock;
   }
 }
 
