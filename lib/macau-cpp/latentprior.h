@@ -11,6 +11,7 @@ class ILatentPrior {
     void virtual sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                         const Eigen::MatrixXd &samples, double alpha, const int num_latent) {};
     void virtual update_prior(const Eigen::MatrixXd &U) {};
+    virtual ~ILatentPrior() {};
 };
 
 /** Prior without side information (pure BPMF) */

@@ -125,6 +125,8 @@ def bpmf(Y,
 
     macau.run()
     sig_off()
+    del prior_u
+    del prior_v
 
     #print("rows=%d, cols=%d" % ( macau.prior_u.Lambda.rows(), macau.prior_u.Lambda.cols()))
     #cdef np.ndarray[np.double_t, ndim=2] L = matview(&macau.prior_u.Lambda)
