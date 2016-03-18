@@ -83,30 +83,52 @@ cdef vecview(VectorXd *v):
 ## 2) F*X (X is a matrix)
 ## 3) F'X (X is a matrix)
 ## 4) solve(A, b, sym_pos=True) where A is posdef
-
 def bpmf(Y,
-         Ytest = None,
+         Ytest      = None,
          num_latent = 10,
          precision  = 1.0, 
          burnin     = 50,
          nsamples   = 400):
-    if type(Y) != sp.sparse.coo.coo_matrix:
-        raise ValueError("Y must be scipy.sparse.coo.coo_matrix")
+    return macau(Y,
+                 Ytest = Ytest,
+                 num_latent = num_latent,
+                 precision  = precision,
+                 burnin     = burnin,
+                 nsamples   = nsamples)
+
+def macau(Y,
+          Ytest      = None,
+          side       = [],
+          lambda_beta = 5.0,
+          num_latent = 10,
+          precision  = 1.0, 
+          burnin     = 50,
+          nsamples   = 400):
+    if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+        raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
+    Y = Y.tocoo(copy = False)
     if Ytest != None:
-        if type(Ytest) != sp.sparse.coo.coo_matrix:
-            raise ValueError("Ytest must be scipy.sparse.coo.coo_matrix")
+        if type(Ytest) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+            raise ValueError("Ytest must be either coo, csr or csc (from scipy.sparse)")
         if Ytest.shape != Y.shape:
             raise ValueError("Ytest and Y must have the same shape")
+        Ytest = Ytest.tocoo(copy = False)
 
     cdef np.ndarray[int] irows = Y.row.astype(np.int32, copy=False)
     cdef np.ndarray[int] icols = Y.col.astype(np.int32, copy=False)
     cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
 
+    ## side information
+    if side:
+        pass
+
     sig_on()
     cdef int D = np.int32(num_latent)
     cdef Macau macau
-    cdef ILatentPrior* prior_u = <ILatentPrior*> new BPMFPrior(D)
-    cdef ILatentPrior* prior_v = <ILatentPrior*> new BPMFPrior(D)
+    cdef ILatentPrior* prior_u
+    cdef ILatentPrior* prior_v
+    prior_u = <ILatentPrior*> new BPMFPrior(D)
+    prior_v = <ILatentPrior*> new BPMFPrior(D)
     macau = Macau(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
