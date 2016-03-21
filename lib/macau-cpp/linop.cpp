@@ -82,7 +82,61 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg
   // move KP += reg * P here with nowait from previous loop
   // http://stackoverflow.com/questions/30496365/parallelize-the-addition-of-a-vector-of-matrices-in-openmp
   A_mul_B_blas(out, B, A);
-  out.noalias() += reg * B; // TODO: check if += is parallelized by eigen
+  out.noalias() += reg * B; // TODO: parallelize +=
+// B is in transformed format: [nrhs x nfeat]
 }
 
-// B is in transformed format: [nrhs x nfeat]
+/** A   is [n x k] matrix
+ *  out is [n x n] matrix
+ *  A and out are column-ordered
+ *  computes out = A * A'
+ *  (storing only lower triangular part)
+ */
+void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
+  const int n = A.rows();
+  const int k = A.cols();
+  int nthreads = -1;
+  double* x = A.data();
+  if (A.rows() != out.rows()) {
+    throw std::runtime_error("A.rows() must equal out.rows()");
+  }
+
+#pragma omp parallel
+  {
+#pragma omp single
+    {
+      nthreads = omp_get_num_threads();
+    }
+  }
+  std::vector<MatrixXd> Ys;
+  Ys.resize(nthreads, MatrixXd(n, n));
+
+#pragma omp parallel
+  {
+    const int ithread  = omp_get_thread_num();
+    int rows_per_thread = (int) 8 * ceil(k / 8.0 / nthreads);
+    int row_start = rows_per_thread * ithread;
+    int row_end   = rows_per_thread * (ithread + 1);
+    if (row_start >= k) {
+      Ys[ithread].setZero();
+    } else {
+      if (row_end > k) {
+        row_end = k;
+      }
+      double* xi = & x[ row_start * n ];
+      int nrows  = row_end - row_start;
+      MatrixXd X = Map<MatrixXd>(xi, n, nrows);
+      MatrixXd & Y = Ys[ithread];
+      Y.triangularView<Eigen::Lower>() = X * X.transpose();
+    }
+  }
+  for (int i = 0; i < n; i++) {
+    for (int j = i; j < n; j++) {
+      double tmp = 0;
+      for (int k = 0; k < nthreads; k++) {
+        tmp += Ys[k](j, i);
+      }
+      out(j, i) = tmp;
+    }
+  }
+}

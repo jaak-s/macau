@@ -140,3 +140,17 @@ TEST_CASE( "mvnormal/rgamma", "generaring random gamma variable" ) {
   double g = rgamma(100.0, 0.01);
   REQUIRE( g > 0 );
 }
+
+TEST_CASE( "A_mul_At_omp", "A_mul_At with OpenMP" ) {
+  init_bmrng(12345);
+  Eigen::MatrixXd A(2, 42);
+  Eigen::MatrixXd AAt(2, 2);
+  bmrandn(A);
+  A_mul_At_omp(AAt, A);
+  Eigen::MatrixXd AAt_true(2, 2);
+  AAt_true.triangularView<Eigen::Lower>() = A * A.transpose();
+
+  REQUIRE( AAt(0,0) == Approx(AAt_true(0,0)) );
+  REQUIRE( AAt(1,1) == Approx(AAt_true(1,1)) );
+  REQUIRE( AAt(0,1) == Approx(AAt_true(0,1)) );
+}
