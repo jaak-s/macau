@@ -92,6 +92,15 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg
  *  computes out = A * A'
  *  (storing only lower triangular part)
  */
+void A_mul_At_combo(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
+  if (out.rows() >= 128) {
+    // using blas for larger matrices
+    A_mul_At_blas(A, out.data());
+  } else {
+    A_mul_At_omp(out, A);
+  }
+}
+
 void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
   const int n = A.rows();
   const int k = A.cols();

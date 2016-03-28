@@ -3,6 +3,7 @@
 #include "linop.h"
 #include "chol.h"
 #include "mvnormal.h"
+#include "latentprior.h"
 
 TEST_CASE( "SparseFeat/At_mul_A", "[At_mul_A]" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
@@ -139,6 +140,21 @@ TEST_CASE( "mvnormal/rgamma", "generaring random gamma variable" ) {
   init_bmrng(1234);
   double g = rgamma(100.0, 0.01);
   REQUIRE( g > 0 );
+}
+
+TEST_CASE( "latentprior/sample_lambda_beta", "sampling lambda beta from gamma distribution" ) {
+  init_bmrng(1234);
+  Eigen::MatrixXd beta(2, 3), Lambda_u(2, 2);
+  beta << 3.0, -2.00,  0.5,
+          1.0,  0.91, -0.2;
+  Lambda_u << 0.5, 0.1,
+              0.1, 0.3;
+  auto post = posterior_lambda_beta(beta, Lambda_u, 0.01, 0.05);
+  REQUIRE( post.first  == Approx(3.005) );
+  REQUIRE( post.second == Approx(0.2631083888) );
+
+  double lambda_beta = sample_lambda_beta(beta, Lambda_u, 0.01, 0.05);
+  REQUIRE( lambda_beta > 0 );
 }
 
 TEST_CASE( "A_mul_At_omp", "A_mul_At with OpenMP" ) {

@@ -123,6 +123,22 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
   }
 }
 
+std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu) {
+  const int D = beta.rows();
+  MatrixXd BB(D, D);
+  A_mul_At_combo(BB, beta);
+  double nux = nu + beta.rows() * beta.cols();
+  double mux = mu * nux / (nu + mu * (BB.selfadjointView<Eigen::Lower>() * Lambda_u).trace() );
+  double b   = nux / 2;
+  double c   = 2 * mux / nux;
+  return std::make_pair(b, c);
+}
+
+double sample_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu) {
+  auto gamma_post = posterior_lambda_beta(beta, Lambda_u, nu, mu);
+  return rgamma(gamma_post.first, gamma_post.second);
+}
+
 /** global function */
 void sample_latent(MatrixXd &s, int mm, const SparseMatrix<double> &mat, double mean_rating,
     const MatrixXd &samples, double alpha, const VectorXd &mu_u, const MatrixXd &Lambda_u,

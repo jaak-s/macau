@@ -70,6 +70,9 @@ class MacauPrior : public ILatentPrior {
 
 template<> class MacauPrior<Eigen::MatrixXd>;
 
+std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);
+double sample_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);
+
 void sample_latent(Eigen::MatrixXd &s,
                    int mm,
                    const Eigen::SparseMatrix<double> &mat,

@@ -53,6 +53,7 @@ void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt);
 void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
 void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
 //void compute_uhat( Eigen::MatrixXd & uhat, Eigen::MatrixXd & denseFeat, Eigen::MatrixXd & beta);
+void A_mul_At_combo(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 
 // util functions:
