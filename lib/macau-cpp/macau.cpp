@@ -96,14 +96,14 @@ void Macau::run() {
     auto starti = tick();
 
     // sample latent vectors
-    priors[0]->sample_latents(*(samples[0]), Yt, mean_rating, *(samples[1]), alpha, num_latent);
-    priors[1]->sample_latents(*(samples[1]), Y,  mean_rating, *(samples[0]), alpha, num_latent);
+    priors[0]->sample_latents(*samples[0], Yt, mean_rating, *samples[1], alpha, num_latent);
+    priors[1]->sample_latents(*samples[1], Y,  mean_rating, *samples[0], alpha, num_latent);
 
     // Sample hyperparams
-    priors[0]->update_prior(*(samples[0]));
-    priors[1]->update_prior(*(samples[1]));
+    priors[0]->update_prior(*samples[0]);
+    priors[1]->update_prior(*samples[1]);
 
-    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin + 1), predictions, *(samples[1]), *(samples[0]), mean_rating);
+    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin + 1), predictions, *samples[1], *samples[0], mean_rating);
 
     auto endi = tick();
     auto elapsed = endi - start;
