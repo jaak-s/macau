@@ -17,6 +17,13 @@ cpdef mul_blas(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2
         raise ValueError("num columns in x and y must be the same.")
     hello(&x[0,0], &y[0,0], x.shape[1], x.shape[0])
 
+cpdef mul_blas2(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2] y):
+    if y.shape[0] != y.shape[1]:
+        raise ValueError("y must be square matrix.")
+    if x.shape[1] != y.shape[0]:
+        raise ValueError("num columns in x and y must be the same.")
+    hello2(&x[0,0], &y[0,0], x.shape[1], x.shape[0])
+
 cpdef py_getx():
     cdef MatrixXd m = getx()
     cdef np.ndarray[np.double_t, ndim=2] A = matview(&m)
@@ -26,11 +33,12 @@ cpdef py_getx():
 cpdef py_eigenQR(np.ndarray[np.double_t, ndim=2] x):
     eigenQR(& x[0,0], x.shape[0], x.shape[1])
 
-cpdef blas_AtA(np.ndarray[np.double_t, ndim=2] X):
-    cdef MatrixXd Xeig = Map[MatrixXd](&X[0,0], X.shape[0], X.shape[1])
-    cdef np.ndarray[np.double_t, ndim=2] AtA = np.zeros((X.shape[1], X.shape[1]))
-    At_mul_A_blas(Xeig, & AtA[0,0])
-    return AtA
+cpdef blas_AtA(np.ndarray[np.double_t, ndim=2] X, np.ndarray[np.double_t, ndim=2] AtA):
+    cdef MatrixXd Xeig   = Map[MatrixXd](&X[0,0],   X.shape[0],   X.shape[1])
+    cdef MatrixXd AtAeig = Map[MatrixXd](&AtA[0,0], AtA.shape[0], AtA.shape[1])
+    #At_mul_A_blas(Xeig, & AtA[0,0])
+    At_mul_A_eig(Xeig, AtAeig)
+    return 0
 
 cdef SparseFeat sparse2SparseBinFeat(X):
     X = X.tocoo(copy=False)

@@ -16,8 +16,10 @@ cdef extern from "Eigen/Dense" namespace "Eigen":
 
 cdef extern from "hello.h":
     void hello(double* x, double* y, int n, int k)
+    void hello2(double* x, double* y, int n, int k)
     MatrixXd getx()
     void eigenQR(double* X, int nrow, int ncol)
+    void At_mul_A_eig(MatrixXd & A, MatrixXd & C)
 
 cdef extern from "linop.h":
     cdef cppclass SparseFeat:
