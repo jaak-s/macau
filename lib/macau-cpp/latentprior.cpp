@@ -20,7 +20,7 @@ void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<dou
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
   const int N = U.cols();
   
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
   for(int n = 0; n < N; n++) {
     sample_latent_blas(U, n, mat, mean_value, samples, alpha, mu, Lambda, num_latent);
   }
@@ -84,7 +84,7 @@ template<class FType>
 void MacauPrior<FType>::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
   const int N = U.cols();
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
   for(int n = 0; n < N; n++) {
     // TODO: try moving mu + Uhat.col(n) inside sample_latent for speed
     sample_latent_blas(U, n, mat, mean_value, samples, alpha, mu + Uhat.col(n), Lambda, num_latent);
