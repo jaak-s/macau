@@ -78,6 +78,15 @@ void MacauPrior<FType>::init(const int num_latent, FType & Fmat, bool comp_FtF) 
 
   beta.resize(num_latent, F.cols());
   beta.setZero();
+
+  // Hyper-prior for lambda_beta (mean 1.0, var of 1e+3):
+  lambda_beta_mu0 = 1.0;
+  lambda_beta_nu0 = 1e-3;
+}
+
+template<class FType>
+void MacauPrior<FType>::setLambdaBeta(double lb) {
+  lambda_beta = lb;
 }
 
 template<class FType>
@@ -93,13 +102,14 @@ void MacauPrior<FType>::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMa
 
 template<class FType>
 void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {
-  // residual:
+  // residual (Uhat is later overwritten):
   Uhat.noalias() = U - Uhat;
-  tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * (beta * beta.transpose()), df + beta.cols());
-  // update beta
+  MatrixXd BBt = A_mul_At_combo(beta);
+  // sampling Gaussian
+  tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * BBt, df + beta.cols());
   sample_beta(U);
-  // update Uhat
   compute_uhat(Uhat, F, beta);
+  lambda_beta = sample_lambda_beta(beta, Lambda, lambda_beta_nu0, lambda_beta_mu0);
 }
 
 /** Update beta and Uhat */

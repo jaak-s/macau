@@ -45,6 +45,8 @@ class MacauPrior : public ILatentPrior {
     Eigen::MatrixXd beta; /* link matrix */
     bool use_FtF;
     double lambda_beta;
+    double lambda_beta_mu0; /* Hyper-prior for lambda_beta */
+    double lambda_beta_nu0; /* Hyper-prior for lambda_beta */
 
     Eigen::VectorXd mu; 
     Eigen::MatrixXd Lambda;
@@ -66,6 +68,7 @@ class MacauPrior : public ILatentPrior {
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
     void update_prior(const Eigen::MatrixXd &U);
     void sample_beta(const Eigen::MatrixXd &U);
+    void setLambdaBeta(double lambda_beta);
 };
 
 template<> class MacauPrior<Eigen::MatrixXd>;

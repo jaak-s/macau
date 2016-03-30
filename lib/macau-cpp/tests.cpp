@@ -157,7 +157,7 @@ TEST_CASE( "latentprior/sample_lambda_beta", "sampling lambda beta from gamma di
   REQUIRE( lambda_beta > 0 );
 }
 
-TEST_CASE( "A_mul_At_omp", "A_mul_At with OpenMP" ) {
+TEST_CASE( "linop/A_mul_At_omp", "A_mul_At with OpenMP" ) {
   init_bmrng(12345);
   Eigen::MatrixXd A(2, 42);
   Eigen::MatrixXd AAt(2, 2);
@@ -168,5 +168,22 @@ TEST_CASE( "A_mul_At_omp", "A_mul_At with OpenMP" ) {
 
   REQUIRE( AAt(0,0) == Approx(AAt_true(0,0)) );
   REQUIRE( AAt(1,1) == Approx(AAt_true(1,1)) );
+  REQUIRE( AAt(1,0) == Approx(AAt_true(1,0)) );
+}
+
+TEST_CASE( "linop/A_mul_At_combo", "A_mul_At with OpenMP (returning matrix)" ) {
+  init_bmrng(12345);
+  Eigen::MatrixXd A(2, 42);
+  Eigen::MatrixXd AAt_true(2, 2);
+  bmrandn(A);
+  Eigen::MatrixXd AAt = A_mul_At_combo(A);
+  AAt_true = A * A.transpose();
+
+  REQUIRE( AAt.rows() == 2);
+  REQUIRE( AAt.cols() == 2);
+
+  REQUIRE( AAt(0,0) == Approx(AAt_true(0,0)) );
+  REQUIRE( AAt(1,1) == Approx(AAt_true(1,1)) );
   REQUIRE( AAt(0,1) == Approx(AAt_true(0,1)) );
+  REQUIRE( AAt(1,0) == Approx(AAt_true(1,0)) );
 }

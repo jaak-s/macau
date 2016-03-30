@@ -86,6 +86,17 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg
 // B is in transformed format: [nrhs x nfeat]
 }
 
+/**
+ * A is [n x k] matrix
+ * returns [n x n] matrix A * A'
+ */
+Eigen::MatrixXd A_mul_At_combo(Eigen::MatrixXd & A) {
+  MatrixXd AAt(A.rows(), A.rows());
+  A_mul_At_combo(AAt, A);
+  AAt = AAt.selfadjointView<Eigen::Lower>();
+  return AAt;
+}
+
 /** A   is [n x k] matrix
  *  out is [n x n] matrix
  *  A and out are column-ordered
