@@ -86,6 +86,11 @@ cdef vecview(VectorXd *v):
     cdef np.double_t[:] view = <np.double_t[:size]> v.data()
     return np.asarray(view)
 
+cdef ILatentPrior* make_prior(side, int num_latent):
+    if not side:
+        return <ILatentPrior*> new BPMFPrior(num_latent)
+    raise ValueError("Unsupported side information type: %s" + type(side))
+
 ## API functions:
 ## 1) F'F
 ## 2) F*X (X is a matrix)
@@ -127,16 +132,22 @@ def macau(Y,
     cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
 
     ## side information
-    if side:
-        pass
-
-    sig_on()
     cdef int D = np.int32(num_latent)
-    cdef Macau macau
     cdef ILatentPrior* prior_u
     cdef ILatentPrior* prior_v
-    prior_u = <ILatentPrior*> new BPMFPrior(D)
-    prior_v = <ILatentPrior*> new BPMFPrior(D)
+
+    if not side:
+        side = [None, None]
+    if type(side) not in [list, tuple]:
+        raise ValueError("Parameter 'side' must be a tuple or a list.")
+    if len(side) != 2:
+        raise ValueError("If specified 'side' must contain 2 elements.")
+
+    prior_u = make_prior(side[0], D)
+    prior_v = make_prior(side[1], D)
+
+    sig_on()
+    cdef Macau macau
     macau = Macau(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
