@@ -3,7 +3,9 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <memory>
 #include "mvnormal.h"
+#include "linop.h"
 
 /** interface */
 class ILatentPrior {
@@ -40,9 +42,9 @@ template<class FType>
 class MacauPrior : public ILatentPrior {
   private:
     Eigen::MatrixXd Uhat;
-    FType           F;    /* side information */
-    Eigen::MatrixXd FtF;  /* F'F */
-    Eigen::MatrixXd beta; /* link matrix */
+    std::unique_ptr<FType> F;  /* side information */
+    Eigen::MatrixXd FtF;       /* F'F */
+    Eigen::MatrixXd beta;      /* link matrix */
     bool use_FtF;
     double lambda_beta;
     double lambda_beta_mu0; /* Hyper-prior for lambda_beta */
@@ -59,10 +61,10 @@ class MacauPrior : public ILatentPrior {
     double tol = 1e-6;
 
   public:
-    MacauPrior(const int nlatent, FType & Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
+    MacauPrior(const int nlatent, FType * Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
     MacauPrior() {}
 
-    void init(const int num_latent, FType & Fmat, bool comp_FtF);
+    void init(const int num_latent, FType * Fmat, bool comp_FtF);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
@@ -70,8 +72,6 @@ class MacauPrior : public ILatentPrior {
     void sample_beta(const Eigen::MatrixXd &U);
     void setLambdaBeta(double lambda_beta);
 };
-
-template<> class MacauPrior<Eigen::MatrixXd>;
 
 std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);
 double sample_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);

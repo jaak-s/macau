@@ -95,9 +95,14 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size):
     if not side:
         return new BPMFPrior(num_latent)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
-      raise ValueError("Unsupported side information type: %s" + type(side))
+        raise ValueError("Unsupported side information type: %s" + type(side))
 
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
+    cdef SparseFeat* sf
+    ## binary
+    if np.all(side.data == 1):
+        sf = sparse2SparseBinFeat(side)
+        return new MacauPrior[SparseFeat](num_latent, sf, compute_ff)
     return new BPMFPrior(num_latent)
 
 ## API functions:

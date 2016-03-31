@@ -50,7 +50,7 @@ void BPMFPrior::init(const int num_latent) {
 
 /** MacauPrior */
 template<class FType>
-void MacauPrior<FType>::init(const int num_latent, FType & Fmat, bool comp_FtF) {
+void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) {
   mu.resize(num_latent);
   mu.setZero();
 
@@ -67,16 +67,16 @@ void MacauPrior<FType>::init(const int num_latent, FType & Fmat, bool comp_FtF) 
   df = num_latent;
 
   // side information
-  F = Fmat;
+  F = std::unique_ptr<FType>(Fmat);
   use_FtF = comp_FtF;
   if (use_FtF) {
-    At_mul_A(FtF, F);
+    At_mul_A(FtF, *F);
   }
 
-  Uhat.resize(num_latent, F.rows());
+  Uhat.resize(num_latent, F->rows());
   Uhat.setZero();
 
-  beta.resize(num_latent, F.cols());
+  beta.resize(num_latent, F->cols());
   beta.setZero();
 
   // Hyper-prior for lambda_beta (mean 1.0, var of 1e+3):
@@ -108,7 +108,7 @@ void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {
   // sampling Gaussian
   tie(mu, Lambda) = CondNormalWishart(Uhat, mu0, b0, WI + lambda_beta * BBt, df + beta.cols());
   sample_beta(U);
-  compute_uhat(Uhat, F, beta);
+  compute_uhat(Uhat, *F, beta);
   lambda_beta = sample_lambda_beta(beta, Lambda, lambda_beta_nu0, lambda_beta_mu0);
 }
 
@@ -118,18 +118,20 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
   const int num_feat = beta.cols();
   // Ft_y = (U .- mu + Normal(0, Lambda^-1)) * F + sqrt(lambda_beta) * Normal(0, Lambda^-1)
   // Ft_y is [ D x F ] matrix
-  MatrixXd Ft_y = A_mul_B( (U + MvNormal_prec_omp(Lambda, U.cols())).colwise() - mu, F) + sqrt(lambda_beta) * MvNormal_prec_omp(Lambda, num_feat);
+  MatrixXd Ft_y = A_mul_B( (U + MvNormal_prec_omp(Lambda, U.cols())).colwise() - mu, *F) + sqrt(lambda_beta) * MvNormal_prec_omp(Lambda, num_feat);
 
   if (use_FtF) {
     MatrixXd K(FtF.rows(), FtF.cols());
     K.triangularView<Eigen::Lower>() = FtF;
-    K.diagonal() += lambda_beta;
+    for (int i = 0; i < K.cols(); i++) {
+      K(i,i) += lambda_beta;
+    }
     chol_decomp(K);
     chol_solve_t(K, Ft_y);
     beta = Ft_y;
   } else {
     // BlockCG
-    solve_blockcg(beta, F, lambda_beta, Ft_y, tol, 32, 8);
+    solve_blockcg(beta, *F, lambda_beta, Ft_y, tol, 32, 8);
   }
 }
 
@@ -213,4 +215,6 @@ Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const SparseFeat & B) {
   //return A * B;
   return MatrixXd(1,1);
 }
+
+template class MacauPrior<SparseFeat>;
 

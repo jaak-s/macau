@@ -48,7 +48,7 @@ cdef extern from "latentprior.h":
         BPMFPrior(int num_latent)
     cdef cppclass MacauPrior[FType](ILatentPrior):
         MacauPrior()
-        MacauPrior(int nlatent, FType & Fmat, bool comp_FtF)
+        MacauPrior(int nlatent, FType* Fmat, bool comp_FtF)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:
