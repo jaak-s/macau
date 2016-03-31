@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/SparseExtra>
+#include <memory>
 #include "latentprior.h"
 
 // try adding num_latent as template parameter to Macau
@@ -22,8 +23,8 @@ class Macau {
   double rmse_train = .0;
 
   /** BPMF model */
-  std::vector<ILatentPrior*> priors;
-  std::vector<Eigen::MatrixXd*> samples;
+  std::vector< std::unique_ptr<ILatentPrior> > priors;
+  std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
 //  BPMFPrior prior_u;
 //  BPMFPrior prior_m;
 //  Eigen::MatrixXd sample_u;
@@ -32,7 +33,7 @@ class Macau {
   public:
     Macau(int D) : num_latent{D} {}
     Macau() : Macau(10) {}
-    void addPrior(ILatentPrior* prior);
+    void addPrior(std::unique_ptr<ILatentPrior> & prior);
     void setPrecision(double p);
     void setSamples(int burnin, int nsamples);
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols);

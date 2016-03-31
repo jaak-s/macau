@@ -1,5 +1,12 @@
 from libcpp cimport bool
 
+cdef extern from "<memory>" namespace "std" nogil:
+    ctypedef void* nullptr_t;
+
+    cdef cppclass unique_ptr[T]:
+        unique_ptr()
+        unique_ptr(T*)
+
 cdef extern from "Eigen/Dense" namespace "Eigen":
     cdef cppclass MatrixXd:
         MatrixXd()
@@ -47,7 +54,7 @@ cdef extern from "macau.h":
     cdef cppclass Macau:
         Macau()
         Macau(int num_latent)
-        void addPrior(ILatentPrior* prior)
+        void addPrior(unique_ptr[ILatentPrior] & prior)
         void setPrecision(double p)
         void setSamples(int burnin, int nsamples)
         void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols)

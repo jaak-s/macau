@@ -40,13 +40,18 @@ cpdef blas_AtA(np.ndarray[np.double_t, ndim=2] X, np.ndarray[np.double_t, ndim=2
     At_mul_A_eig(Xeig, AtAeig)
     return 0
 
-cdef SparseFeat sparse2SparseBinFeat(X):
+cdef SparseFeat* sparse2SparseBinFeat(X):
     X = X.tocoo(copy=False)
     cdef np.ndarray[int] irows = X.row.astype(np.int32, copy=False)
     cdef np.ndarray[int] icols = X.col.astype(np.int32, copy=False)
-    cdef SparseFeat K
-    K = SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0])
-    return K
+    return new SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0])
+
+cdef SparseDoubleFeat* sparse2SparseDoubleFeat(X):
+    X = X.tocoo(copy=False)
+    cdef np.ndarray[int] irows = X.row.astype(np.int32, copy=False)
+    cdef np.ndarray[int] icols = X.col.astype(np.int32, copy=False)
+    cdef np.ndarray[np.double_t] vals = X.data.astype(np.double, copy=False)
+    return new SparseDoubleFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0], & vals[0])
 
 cpdef blockcg(X, np.ndarray[np.double_t, ndim=2] B, double reg, double tol = 1e-6):
     if not np.isfortran(B):
@@ -86,10 +91,14 @@ cdef vecview(VectorXd *v):
     cdef np.double_t[:] view = <np.double_t[:size]> v.data()
     return np.asarray(view)
 
-cdef ILatentPrior* make_prior(side, int num_latent):
+cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size):
     if not side:
-        return <ILatentPrior*> new BPMFPrior(num_latent)
-    raise ValueError("Unsupported side information type: %s" + type(side))
+        return new BPMFPrior(num_latent)
+    if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+      raise ValueError("Unsupported side information type: %s" + type(side))
+
+    cdef bool compute_ff = (side.shape[1] <= max_ff_size)
+    return new BPMFPrior(num_latent)
 
 ## API functions:
 ## 1) F'F
@@ -132,10 +141,6 @@ def macau(Y,
     cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
 
     ## side information
-    cdef int D = np.int32(num_latent)
-    cdef ILatentPrior* prior_u
-    cdef ILatentPrior* prior_v
-
     if not side:
         side = [None, None]
     if type(side) not in [list, tuple]:
@@ -143,12 +148,12 @@ def macau(Y,
     if len(side) != 2:
         raise ValueError("If specified 'side' must contain 2 elements.")
 
-    prior_u = make_prior(side[0], D)
-    prior_v = make_prior(side[1], D)
+    cdef int D = np.int32(num_latent)
+    cdef unique_ptr[ILatentPrior] prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000))
+    cdef unique_ptr[ILatentPrior] prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000))
 
     sig_on()
-    cdef Macau macau
-    macau = Macau(D)
+    cdef Macau *macau = new Macau(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
     macau.setPrecision(np.float64(precision))
@@ -166,11 +171,12 @@ def macau(Y,
 
     macau.run()
     sig_off()
-    del prior_u
-    del prior_v
+    result = dict(rmse_test = macau.getRmseTest())
+
+    del macau
 
     #print("rows=%d, cols=%d" % ( macau.prior_u.Lambda.rows(), macau.prior_u.Lambda.cols()))
     #cdef np.ndarray[np.double_t, ndim=2] L = matview(&macau.prior_u.Lambda)
     #cdef np.ndarray[np.double_t] mu = vecview(&macau.prior_u.mu)
-    return dict(rmse_test = macau.getRmseTest())
+    return result
 

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <memory>
 
 #include <unsupported/Eigen/SparseExtra>
 #include <Eigen/Sparse>
@@ -21,8 +22,8 @@
 using namespace std; 
 using namespace Eigen;
 
-void Macau::addPrior(ILatentPrior* prior) {
-  priors.push_back( prior );
+void Macau::addPrior(unique_ptr<ILatentPrior> & prior) {
+  priors.push_back( std::move(prior) );
 }
 
 void Macau::setPrecision(double p) {
@@ -68,14 +69,11 @@ void Macau::init() {
   MatrixXd* V = new MatrixXd(num_latent, Y.cols());
   U->setZero();
   V->setZero();
-  samples.push_back(U);
-  samples.push_back(V);
+  samples.push_back( std::move(std::unique_ptr<MatrixXd>(U)) );
+  samples.push_back( std::move(std::unique_ptr<MatrixXd>(V)) );
 }
 
 Macau::~Macau() {
-  for (unsigned i = 0; i < samples.size(); i++) {
-    delete samples[i];
-  }
 }
 
 inline double sqr(double x) { return x*x; }
