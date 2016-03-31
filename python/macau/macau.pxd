@@ -25,6 +25,9 @@ cdef extern from "linop.h":
     cdef cppclass SparseFeat:
         SparseFeat()
         SparseFeat(int nrow, int ncol, long nnz, int* rows, int* cols)
+    cdef cppclass SparseDoubleFeat:
+        SparseDoubleFeat()
+        SparseDoubleFeat(int nrow, int ncol, long nnz, int* rows, int* cols, double* vals)
     void At_mul_A_blas(MatrixXd & A, double* AtA)
     int solve_blockcg(MatrixXd & out, SparseFeat & K, double reg, MatrixXd & B, double tol)
 

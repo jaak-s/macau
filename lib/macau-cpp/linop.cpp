@@ -29,6 +29,20 @@ void A_mul_Bt(Eigen::MatrixXd & out, BinaryCSR & csr, Eigen::MatrixXd & B) {
   bcsr_A_mul_Bn( out.data(), & csr, B.data(), B.rows() );
 }
 
+// out = bcsr * b (for vectors)
+void A_mul_B(Eigen::VectorXd & out, CSR & csr, Eigen::VectorXd & b) {
+  if (csr.nrow != out.size()) {throw std::runtime_error("csr.nrow must equal out.size()");}
+  if (csr.ncol != b.size())   {throw std::runtime_error("csr.ncol must equal b.size()");}
+  csr_A_mul_B( out.data(), & csr, b.data() );
+}
+
+// OUT' = bcsr * B' (for matrices)
+void A_mul_Bt(Eigen::MatrixXd & out, CSR & csr, Eigen::MatrixXd & B) {
+  if (csr.nrow != out.cols()) {throw std::runtime_error("csr.nrow must equal out.cols()");}
+  if (csr.ncol != B.cols())   {throw std::runtime_error("csr.ncol must equal b.cols()");}
+  if (out.rows() != B.rows()) {throw std::runtime_error("out.rows() must equal B.rows()");}
+  csr_A_mul_Bn( out.data(), & csr, B.data(), B.rows() );
+}
 
 void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA) {
   cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, A.cols(), A.rows(), 1.0, A.data(), A.rows(), 0.0, AtA, A.cols());
