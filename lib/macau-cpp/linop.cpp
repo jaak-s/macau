@@ -87,7 +87,28 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eig
   // move KP += reg * P here with nowait from previous loop
   // http://stackoverflow.com/questions/30496365/parallelize-the-addition-of-a-vector-of-matrices-in-openmp
   A_mul_Bt(out, A.Mt, tmp);
-  out.noalias() += reg * B; // TODO: check if += is parallelized by eigen
+  int ncol = out.cols(), nrow = out.rows();
+#pragma omp parallel for schedule(static)
+  for (int col = 0; col < ncol; col++) {
+    for (int row = 0; row < nrow; row++) {
+      out(row, col) += reg * B(row, col);
+    }
+  }
+}
+
+template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
+  // solution update:
+  A_mul_Bt(tmp, A.M, B);
+  // move KP += reg * P here with nowait from previous loop
+  // http://stackoverflow.com/questions/30496365/parallelize-the-addition-of-a-vector-of-matrices-in-openmp
+  A_mul_Bt(out, A.Mt, tmp);
+  int ncol = out.cols(), nrow = out.rows();
+#pragma omp parallel for schedule(static)
+  for (int col = 0; col < ncol; col++) {
+    for (int row = 0; row < nrow; row++) {
+      out(row, col) += reg * B(row, col);
+    }
+  }
 }
 
 template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
@@ -96,8 +117,14 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg
   // move KP += reg * P here with nowait from previous loop
   // http://stackoverflow.com/questions/30496365/parallelize-the-addition-of-a-vector-of-matrices-in-openmp
   A_mul_B_blas(out, B, A);
-  out.noalias() += reg * B; // TODO: parallelize +=
-// B is in transformed format: [nrhs x nfeat]
+
+  int ncol = out.cols(), nrow = out.rows();
+#pragma omp parallel for schedule(static)
+  for (int col = 0; col < ncol; col++) {
+    for (int row = 0; row < nrow; row++) {
+      out(row, col) += reg * B(row, col);
+    }
+  }
 }
 
 /**

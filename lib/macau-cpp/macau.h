@@ -25,10 +25,7 @@ class Macau {
   /** BPMF model */
   std::vector< std::unique_ptr<ILatentPrior> > priors;
   std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
-//  BPMFPrior prior_u;
-//  BPMFPrior prior_m;
-//  Eigen::MatrixXd sample_u;
-//  Eigen::MatrixXd sample_m;
+  bool verbose = true;
 
   public:
     Macau(int D) : num_latent{D} {}

@@ -1,13 +1,15 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-#include <iostream>                                                                                                         
+#include <iostream>
+
 #include <fstream>
 #include <string>
 #include <algorithm>
 #include <random>
 #include <chrono>
 #include <memory>
+#include <cmath>
 
 #include <unsupported/Eigen/SparseExtra>
 #include <Eigen/Sparse>
@@ -108,7 +110,14 @@ void Macau::run() {
     double samples_per_sec = (i + 1) * (num_rows + num_cols) / elapsed;
     double elapsedi = endi - starti;
 
-    printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f\tFU(%1.3e) FV(%1.3e) [took %0.1fs, Samples/sec: %6.1f]\n", i, eval.first, eval.second, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
+    if (verbose) {
+      printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f  FU(%1.2e) FV(%1.2e) [took %0.1fs, Samples/sec: %6.1f]\n", i, eval.first, eval.second, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
+      double norm0 = priors[0]->getLinkNorm();
+      double norm1 = priors[1]->getLinkNorm();
+      if (!std::isnan(norm0) || !std::isnan(norm1)) {
+        printf("        U.beta(%1.2e) V.beta(%1.2e)\n", norm0, norm1);
+      }
+    }
     rmse_test = eval.second;
   }
 }

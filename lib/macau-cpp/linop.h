@@ -110,6 +110,13 @@ template<> inline void compute_uhat(Eigen::MatrixXd & uhat, Eigen::MatrixXd & de
 
 template<>
 inline void At_mul_A(Eigen::MatrixXd & out, SparseFeat & A) {
+  if (out.cols() != A.cols()) {
+    throw std::runtime_error("At_mul_A(SparseFeat): out.cols() must equal A.cols()");
+  }
+  if (out.cols() != out.rows()) {
+    throw std::runtime_error("At_mul_A(SparseFeat): out must be square matrix.)");
+  }
+
   out.setZero();
   const int nfeat = A.M.ncol;
 
@@ -133,6 +140,12 @@ inline void At_mul_A(Eigen::MatrixXd & out, SparseFeat & A) {
 
 template<>
 inline void At_mul_A(Eigen::MatrixXd & out, SparseDoubleFeat & A) {
+  if (out.cols() != A.cols()) {
+    throw std::runtime_error("At_mul_A(SparseDoubleFeat): out.cols() must equal A.cols()");
+  }
+  if (out.cols() != out.rows()) {
+    throw std::runtime_error("At_mul_A(SparseDoubleFeat): out must be square matrix.)");
+  }
   out.setZero();
   const int nfeat = A.M.ncol;
 

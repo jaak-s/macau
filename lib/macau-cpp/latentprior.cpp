@@ -3,6 +3,7 @@
 #include <cblas.h>
 #include <math.h>
 #include <omp.h>
+#include <iomanip>
 
 #include "mvnormal.h"
 #include "macau.h"
@@ -70,6 +71,7 @@ void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) 
   F = std::unique_ptr<FType>(Fmat);
   use_FtF = comp_FtF;
   if (use_FtF) {
+    FtF.resize(F->cols(), F->cols());
     At_mul_A(FtF, *F);
   }
 
@@ -79,6 +81,8 @@ void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) 
   beta.resize(num_latent, F->cols());
   beta.setZero();
 
+  // initial value (should be determined automatically)
+  lambda_beta = 5.0;
   // Hyper-prior for lambda_beta (mean 1.0, var of 1e+3):
   lambda_beta_mu0 = 1.0;
   lambda_beta_nu0 = 1e-3;
@@ -112,13 +116,19 @@ void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {
   lambda_beta = sample_lambda_beta(beta, Lambda, lambda_beta_nu0, lambda_beta_mu0);
 }
 
+template<class FType>
+double MacauPrior<FType>::getLinkNorm() {
+  return beta.norm();
+}
+
 /** Update beta and Uhat */
 template<class FType>
 void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
   const int num_feat = beta.cols();
   // Ft_y = (U .- mu + Normal(0, Lambda^-1)) * F + sqrt(lambda_beta) * Normal(0, Lambda^-1)
   // Ft_y is [ D x F ] matrix
-  MatrixXd Ft_y = A_mul_B( (U + MvNormal_prec_omp(Lambda, U.cols())).colwise() - mu, *F) + sqrt(lambda_beta) * MvNormal_prec_omp(Lambda, num_feat);
+  MatrixXd tmp = (U + MvNormal_prec_omp(Lambda, U.cols())).colwise() - mu;
+  MatrixXd Ft_y = A_mul_B(tmp, *F) + sqrt(lambda_beta) * MvNormal_prec_omp(Lambda, num_feat);
 
   if (use_FtF) {
     MatrixXd K(FtF.rows(), FtF.cols());
@@ -205,16 +215,28 @@ void sample_latent_blas(MatrixXd &s, int mm, const SparseMatrix<double> &mat, do
   s.col(mm).noalias() = rr;
 }
 
-Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
-  // TODO: use blas
-  return A * B;
+/**
+ * X = A * B
+ */
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
+  MatrixXd out(A.rows(), B.cols());
+  A_mul_B_blas(out, A, B);
+  return out;
 }
 
-Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const SparseFeat & B) {
-  // TODO: use blas
-  //return A * B;
-  return MatrixXd(1,1);
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B) {
+  MatrixXd out(A.rows(), B.cols());
+  A_mul_Bt(out, B.Mt, A);
+  return out;
+}
+
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B) {
+  MatrixXd out(A.rows(), B.cols());
+  A_mul_Bt(out, B.Mt, A);
+  return out;
 }
 
 template class MacauPrior<SparseFeat>;
+template class MacauPrior<SparseDoubleFeat>;
+//template class MacauPrior<Eigen::MatrixXd>;
 

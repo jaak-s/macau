@@ -92,18 +92,23 @@ cdef vecview(VectorXd *v):
     return np.asarray(view)
 
 cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size):
-    if not side:
+    if side == None or side == ():
         return new BPMFPrior(num_latent)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Unsupported side information type: %s" + type(side))
 
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
-    cdef SparseFeat* sf
+
     ## binary
-    if np.all(side.data == 1):
+    cdef SparseFeat* sf
+    if (side.data == 1).all():
         sf = sparse2SparseBinFeat(side)
         return new MacauPrior[SparseFeat](num_latent, sf, compute_ff)
-    return new BPMFPrior(num_latent)
+
+    ## double CSR
+    cdef SparseDoubleFeat* sdf
+    sdf = sparse2SparseDoubleFeat(side)
+    return new MacauPrior[SparseDoubleFeat](num_latent, sdf, compute_ff)
 
 ## API functions:
 ## 1) F'F

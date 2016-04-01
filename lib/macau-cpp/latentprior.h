@@ -13,6 +13,7 @@ class ILatentPrior {
     void virtual sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                         const Eigen::MatrixXd &samples, double alpha, const int num_latent) {};
     void virtual update_prior(const Eigen::MatrixXd &U) {};
+    virtual double getLinkNorm() { return NAN; };
     virtual ~ILatentPrior() {};
 };
 
@@ -69,6 +70,7 @@ class MacauPrior : public ILatentPrior {
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
     void update_prior(const Eigen::MatrixXd &U);
+    double getLinkNorm();
     void sample_beta(const Eigen::MatrixXd &U);
     void setLambdaBeta(double lambda_beta);
 };
@@ -97,8 +99,12 @@ void sample_latent_blas(Eigen::MatrixXd &s,
                         const int num_latent);
 
 template<typename T>
-Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const T & B);
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, T & B);
 template<>
-Eigen::MatrixXd A_mul_B(const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+template<>
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
+template<>
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
 
 #endif /* LATENTPRIOR_H */
