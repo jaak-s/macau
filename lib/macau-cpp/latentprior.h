@@ -14,6 +14,7 @@ class ILatentPrior {
                         const Eigen::MatrixXd &samples, double alpha, const int num_latent) {};
     void virtual update_prior(const Eigen::MatrixXd &U) {};
     virtual double getLinkNorm() { return NAN; };
+    virtual double getLinkLambda() { return NAN; };
     virtual ~ILatentPrior() {};
 };
 
@@ -71,6 +72,7 @@ class MacauPrior : public ILatentPrior {
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
     void update_prior(const Eigen::MatrixXd &U);
     double getLinkNorm();
+    double getLinkLambda() { return lambda_beta; };
     void sample_beta(const Eigen::MatrixXd &U);
     void setLambdaBeta(double lambda_beta);
 };

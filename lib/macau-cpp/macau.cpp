@@ -90,7 +90,7 @@ void Macau::run() {
 
   auto start = tick();
   for (int i = 0; i < burnin + nsamples; i++) {
-    if (i == burnin) {
+    if (verbose && i == burnin) {
       printf(" ====== Burn-in complete, averaging samples ====== \n");
     }
     auto starti = tick();
@@ -111,14 +111,21 @@ void Macau::run() {
     double elapsedi = endi - starti;
 
     if (verbose) {
-      printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f  FU(%1.2e) FV(%1.2e) [took %0.1fs, Samples/sec: %6.1f]\n", i, eval.first, eval.second, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
-      double norm0 = priors[0]->getLinkNorm();
-      double norm1 = priors[1]->getLinkNorm();
-      if (!std::isnan(norm0) || !std::isnan(norm1)) {
-        printf("        U.beta(%1.2e) V.beta(%1.2e)\n", norm0, norm1);
-      }
+      printStatus(i, eval.first, eval.second, elapsedi, samples_per_sec);
     }
     rmse_test = eval.second;
+  }
+}
+
+void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec) {
+  printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f  FU(%1.2e) FV(%1.2e) [took %0.1fs, Samples/sec: %6.1f]\n", i, rmse, rmse_avg, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
+  double norm0 = priors[0]->getLinkNorm();
+  double norm1 = priors[1]->getLinkNorm();
+  if (!std::isnan(norm0) || !std::isnan(norm1)) {
+    printf("        [Side info] ");
+    if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
+    if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
+    printf("\n");
   }
 }
 
