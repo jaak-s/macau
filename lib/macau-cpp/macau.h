@@ -39,6 +39,7 @@ class Macau {
     void init();
     void run();
     void printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec);
+    void setVerbose(bool v) { verbose = v; };
     ~Macau();
 };
 

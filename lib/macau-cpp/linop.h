@@ -175,7 +175,6 @@ inline void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
 /** good values for solve_blockcg are blocksize=32 an excess=8 */
 template<typename T>
 inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol, const int blocksize, const int excess) {
-  X(0, 0) = 2;
   if (B.rows() <= excess + blocksize) {
     solve_blockcg(X, K, reg, B, tol);
     return;

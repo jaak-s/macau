@@ -3,6 +3,7 @@ import numpy as np
 cimport numpy as np
 import scipy as sp
 import timeit
+import numbers
 
 cimport macau
 
@@ -66,17 +67,17 @@ cpdef blockcg(X, np.ndarray[np.double_t, ndim=2] B, double reg, double tol = 1e-
     cdef MatrixXd out  = Map[MatrixXd](&B[0,0], B.shape[0], B.shape[1])
     cdef np.ndarray[int] irows = X.row.astype(np.int32, copy=False)
     cdef np.ndarray[int] icols = X.col.astype(np.int32, copy=False)
-    cdef SparseFeat K
-    print("Sorting sparse [%d x %d] matrix" % (X.shape[0], X.shape[1]))
-    K = SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0])
+    print("Sparse [%d x %d] matrix" % (X.shape[0], X.shape[1]))
+    cdef SparseFeat* K = new SparseFeat(X.shape[0], X.shape[1], irows.shape[0], & irows[0], & icols[0])
     print("Running block-cg")
     cdef double start = timeit.default_timer()
-    cdef int niter = solve_blockcg(result_eig, K, reg, Beig, tol)
+    cdef int niter = solve_blockcg(result_eig, K[0], reg, Beig, tol)
     cdef double end = timeit.default_timer()
 
     cdef np.ndarray[np.double_t] v = np.zeros(2)
     v[0] = niter
     v[1] = end - start
+    del K
     return v
     #cdef np.ndarray[np.double_t] ivals = X.data.astype(np.double, copy=False)
 
@@ -90,6 +91,22 @@ cdef vecview(VectorXd *v):
     cdef int size = v.size()
     cdef np.double_t[:] view = <np.double_t[:size]> v.data()
     return np.asarray(view)
+
+def make_train_test(Y, ntest):
+    if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+        raise ValueError("Unsupported Y type: %s" + type(Y))
+    if not isinstance(ntest, numbers.Real) or ntest < 0:
+        raise ValueError("ntest has to be a non-negative number (number or ratio of test samples).")
+    Y = Y.tocoo(copy = False)
+    if ntest < 1:
+        ntest = Y.nnz * ntest
+    ntest = int(round(ntest))
+    rperm = np.random.permutation(Y.nnz)
+    train = rperm[ntest:]
+    test  = rperm[0:ntest]
+    Ytrain = sp.sparse.coo_matrix( (Y.data[train], (Y.row[train], Y.col[train])), shape=Y.shape )
+    Ytest  = sp.sparse.coo_matrix( (Y.data[test],  (Y.row[test],  Y.col[test])),  shape=Y.shape )
+    return Ytrain, Ytest
 
 cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size):
     if side == None or side == ():
@@ -135,11 +152,14 @@ def macau(Y,
           num_latent = 10,
           precision  = 1.0, 
           burnin     = 50,
-          nsamples   = 400):
+          nsamples   = 400,
+          verbose    = True):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
     Y = Y.tocoo(copy = False)
     if Ytest != None:
+        if isinstance(Ytest, numbers.Real):
+            Y, Ytest = make_train_test(Y, Ytest)
         if type(Ytest) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
             raise ValueError("Ytest must be either coo, csr or csc (from scipy.sparse)")
         if Ytest.shape != Y.shape:
@@ -169,6 +189,7 @@ def macau(Y,
     macau.setPrecision(np.float64(precision))
     macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
+    macau.setVerbose(verbose)
 
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals
@@ -181,7 +202,11 @@ def macau(Y,
 
     macau.run()
     sig_off()
-    result = dict(rmse_test = macau.getRmseTest())
+    result = dict(
+        rmse_test = macau.getRmseTest(),
+        ntrain    = Y.nnz,
+        ntest     = Ytest.nnz if Ytest != None else 0
+    )
 
     del macau
 

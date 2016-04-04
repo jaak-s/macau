@@ -87,6 +87,7 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eig
   // move KP += reg * P here with nowait from previous loop
   // http://stackoverflow.com/questions/30496365/parallelize-the-addition-of-a-vector-of-matrices-in-openmp
   A_mul_Bt(out, A.Mt, tmp);
+
   int ncol = out.cols(), nrow = out.rows();
 #pragma omp parallel for schedule(static)
   for (int col = 0; col < ncol; col++) {
