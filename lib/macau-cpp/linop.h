@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include "chol.h"
+#include "bpmfutils.h"
 
 extern "C" {
   #include <csr.h>

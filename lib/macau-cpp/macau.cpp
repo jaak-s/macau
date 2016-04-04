@@ -18,7 +18,7 @@
 
 #include "macau.h"
 #include "mvnormal.h"
-#include "utils.h"
+#include "bpmfutils.h"
 #include "latentprior.h"
 
 using namespace std; 

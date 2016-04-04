@@ -1,3 +1,6 @@
+#ifndef BPMFUTILS_H
+#define BPMFUTILS_H
+
 #include <chrono>
 #include <Eigen/Sparse>
 
@@ -9,7 +12,7 @@ inline double clamp(double x, double min, double max) {
   return x < min ? min : (x > max ? max : x);
 }
 
-std::pair<double, double> getMinMax(const Eigen::SparseMatrix<double> &mat) { 
+inline std::pair<double, double> getMinMax(const Eigen::SparseMatrix<double> &mat) { 
     double min = INFINITY;
     double max = -INFINITY;
     for (int k = 0; k < mat.outerSize(); ++k) {
@@ -21,3 +24,5 @@ std::pair<double, double> getMinMax(const Eigen::SparseMatrix<double> &mat) {
     }
     return std::make_pair(min, max);
 }
+
+#endif /* BPMFUTILS_H */
