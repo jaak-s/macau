@@ -128,6 +128,10 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg
   }
 }
 
+void makeSymmetric(Eigen::MatrixXd & A) {
+  A = A.selfadjointView<Eigen::Lower>();
+}
+
 /**
  * A is [n x k] matrix
  * returns [n x n] matrix A * A'

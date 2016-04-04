@@ -122,7 +122,7 @@ void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, do
   double norm0 = priors[0]->getLinkNorm();
   double norm1 = priors[1]->getLinkNorm();
   if (!std::isnan(norm0) || !std::isnan(norm1)) {
-    printf("        [Side info] ");
+    printf("          [Side info] ");
     if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
     if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
     printf("\n");

@@ -78,6 +78,7 @@ void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, Eigen::MatrixXd & B);
 void A_mul_B(  Eigen::VectorXd & out, CSR & csr, Eigen::VectorXd & b);
 void A_mul_Bt( Eigen::MatrixXd & out, CSR & csr, Eigen::MatrixXd & B);
 
+void makeSymmetric(Eigen::MatrixXd & A);
 
 // Y = beta * Y + alpha * A * B (where B is symmetric)
 void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
@@ -240,12 +241,7 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   Eigen::MatrixXd Psi(nrhs, nrhs);
 
   A_mul_At_blas(R, RtR->data());
-  // copying A lower tri to upper tri
-  for (int i = 1; i < nrhs; i++) {
-    for (int j = 0; j < i; j++) {
-      (*RtR)(j, i) = (*RtR)(i, j);
-    }
-  }
+  makeSymmetric(*RtR);
 
   // CG iteration:
   int iter = 0;
