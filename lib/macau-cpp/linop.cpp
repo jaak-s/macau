@@ -209,3 +209,4 @@ void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
     }
   }
 }
+

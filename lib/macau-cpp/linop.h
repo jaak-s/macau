@@ -81,8 +81,17 @@ void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA);
 void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt);
 void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
 void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
+
+//template<int N>
+//inline void A_mul_B_omp(double alpha, Eigen::MatrixXd & out, double beta, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
+inline void A_mul_B_omp(double alpha, Eigen::MatrixXd & out, double beta, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+/*
 template<int N>
-inline void A_mul_B_omp(Eigen::MatrixXd & out, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
+inline void A_mul_B_add_omp(Eigen::MatrixXd & out, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
+template<int N>
+inline void A_mul_B_sub_omp(Eigen::MatrixXd & out, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
+*/
+
 void A_mul_At_combo(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 Eigen::MatrixXd A_mul_At_combo(Eigen::MatrixXd & A);
@@ -275,7 +284,7 @@ inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
 
   if (nfeat != K.cols()) {throw std::runtime_error("B.cols() must equal K.cols()");}
 
-  Eigen::VectorXd norms(N), inorms(N); 
+  Eigen::VectorXd norms(nrhs), inorms(nrhs); 
   norms.setZero();
   inorms.setZero();
 #pragma omp parallel for schedule(static)
@@ -287,9 +296,9 @@ inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
     norms(rhs)  = sqrt(sumsq);
     inorms(rhs) = 1.0 / norms(rhs);
   }
-  Eigen::MatrixXd R(N, nfeat);
-  Eigen::MatrixXd P(N, nfeat);
-  Eigen::MatrixXd Ptmp(N, nfeat);
+  Eigen::MatrixXd R(nrhs, nfeat);
+  Eigen::MatrixXd P(nrhs, nfeat);
+  Eigen::MatrixXd Ptmp(nrhs, nfeat);
   X.setZero();
   // normalize R and P:
 #pragma omp parallel for schedule(static) collapse(2)
@@ -299,37 +308,47 @@ inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
       P(rhs, feat) = R(rhs, feat);
     }
   }
-  Eigen::MatrixXd* RtR = new Eigen::MatrixXd(N, N);
-  Eigen::MatrixXd* RtR2 = new Eigen::MatrixXd(N, N);
+  Eigen::MatrixXd* RtR = new Eigen::MatrixXd(nrhs, nrhs);
+  Eigen::MatrixXd* RtR2 = new Eigen::MatrixXd(nrhs, nrhs);
 
-  Eigen::MatrixXd KP(N, nfeat);
-  Eigen::MatrixXd KPtmp(N, K.rows());
-  Eigen::MatrixXd A(N, N);
-  Eigen::MatrixXd PtKP(N, N);
-  Eigen::MatrixXd Psi(N, N);
+  Eigen::MatrixXd KP(nrhs, nfeat);
+  Eigen::MatrixXd KPtmp(nrhs, K.rows());
+  Eigen::MatrixXd PtKP(nrhs, nrhs);
+  //Eigen::Matrix<double, N, N> A;
+  //Eigen::Matrix<double, N, N> Psi;
+  Eigen::MatrixXd A;
+  Eigen::MatrixXd Psi;
+
 
   A_mul_At_blas(R, RtR->data());
   makeSymmetric(*RtR);
+
+  const int nblocks = (int)ceil(nfeat / 64.0);
 
   // CG iteration:
   int iter = 0;
   for (iter = 0; iter < 100000; iter++) {
     // KP = K * P
-    ////double t1 = tick();
+    double t1 = tick();
     AtA_mul_Bx<N>(KP, K, reg, P, KPtmp);
-    ////double t2 = tick();
+    double t2 = tick();
 
     A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
     Eigen::LLT<Eigen::MatrixXd> chol = PtKP.llt();
     A = chol.solve(*RtR);
-    ////double t3 = tick();
+    A.transposeInPlace();
+    double t3 = tick();
     
-    // X += A' * P (as X and P are already transposed)
-    At_mul_B_blas(1.0, X, 1.0, A, P);
-
-    // R -= A' * KP (as R and KP are already transposed)
-    At_mul_B_blas(1.0, R, -1.0, A, KP);
-    ////double t4 = tick();
+#pragma omp parallel for schedule(dynamic, 4)
+    for (int block = 0; block < nblocks; block++) {
+      int col = block * 64;
+      int bcols = std::min(64, nfeat - col);
+      // X += A' * P
+      X.block(0, col, nrhs, bcols).noalias() += A *  P.block(0, col, nrhs, bcols);
+      // R -= A' * KP
+      R.block(0, col, nrhs, bcols).noalias() -= A * KP.block(0, col, nrhs, bcols);
+    }
+    double t4 = tick();
 
     // convergence check:
     A_mul_At_combo(*RtR2, R);
@@ -343,20 +362,23 @@ inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
     // Psi = (R R') \ R2 R2'
     chol = RtR->llt();
     Psi  = chol.solve(*RtR2);
-    ////double t5 = tick();
+    Psi.transposeInPlace();
+    double t5 = tick();
 
     // P = R + Psi' * P (P and R are already transposed)
-    At_mul_B_blas(0.0, Ptmp, 1.0, Psi, P);
-#pragma omp parallel for schedule(static) collapse(2)
-    for (int feat = 0; feat < nfeat; feat++) {
-      for (int rhs = 0; rhs < nrhs; rhs++) {
-        P(rhs, feat) = R(rhs, feat) + Ptmp(rhs, feat);
-      }
+#pragma omp parallel for schedule(dynamic, 8)
+    for (int block = 0; block < nblocks; block++) {
+      int col = block * 64;
+      int bcols = std::min(64, nfeat - col);
+      Eigen::MatrixXd xtmp(nrhs, bcols);
+      xtmp = Psi *  P.block(0, col, nrhs, bcols);
+      P.block(0, col, nrhs, bcols) = R.block(0, col, nrhs, bcols) + xtmp;
     }
+
     // R R' = R2 R2'
     std::swap(RtR, RtR2);
-    ////double t6 = tick();
-    ////printf("t2-t1 = %.3f, t3-t2 = %.3f, t4-t3 = %.3f, t5-t4 = %.3f, t6-t5 = %.3f\n", t2-t1, t3-t2, t4-t3, t5-t4, t6-t5);
+    double t6 = tick();
+    printf("t2-t1 = %.3f, t3-t2 = %.3f, t4-t3 = %.3f, t5-t4 = %.3f, t6-t5 = %.3f\n", t2-t1, t3-t2, t4-t3, t5-t4, t6-t5);
   }
   // unnormalizing X:
 #pragma omp parallel for schedule(static) collapse(2)
@@ -460,9 +482,32 @@ void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::
   }
 }
 
+// computes out = alpha * out + beta * A * B
+inline void A_mul_B_omp(
+    double alpha,
+    Eigen::MatrixXd & out,
+    double beta,
+    Eigen::MatrixXd & A,
+    Eigen::MatrixXd & B)
+{
+  assert(out.cols() == B.cols());
+  const int nblocks = (int)ceil(out.cols() / 64.0);
+  const int nrow = out.rows();
+  const int ncol = out.cols();
+#pragma omp parallel for schedule(dynamic, 8)
+  for (int block = 0; block < nblocks; block++) {
+    int col = block * 64;
+    int bcols = std::min(64, ncol - col);
+    out.template block(0, col, nrow, bcols).noalias() = alpha * out.template block(0, col, nrow, bcols) + beta * A * B.template block(0, col, nrow, bcols);
+  }
+}
+
+/*
 template<int N>
 inline void A_mul_B_omp(
+    double alpha,
     Eigen::MatrixXd & out,
+    double beta,
     Eigen::Matrix<double, N, N> & A,
     Eigen::MatrixXd & B)
 {
@@ -471,11 +516,11 @@ inline void A_mul_B_omp(
 #pragma omp parallel for schedule(dynamic, 8)
   for (int block = 0; block < nblocks; block++) {
     int col = block * 64;
-    out.template block<N, 64>(0, col).noalias() = A * B.template block<N, 64>(0, col);
+    out.template block<N, 64>(0, col).noalias() = alpha * out.template block<N, 64>(0, col) + beta * A * B.template block<N, 64>(0, col);
   }
   // last remaining block
   int col = nblocks * 64;
-  out.block(0, col, N, out.cols() - col) = A * B.block(0, col, N, out.cols() - col);
+  out.block(0, col, N, out.cols() - col) = alpha * out.block(0, col, N, out.cols() - col) + beta * A * B.block(0, col, N, out.cols() - col);
 }
-
+*/
 #endif /* LINOP_H */

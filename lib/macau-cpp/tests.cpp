@@ -216,7 +216,7 @@ TEST_CASE( "linop/A_mul_At_combo", "A_mul_At with OpenMP (returning matrix)" ) {
 }
 
 TEST_CASE( "linop/A_mul_B_omp", "Fast parallel A_mul_B for small A") {
-  Eigen::Matrix<double, 2, 2> A;
+  Eigen::MatrixXd A(2, 2);
   Eigen::MatrixXd B(2, 5);
   Eigen::MatrixXd C(2, 5);
   Eigen::MatrixXd Ctr(2, 5);
@@ -224,7 +224,7 @@ TEST_CASE( "linop/A_mul_B_omp", "Fast parallel A_mul_B for small A") {
        1.0,  0.91;
   B << 0.52, 0.19, 0.25, -0.73, -2.81,
       -0.15, 0.31,-0.40,  0.91, -0.08;
-  A_mul_B_omp<2>(C, A, B);
+  A_mul_B_omp(0, C, 1.0, A, B);
   Ctr = A * B;
   REQUIRE( (C - Ctr).norm() == Approx(0.0) );
 }
@@ -233,7 +233,7 @@ TEST_CASE( "linop/A_mul_B_omp/speed", "Speed of A_mul_B_omp") {
   Eigen::MatrixXd B(32, 1000);
   Eigen::MatrixXd X(32, 1000);
   Eigen::MatrixXd Xtr(32, 1000);
-  Eigen::Matrix<double, 32, 32> A(32, 32);
+  Eigen::MatrixXd A(32, 32);
   for (int col = 0; col < B.cols(); col++) {
     for (int row = 0; row < B.rows(); row++) {
       B(row, col) = sin(row * col);
@@ -245,17 +245,23 @@ TEST_CASE( "linop/A_mul_B_omp/speed", "Speed of A_mul_B_omp") {
     }
   }
   Xtr = A * B;
-  A_mul_B_omp(X, A, B);
+  A_mul_B_omp(0, X, 1.0, A, B);
   REQUIRE( (X - Xtr).norm() == Approx(0.0) );
-  /*
-  double total = 0;
-  for (int iter = 0; iter < 10; iter++) {
-    double t1 = tick();
-    A_mul_B_omp(X, A, B);
-    double t2 = tick();
-    printf("A_mul_B_omp took %.5f seconds.\n", t2 - t1);
-    total += t2 - t1;
-  }
-  printf("Avg: %.5f seconds.\n", total / 10);
-  */
+}
+
+TEST_CASE( "linop/A_mul_B_add", "Fast parallel A_mul_B with adding") {
+  Eigen::MatrixXd A(2, 2);
+  Eigen::MatrixXd B(2, 5);
+  Eigen::MatrixXd C(2, 5);
+  Eigen::MatrixXd Ctr(2, 5);
+  A << 3.0, -2.00,
+       1.0,  0.91;
+  B << 0.52, 0.19, 0.25, -0.73, -2.81,
+      -0.15, 0.31,-0.40,  0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10;
+  Ctr = C;
+  A_mul_B_omp(1.0, C, 1.0, A, B);
+  Ctr += A * B;
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
 }
