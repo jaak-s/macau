@@ -55,12 +55,25 @@ template<typename T>
 void  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol, const int blocksize, const int excess);
 template<typename T>
 int  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol);
+template<typename T, unsigned N>
+inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol);
+
 template<typename T>
 void At_mul_A(Eigen::MatrixXd & out, T & A);
 template<typename T>
 void compute_uhat(Eigen::MatrixXd & uhat, T & feat, Eigen::MatrixXd & beta);
 template<typename T>
 void AtA_mul_B(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+
+// compile-time optimized versions (N - number of RHSs)
+template<unsigned N>
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+template<unsigned N>
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+template<unsigned N>
+void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B);
+template<unsigned N>
+void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B);
 
 
 void At_mul_B_blas(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
@@ -78,6 +91,7 @@ void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, Eigen::VectorXd & b);
 void A_mul_Bt( Eigen::MatrixXd & out, BinaryCSR & csr, Eigen::MatrixXd & B);
 void A_mul_B(  Eigen::VectorXd & out, CSR & csr, Eigen::VectorXd & b);
 void A_mul_Bt( Eigen::MatrixXd & out, CSR & csr, Eigen::MatrixXd & B);
+
 
 void makeSymmetric(Eigen::MatrixXd & A);
 
@@ -199,14 +213,68 @@ inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
 
 template<typename T>
 inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol) {
+  switch(B.rows()) {
+    case 1: return solve_blockcgx<T,1>(X, K, reg, B, tol);
+    case 2: return solve_blockcgx<T,2>(X, K, reg, B, tol);
+    case 3: return solve_blockcgx<T,3>(X, K, reg, B, tol);
+    case 4: return solve_blockcgx<T,4>(X, K, reg, B, tol);
+    case 5: return solve_blockcgx<T,5>(X, K, reg, B, tol);
+
+    case 6: return solve_blockcgx<T,6>(X, K, reg, B, tol);
+    case 7: return solve_blockcgx<T,7>(X, K, reg, B, tol);
+    case 8: return solve_blockcgx<T,8>(X, K, reg, B, tol);
+    case 9: return solve_blockcgx<T,9>(X, K, reg, B, tol);
+    case 10: return solve_blockcgx<T,10>(X, K, reg, B, tol);
+
+    case 11: return solve_blockcgx<T,11>(X, K, reg, B, tol);
+    case 12: return solve_blockcgx<T,12>(X, K, reg, B, tol);
+    case 13: return solve_blockcgx<T,13>(X, K, reg, B, tol);
+    case 14: return solve_blockcgx<T,14>(X, K, reg, B, tol);
+    case 15: return solve_blockcgx<T,15>(X, K, reg, B, tol);
+
+    case 16: return solve_blockcgx<T,16>(X, K, reg, B, tol);
+    case 17: return solve_blockcgx<T,17>(X, K, reg, B, tol);
+    case 18: return solve_blockcgx<T,18>(X, K, reg, B, tol);
+    case 19: return solve_blockcgx<T,19>(X, K, reg, B, tol);
+    case 20: return solve_blockcgx<T,20>(X, K, reg, B, tol);
+
+    case 21: return solve_blockcgx<T,21>(X, K, reg, B, tol);
+    case 22: return solve_blockcgx<T,22>(X, K, reg, B, tol);
+    case 23: return solve_blockcgx<T,23>(X, K, reg, B, tol);
+    case 24: return solve_blockcgx<T,24>(X, K, reg, B, tol);
+    case 25: return solve_blockcgx<T,25>(X, K, reg, B, tol);
+
+    case 26: return solve_blockcgx<T,26>(X, K, reg, B, tol);
+    case 27: return solve_blockcgx<T,27>(X, K, reg, B, tol);
+    case 28: return solve_blockcgx<T,28>(X, K, reg, B, tol);
+    case 29: return solve_blockcgx<T,29>(X, K, reg, B, tol);
+    case 30: return solve_blockcgx<T,30>(X, K, reg, B, tol);
+
+    case 31: return solve_blockcgx<T,31>(X, K, reg, B, tol);
+    case 32: return solve_blockcgx<T,32>(X, K, reg, B, tol);
+    case 33: return solve_blockcgx<T,33>(X, K, reg, B, tol);
+    case 34: return solve_blockcgx<T,34>(X, K, reg, B, tol);
+    case 35: return solve_blockcgx<T,35>(X, K, reg, B, tol);
+
+    case 36: return solve_blockcgx<T,36>(X, K, reg, B, tol);
+    case 37: return solve_blockcgx<T,37>(X, K, reg, B, tol);
+    case 38: return solve_blockcgx<T,38>(X, K, reg, B, tol);
+    case 39: return solve_blockcgx<T,39>(X, K, reg, B, tol);
+    case 40: return solve_blockcgx<T,40>(X, K, reg, B, tol);
+    default: throw std::runtime_error("BlockCG only available for up to 40 RHSs.");
+  }
+}
+
+template<typename T, unsigned N>
+inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol) {
   // initialize
-  const int nrhs  = B.rows();
   const int nfeat = B.cols();
+  const int nrhs  = B.rows();
   double tolsq = tol*tol;
 
   if (nfeat != K.cols()) {throw std::runtime_error("B.cols() must equal K.cols()");}
 
-  Eigen::VectorXd norms(nrhs), inorms(nrhs); 
+  Eigen::VectorXd norms(N), inorms(N); 
   norms.setZero();
   inorms.setZero();
 #pragma omp parallel for schedule(static)
@@ -218,9 +286,9 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
     norms(rhs)  = sqrt(sumsq);
     inorms(rhs) = 1.0 / norms(rhs);
   }
-  Eigen::MatrixXd R(nrhs, nfeat);
-  Eigen::MatrixXd P(nrhs, nfeat);
-  Eigen::MatrixXd Ptmp(nrhs, nfeat);
+  Eigen::MatrixXd R(N, nfeat);
+  Eigen::MatrixXd P(N, nfeat);
+  Eigen::MatrixXd Ptmp(N, nfeat);
   X.setZero();
   // normalize R and P:
 #pragma omp parallel for schedule(static) collapse(2)
@@ -230,16 +298,14 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
       P(rhs, feat) = R(rhs, feat);
     }
   }
-  Eigen::MatrixXd* RtR = new Eigen::MatrixXd(nrhs, nrhs);
-  Eigen::MatrixXd* RtR2 = new Eigen::MatrixXd(nrhs, nrhs);
+  Eigen::MatrixXd* RtR = new Eigen::MatrixXd(N, N);
+  Eigen::MatrixXd* RtR2 = new Eigen::MatrixXd(N, N);
 
-  //RtR->setZero();
-  //RtR2->setZero();
-  Eigen::MatrixXd KP(nrhs, nfeat);
-  Eigen::MatrixXd KPtmp(nrhs, K.rows());
-  Eigen::MatrixXd A(nrhs, nrhs);
-  Eigen::MatrixXd PtKP(nrhs, nrhs);
-  Eigen::MatrixXd Psi(nrhs, nrhs);
+  Eigen::MatrixXd KP(N, nfeat);
+  Eigen::MatrixXd KPtmp(N, K.rows());
+  Eigen::MatrixXd A(N, N);
+  Eigen::MatrixXd PtKP(N, N);
+  Eigen::MatrixXd Psi(N, N);
 
   A_mul_At_blas(R, RtR->data());
   makeSymmetric(*RtR);
@@ -248,27 +314,25 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   int iter = 0;
   for (iter = 0; iter < 100000; iter++) {
     // KP = K * P
-    AtA_mul_B(KP, K, reg, P, KPtmp);
+    ////double t1 = tick();
+    AtA_mul_Bx<N>(KP, K, reg, P, KPtmp);
+    ////double t2 = tick();
 
     A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
-    chol_decomp(PtKP);
-    A = *RtR;
-    chol_solve(PtKP, A);
+    Eigen::LLT<Eigen::MatrixXd> chol = PtKP.llt();
+    A = chol.solve(*RtR);
+    ////double t3 = tick();
     
     // X += A' * P (as X and P are already transposed)
     At_mul_B_blas(1.0, X, 1.0, A, P);
 
     // R -= A' * KP (as R and KP are already transposed)
     At_mul_B_blas(1.0, R, -1.0, A, KP);
+    ////double t4 = tick();
 
     // convergence check:
-    A_mul_At_blas(R, RtR2->data());
-    // copying A lower tri to upper tri
-    for (int i = 1; i < nrhs; i++) {
-      for (int j = 0; j < i; j++) {
-        (*RtR2)(j, i) = (*RtR2)(i, j);
-      }
-    }
+    A_mul_At_combo(*RtR2, R);
+    makeSymmetric(*RtR2);
 
     Eigen::VectorXd d = RtR2->diagonal();
     //std::cout << "[ iter " << iter << "] " << d.cwiseSqrt() << "\n";
@@ -276,15 +340,22 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
       break;
     }
     // Psi = (R R') \ R2 R2'
-    chol_decomp(*RtR);
-    Psi = *RtR2;
-    chol_solve(*RtR, Psi);
+    chol = RtR->llt();
+    Psi  = chol.solve(*RtR2);
+    ////double t5 = tick();
 
     // P = R + Psi' * P (P and R are already transposed)
     At_mul_B_blas(0.0, Ptmp, 1.0, Psi, P);
-    P.noalias() = R + Ptmp;
+#pragma omp parallel for schedule(static) collapse(2)
+    for (int feat = 0; feat < nfeat; feat++) {
+      for (int rhs = 0; rhs < nrhs; rhs++) {
+        P(rhs, feat) = R(rhs, feat) + Ptmp(rhs, feat);
+      }
+    }
     // R R' = R2 R2'
     std::swap(RtR, RtR2);
+    ////double t6 = tick();
+    ////printf("t2-t1 = %.3f, t3-t2 = %.3f, t4-t3 = %.3f, t5-t4 = %.3f, t6-t5 = %.3f\n", t2-t1, t3-t2, t4-t3, t5-t4, t6-t5);
   }
   // unnormalizing X:
 #pragma omp parallel for schedule(static) collapse(2)
@@ -298,4 +369,93 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   return iter;
 }
 
+template<unsigned N>
+void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B) {
+  assert(N == out.rows());
+  assert(N == B.rows());
+  assert(A.ncol == B.cols());
+  assert(A.nrow == out.cols());
+
+  int* row_ptr   = A.row_ptr;
+  int* cols      = A.cols;
+  const int nrow = A.nrow;
+  double* Y = out.data();
+  double* X = B.data();
+#pragma omp parallel for schedule(dynamic, 256)
+  for (int row = 0; row < nrow; row++) {
+    double tmp[N] = { 0 };
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      int col = cols[i] * N;
+      for (int j = 0; j < N; j++) {
+         tmp[j] += X[col + j];
+      }
+    }
+    int r = row * N;
+    for (int j = 0; j < N; j++) {
+      Y[r + j] = tmp[j];
+    }
+  }
+}
+
+template<unsigned N>
+void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B) {
+  assert(N == out.rows());
+  assert(N == B.rows());
+  assert(A.ncol == B.cols());
+  assert(A.nrow == out.cols());
+
+  int* row_ptr   = A.row_ptr;
+  int* cols      = A.cols;
+  double* vals   = A.vals;
+  const int nrow = A.nrow;
+  double* Y = out.data();
+  double* X = B.data();
+#pragma omp parallel for schedule(dynamic, 256)
+  for (int row = 0; row < nrow; row++) {
+    double tmp[N] = { 0 };
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      int col = cols[i] * N;
+      double val = vals[i];
+      for (int j = 0; j < N; j++) {
+         tmp[j] += X[col + j] * val;
+      }
+    }
+    int r = row * N;
+    for (int j = 0; j < N; j++) {
+      Y[r + j] = tmp[j];
+    }
+  }
+}
+
+template<unsigned N>
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
+  A_mul_Bx<N>(tmp, A.M,  B);
+  A_mul_Bx<N>(out, A.Mt, tmp);
+
+  const int ncol = out.cols();
+  const int nrow = out.rows();
+#pragma omp parallel for schedule(static) collapse(2)
+  for (int col = 0; col < ncol; col++) {
+    for (int row = 0; row < nrow; row++) {
+      out(row, col) += reg * B(row, col);
+    }
+  }
+}
+
+template<unsigned N>
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
+  A_mul_Bx<N>(tmp, A.M,  B);
+  A_mul_Bx<N>(out, A.Mt, tmp);
+
+  const int ncol = out.cols();
+  const int nrow = out.rows();
+#pragma omp parallel for schedule(static) collapse(2)
+  for (int col = 0; col < ncol; col++) {
+    for (int row = 0; row < nrow; row++) {
+      out(row, col) += reg * B(row, col);
+    }
+  }
+}
 #endif /* LINOP_H */

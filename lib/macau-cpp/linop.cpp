@@ -81,6 +81,8 @@ void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::Mat
   cblas_dsymm(CblasColMajor, CblasRight, CblasLower, Y.rows(), Y.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
 }
 
+
+
 template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
   // solution update:
   A_mul_Bt(tmp, A.M, B);
@@ -97,7 +99,8 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eig
   }
 }
 
-template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
+template<>
+void AtA_mul_B(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
   // solution update:
   A_mul_Bt(tmp, A.M, B);
   // move KP += reg * P here with nowait from previous loop
@@ -112,7 +115,8 @@ template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseDoubleFeat & A, double re
   }
 }
 
-template<> void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
+template<>
+void AtA_mul_B(Eigen::MatrixXd & out, Eigen::MatrixXd & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
   // solution update:
   A_mul_Bt_blas(tmp, B, A);
   // move KP += reg * P here with nowait from previous loop
