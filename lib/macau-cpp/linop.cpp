@@ -82,7 +82,6 @@ void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::Mat
 }
 
 
-
 template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
   // solution update:
   A_mul_Bt(tmp, A.M, B);

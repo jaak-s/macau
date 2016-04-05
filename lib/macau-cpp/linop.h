@@ -81,7 +81,8 @@ void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA);
 void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt);
 void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
 void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
-//void compute_uhat( Eigen::MatrixXd & uhat, Eigen::MatrixXd & denseFeat, Eigen::MatrixXd & beta);
+template<int N>
+inline void A_mul_B_omp(Eigen::MatrixXd & out, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
 void A_mul_At_combo(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 Eigen::MatrixXd A_mul_At_combo(Eigen::MatrixXd & A);
@@ -458,4 +459,23 @@ void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::
     }
   }
 }
+
+template<int N>
+inline void A_mul_B_omp(
+    Eigen::MatrixXd & out,
+    Eigen::Matrix<double, N, N> & A,
+    Eigen::MatrixXd & B)
+{
+  assert(out.cols() == B.cols());
+  const int nblocks = out.cols() / 64;
+#pragma omp parallel for schedule(dynamic, 8)
+  for (int block = 0; block < nblocks; block++) {
+    int col = block * 64;
+    out.template block<N, 64>(0, col).noalias() = A * B.template block<N, 64>(0, col);
+  }
+  // last remaining block
+  int col = nblocks * 64;
+  out.block(0, col, N, out.cols() - col) = A * B.block(0, col, N, out.cols() - col);
+}
+
 #endif /* LINOP_H */
