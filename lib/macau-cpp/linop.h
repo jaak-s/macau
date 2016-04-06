@@ -55,8 +55,6 @@ template<typename T>
 void  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol, const int blocksize, const int excess);
 template<typename T>
 int  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol);
-template<typename T, unsigned N>
-inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol);
 
 template<typename T>
 void At_mul_A(Eigen::MatrixXd & out, T & A);
@@ -66,6 +64,8 @@ template<typename T>
 void AtA_mul_B(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
 
 // compile-time optimized versions (N - number of RHSs)
+template<typename T>
+inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
 template<unsigned N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
 template<unsigned N>
@@ -224,60 +224,6 @@ inline void solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
 
 template<typename T>
 inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol) {
-  switch(B.rows()) {
-    case 1: return solve_blockcgx<T,1>(X, K, reg, B, tol);
-    case 2: return solve_blockcgx<T,2>(X, K, reg, B, tol);
-    case 3: return solve_blockcgx<T,3>(X, K, reg, B, tol);
-    case 4: return solve_blockcgx<T,4>(X, K, reg, B, tol);
-    case 5: return solve_blockcgx<T,5>(X, K, reg, B, tol);
-
-    case 6: return solve_blockcgx<T,6>(X, K, reg, B, tol);
-    case 7: return solve_blockcgx<T,7>(X, K, reg, B, tol);
-    case 8: return solve_blockcgx<T,8>(X, K, reg, B, tol);
-    case 9: return solve_blockcgx<T,9>(X, K, reg, B, tol);
-    case 10: return solve_blockcgx<T,10>(X, K, reg, B, tol);
-
-    case 11: return solve_blockcgx<T,11>(X, K, reg, B, tol);
-    case 12: return solve_blockcgx<T,12>(X, K, reg, B, tol);
-    case 13: return solve_blockcgx<T,13>(X, K, reg, B, tol);
-    case 14: return solve_blockcgx<T,14>(X, K, reg, B, tol);
-    case 15: return solve_blockcgx<T,15>(X, K, reg, B, tol);
-
-    case 16: return solve_blockcgx<T,16>(X, K, reg, B, tol);
-    case 17: return solve_blockcgx<T,17>(X, K, reg, B, tol);
-    case 18: return solve_blockcgx<T,18>(X, K, reg, B, tol);
-    case 19: return solve_blockcgx<T,19>(X, K, reg, B, tol);
-    case 20: return solve_blockcgx<T,20>(X, K, reg, B, tol);
-
-    case 21: return solve_blockcgx<T,21>(X, K, reg, B, tol);
-    case 22: return solve_blockcgx<T,22>(X, K, reg, B, tol);
-    case 23: return solve_blockcgx<T,23>(X, K, reg, B, tol);
-    case 24: return solve_blockcgx<T,24>(X, K, reg, B, tol);
-    case 25: return solve_blockcgx<T,25>(X, K, reg, B, tol);
-
-    case 26: return solve_blockcgx<T,26>(X, K, reg, B, tol);
-    case 27: return solve_blockcgx<T,27>(X, K, reg, B, tol);
-    case 28: return solve_blockcgx<T,28>(X, K, reg, B, tol);
-    case 29: return solve_blockcgx<T,29>(X, K, reg, B, tol);
-    case 30: return solve_blockcgx<T,30>(X, K, reg, B, tol);
-
-    case 31: return solve_blockcgx<T,31>(X, K, reg, B, tol);
-    case 32: return solve_blockcgx<T,32>(X, K, reg, B, tol);
-    case 33: return solve_blockcgx<T,33>(X, K, reg, B, tol);
-    case 34: return solve_blockcgx<T,34>(X, K, reg, B, tol);
-    case 35: return solve_blockcgx<T,35>(X, K, reg, B, tol);
-
-    case 36: return solve_blockcgx<T,36>(X, K, reg, B, tol);
-    case 37: return solve_blockcgx<T,37>(X, K, reg, B, tol);
-    case 38: return solve_blockcgx<T,38>(X, K, reg, B, tol);
-    case 39: return solve_blockcgx<T,39>(X, K, reg, B, tol);
-    case 40: return solve_blockcgx<T,40>(X, K, reg, B, tol);
-    default: throw std::runtime_error("BlockCG only available for up to 40 RHSs.");
-  }
-}
-
-template<typename T, unsigned N>
-inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd & B, double tol) {
   // initialize
   const int nfeat = B.cols();
   const int nrhs  = B.rows();
@@ -331,7 +277,7 @@ inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
   for (iter = 0; iter < 100000; iter++) {
     // KP = K * P
     double t1 = tick();
-    AtA_mul_Bx<N>(KP, K, reg, P, KPtmp);
+    AtA_mul_B_switch(KP, K, reg, P, KPtmp);
     double t2 = tick();
 
     //A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
@@ -451,6 +397,61 @@ void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B) {
     for (int j = 0; j < N; j++) {
       Y[r + j] = tmp[j];
     }
+  }
+}
+
+template<typename T>
+inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp)
+{
+  switch(B.rows()) {
+    case 1: return AtA_mul_Bx<1>(out, A, reg, B, tmp);
+    case 2: return AtA_mul_Bx<2>(out, A, reg, B, tmp);
+    case 3: return AtA_mul_Bx<3>(out, A, reg, B, tmp);
+    case 4: return AtA_mul_Bx<4>(out, A, reg, B, tmp);
+    case 5: return AtA_mul_Bx<5>(out, A, reg, B, tmp);
+
+    case 6: return AtA_mul_Bx<6>(out, A, reg, B, tmp);
+    case 7: return AtA_mul_Bx<7>(out, A, reg, B, tmp);
+    case 8: return AtA_mul_Bx<8>(out, A, reg, B, tmp);
+    case 9: return AtA_mul_Bx<9>(out, A, reg, B, tmp);
+    case 10: return AtA_mul_Bx<10>(out, A, reg, B, tmp);
+
+    case 11: return AtA_mul_Bx<11>(out, A, reg, B, tmp);
+    case 12: return AtA_mul_Bx<12>(out, A, reg, B, tmp);
+    case 13: return AtA_mul_Bx<13>(out, A, reg, B, tmp);
+    case 14: return AtA_mul_Bx<14>(out, A, reg, B, tmp);
+    case 15: return AtA_mul_Bx<15>(out, A, reg, B, tmp);
+
+    case 16: return AtA_mul_Bx<16>(out, A, reg, B, tmp);
+    case 17: return AtA_mul_Bx<17>(out, A, reg, B, tmp);
+    case 18: return AtA_mul_Bx<18>(out, A, reg, B, tmp);
+    case 19: return AtA_mul_Bx<19>(out, A, reg, B, tmp);
+    case 20: return AtA_mul_Bx<20>(out, A, reg, B, tmp);
+
+    case 21: return AtA_mul_Bx<21>(out, A, reg, B, tmp);
+    case 22: return AtA_mul_Bx<22>(out, A, reg, B, tmp);
+    case 23: return AtA_mul_Bx<23>(out, A, reg, B, tmp);
+    case 24: return AtA_mul_Bx<24>(out, A, reg, B, tmp);
+    case 25: return AtA_mul_Bx<25>(out, A, reg, B, tmp);
+
+    case 26: return AtA_mul_Bx<26>(out, A, reg, B, tmp);
+    case 27: return AtA_mul_Bx<27>(out, A, reg, B, tmp);
+    case 28: return AtA_mul_Bx<28>(out, A, reg, B, tmp);
+    case 29: return AtA_mul_Bx<29>(out, A, reg, B, tmp);
+    case 30: return AtA_mul_Bx<30>(out, A, reg, B, tmp);
+
+    case 31: return AtA_mul_Bx<31>(out, A, reg, B, tmp);
+    case 32: return AtA_mul_Bx<32>(out, A, reg, B, tmp);
+    case 33: return AtA_mul_Bx<33>(out, A, reg, B, tmp);
+    case 34: return AtA_mul_Bx<34>(out, A, reg, B, tmp);
+    case 35: return AtA_mul_Bx<35>(out, A, reg, B, tmp);
+
+    case 36: return AtA_mul_Bx<36>(out, A, reg, B, tmp);
+    case 37: return AtA_mul_Bx<37>(out, A, reg, B, tmp);
+    case 38: return AtA_mul_Bx<38>(out, A, reg, B, tmp);
+    case 39: return AtA_mul_Bx<39>(out, A, reg, B, tmp);
+    case 40: return AtA_mul_Bx<40>(out, A, reg, B, tmp);
+    default: throw std::runtime_error("BlockCG only available for up to 40 RHSs.");
   }
 }
 
