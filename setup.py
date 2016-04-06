@@ -15,6 +15,12 @@ from distutils import log
 import os
 from textwrap import dedent
 
+# for downloading Eigen
+import tempfile
+import urllib
+import tarfile
+import shutil
+
 ## how to test -fopenmp: https://github.com/hickford/primesieve-python/blob/master/setup.py
 def is_openblas_installed():
     """check if the C module can be build by trying to compile a small 
@@ -130,6 +136,29 @@ def is_openblas_installed():
     shutil.rmtree(tmp_dir)
     return ret_val
 
+def download_eigen_if_needed():
+    url = "http://bitbucket.org/eigen/eigen/get/3.3-beta1.tar.bz2"
+    eigen_inner = "eigen-eigen-ce5a455b34c0"
+    dest = "lib/eigen3"
+    if os.path.isdir(dest + "/Eigen"):
+        return
+    print("Downloading Eigen (v3.3)...")
+    tmpdir = tempfile.mkdtemp()
+    bzfile = tmpdir + "/3.3-beta1.tar.bz2"
+    urllib.urlretrieve(url, bzfile)
+    print("Download complete. Extracting Eigen ...")
+    tf = tarfile.open(bzfile, "r:bz2")
+    if not os.path.exists(dest):
+        os.makedirs(dest)
+    tf.extractall(path = tmpdir)
+    print("Extracting complete.")
+    tmpeigen = tmpdir + "/" + eigen_inner
+    shutil.move(tmpeigen + "/Eigen", dest)
+    shutil.move(tmpeigen + "/unsupported", dest)
+    ## deleting tmp
+    shutil.rmtree(tmpdir)
+
+
 class build_clibx(build_clib):
     def build_libraries(self, libraries):
         for (lib_name, build_info) in libraries:
@@ -192,6 +221,7 @@ def main():
         sys.exit(1)
     else:
         print("OpenBLAS found.")
+    download_eigen_if_needed()
 
     setup(
         name = 'macau',
