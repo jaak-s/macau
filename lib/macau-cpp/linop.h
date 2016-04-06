@@ -95,6 +95,7 @@ inline void A_mul_B_sub_omp(Eigen::MatrixXd & out, Eigen::Matrix<double, N, N> &
 void A_mul_At_combo(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 Eigen::MatrixXd A_mul_At_combo(Eigen::MatrixXd & A);
+void A_mul_Bt_omp_sym(Eigen::MatrixXd & out, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 
 // util functions:
 void A_mul_B(  Eigen::VectorXd & out, BinaryCSR & csr, Eigen::VectorXd & b);
@@ -333,7 +334,8 @@ inline int solve_blockcgx(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixX
     AtA_mul_Bx<N>(KP, K, reg, P, KPtmp);
     double t2 = tick();
 
-    A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
+    //A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
+    A_mul_Bt_omp_sym(PtKP, P, KP);
     Eigen::LLT<Eigen::MatrixXd> chol = PtKP.llt();
     A = chol.solve(*RtR);
     A.transposeInPlace();

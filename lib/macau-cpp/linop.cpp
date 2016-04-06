@@ -210,3 +210,56 @@ void A_mul_At_omp(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
   }
 }
 
+void A_mul_Bt_omp_sym(Eigen::MatrixXd & out, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
+  const int n = A.rows();
+  const int k = A.cols();
+  int nthreads = -1;
+  double* x  = A.data();
+  double* x2 = B.data();
+  assert(A.rows() == B.rows());
+  assert(A.cols() == B.cols());
+  if (A.rows() != out.rows()) {
+    throw std::runtime_error("A.rows() must equal out.rows()");
+  }
+
+#pragma omp parallel
+  {
+#pragma omp single
+    {
+      nthreads = omp_get_num_threads();
+    }
+  }
+  std::vector<MatrixXd> Ys;
+  Ys.resize(nthreads, MatrixXd(n, n));
+
+#pragma omp parallel
+  {
+    const int ithread  = omp_get_thread_num();
+    int rows_per_thread = (int) 8 * ceil(k / 8.0 / nthreads);
+    int row_start = rows_per_thread * ithread;
+    int row_end   = rows_per_thread * (ithread + 1);
+    if (row_start >= k) {
+      Ys[ithread].setZero();
+    } else {
+      if (row_end > k) {
+        row_end = k;
+      }
+      double* xi  = & x[ row_start * n ];
+      double* x2i = & x2[ row_start * n ];
+      int nrows   = row_end - row_start;
+      MatrixXd X  = Map<MatrixXd>(xi, n, nrows);
+      MatrixXd X2 = Map<MatrixXd>(x2i, n, nrows);
+      MatrixXd & Y = Ys[ithread];
+      Y.triangularView<Eigen::Lower>() = X * X2.transpose();
+    }
+  }
+  for (int i = 0; i < n; i++) {
+    for (int j = i; j < n; j++) {
+      double tmp = 0;
+      for (int k = 0; k < nthreads; k++) {
+        tmp += Ys[k](j, i);
+      }
+      out(j, i) = tmp;
+    }
+  }
+}
