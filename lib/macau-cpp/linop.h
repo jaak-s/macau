@@ -276,16 +276,16 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   int iter = 0;
   for (iter = 0; iter < 100000; iter++) {
     // KP = K * P
-    double t1 = tick();
+    ////double t1 = tick();
     AtA_mul_B_switch(KP, K, reg, P, KPtmp);
-    double t2 = tick();
+    ////double t2 = tick();
 
     //A_mul_Bt_blas(PtKP, P, KP); // TODO: use KPtmp with dsyrk two save 2x time
     A_mul_Bt_omp_sym(PtKP, P, KP);
     Eigen::LLT<Eigen::MatrixXd> chol = PtKP.llt();
     A = chol.solve(*RtR);
     A.transposeInPlace();
-    double t3 = tick();
+    ////double t3 = tick();
     
 #pragma omp parallel for schedule(dynamic, 4)
     for (int block = 0; block < nblocks; block++) {
@@ -296,7 +296,7 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
       // R -= A' * KP
       R.block(0, col, nrhs, bcols).noalias() -= A * KP.block(0, col, nrhs, bcols);
     }
-    double t4 = tick();
+    ////double t4 = tick();
 
     // convergence check:
     A_mul_At_combo(*RtR2, R);
@@ -311,7 +311,7 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
     chol = RtR->llt();
     Psi  = chol.solve(*RtR2);
     Psi.transposeInPlace();
-    double t5 = tick();
+    ////double t5 = tick();
 
     // P = R + Psi' * P (P and R are already transposed)
 #pragma omp parallel for schedule(dynamic, 8)
@@ -325,8 +325,8 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
 
     // R R' = R2 R2'
     std::swap(RtR, RtR2);
-    double t6 = tick();
-    printf("t2-t1 = %.3f, t3-t2 = %.3f, t4-t3 = %.3f, t5-t4 = %.3f, t6-t5 = %.3f\n", t2-t1, t3-t2, t4-t3, t5-t4, t6-t5);
+    ////double t6 = tick();
+    ////printf("t2-t1 = %.3f, t3-t2 = %.3f, t4-t3 = %.3f, t5-t4 = %.3f, t6-t5 = %.3f\n", t2-t1, t3-t2, t4-t3, t5-t4, t6-t5);
   }
   // unnormalizing X:
 #pragma omp parallel for schedule(static) collapse(2)
