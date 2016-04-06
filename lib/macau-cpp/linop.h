@@ -61,15 +61,15 @@ void At_mul_A(Eigen::MatrixXd & out, T & A);
 template<typename T>
 void compute_uhat(Eigen::MatrixXd & uhat, T & feat, Eigen::MatrixXd & beta);
 template<typename T>
-void AtA_mul_B(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+void AtA_mul_B(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
 
 // compile-time optimized versions (N - number of RHSs)
 template<typename T>
-inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
 template<unsigned N>
-void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
 template<unsigned N>
-void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp);
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
 template<unsigned N>
 void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B);
 template<unsigned N>
@@ -401,7 +401,7 @@ void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B) {
 }
 
 template<typename T>
-inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp)
+inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp)
 {
   switch(B.rows()) {
     case 1: return AtA_mul_Bx<1>(out, A, reg, B, tmp);
@@ -456,31 +456,69 @@ inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::Ma
 }
 
 template<unsigned N>
-void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
-  A_mul_Bx<N>(tmp, A.M,  B);
-  A_mul_Bx<N>(out, A.Mt, tmp);
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
+  assert(N == out.rows());
+  assert(N == B.rows());
+  assert(A.M.cols() == B.cols());
+  assert(A.M.cols() == out.cols());
+  assert(A.M.rows() == inner.cols());
 
-  const int ncol = out.cols();
-  const int nrow = out.rows();
-#pragma omp parallel for schedule(static) collapse(2)
-  for (int col = 0; col < ncol; col++) {
-    for (int row = 0; row < nrow; row++) {
-      out(row, col) += reg * B(row, col);
+  A_mul_Bx<N>(inner, A.M,  B);
+
+  int* row_ptr   = A.Mt.row_ptr;
+  int* cols      = A.Mt.cols;
+  const int nrow = A.Mt.nrow;
+  double* Y      = out.data();
+  double* X      = inner.data();
+  double* Braw   = B.data();
+#pragma omp parallel for schedule(dynamic, 256)
+  for (int row = 0; row < nrow; row++) {
+    double tmp[N] = { 0 };
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      int col = cols[i] * N;
+      for (int j = 0; j < N; j++) {
+         tmp[j] += X[col + j];
+      }
+    }
+    int r = row * N;
+    for (int j = 0; j < N; j++) {
+      Y[r + j] = tmp[j] + reg * Braw[r + j];
     }
   }
 }
 
 template<unsigned N>
-void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd tmp) {
-  A_mul_Bx<N>(tmp, A.M,  B);
-  A_mul_Bx<N>(out, A.Mt, tmp);
+void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
+  assert(N == out.rows());
+  assert(N == B.rows());
+  assert(A.M.cols() == B.cols());
+  assert(A.M.cols() == out.cols());
+  assert(A.M.rows() == inner.cols());
 
-  const int ncol = out.cols();
-  const int nrow = out.rows();
-#pragma omp parallel for schedule(static) collapse(2)
-  for (int col = 0; col < ncol; col++) {
-    for (int row = 0; row < nrow; row++) {
-      out(row, col) += reg * B(row, col);
+  A_mul_Bx<N>(inner, A.M,  B);
+
+  int* row_ptr   = A.Mt.row_ptr;
+  int* cols      = A.Mt.cols;
+  double* vals   = A.Mt.vals;
+  const int nrow = A.Mt.nrow;
+  double* Y      = out.data();
+  double* X      = inner.data();
+  double* Braw   = B.data();
+#pragma omp parallel for schedule(dynamic, 256)
+  for (int row = 0; row < nrow; row++) {
+    double tmp[N] = { 0 };
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      int col = cols[i] * N;
+      double val = vals[i];
+      for (int j = 0; j < N; j++) {
+        tmp[j] += X[col + j] * val;
+      }
+    }
+    int r = row * N;
+    for (int j = 0; j < N; j++) {
+      Y[r + j] = tmp[j] + reg * Braw[r + j];
     }
   }
 }

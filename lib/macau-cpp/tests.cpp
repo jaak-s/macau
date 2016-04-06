@@ -56,6 +56,42 @@ TEST_CASE( "SparseFeat/At_mul_A_csr", "[At_mul_A] for CSR" ) {
   REQUIRE( AA(3,2) == 0 );
 }
 
+TEST_CASE( "linop/A_mul_Bx(csr)", "A_mul_Bx for CSR" ) {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  double vals[9] = { 0.6 , -0.76,  1.48,  1.19,  2.44,  1.95, -0.82,  0.06,  2.54 };
+  SparseDoubleFeat sf(6, 4, 9, rows, cols, vals);
+  Eigen::MatrixXd B(2, 4), X(2, 6), Xtr(2, 6);
+  B << -1.38,  1.04, -0.28, -0.18,
+        0.03,  0.88,  1.32, -0.31;
+  Xtr << 0.624 , -0.8528,  1.2268,  0.6344, -3.4022, -0.4392,
+         0.528 , -0.7216,  1.0286,  1.9308,  3.4113, -0.7564;
+  A_mul_Bx<2>(X, sf.M,  B);
+  REQUIRE( (X - Xtr).norm() == Approx(0) );
+}
+
+TEST_CASE( "linop/AtA_mul_Bx(csr)", "AtA_mul_Bx for CSR" ) {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  double vals[9] = { 0.6 , -0.76,  1.48,  1.19,  2.44,  1.95, -0.82,  0.06,  2.54 };
+  SparseDoubleFeat sf(6, 4, 9, rows, cols, vals);
+  Eigen::MatrixXd B(2, 4), tmp(2, 6), out(2, 4), outtr(2, 4), X(6, 4);
+  B << -1.38,  1.04, -0.28, -0.18,
+        0.03,  0.88,  1.32, -0.31;
+  double reg = 0.6;
+
+  X <<  0.  ,  0.6 ,  0.  ,  0.  ,
+        0.  , -0.82,  0.  ,  0.  ,
+        0.  ,  1.19,  0.  ,  0.06,
+       -0.76,  0.  ,  1.48,  0.  ,
+        1.95,  0.  ,  2.54,  0.  ,
+        0.  ,  0.  ,  0.  ,  2.44;
+
+  AtA_mul_Bx<2>(out, sf, reg, B, tmp);
+  outtr = (X.transpose() * X * B.transpose() + reg * B.transpose()).transpose();
+  REQUIRE( (out - outtr).norm() == Approx(0) );
+}
+
 TEST_CASE( "SparseFeat/compute_uhat", "compute_uhat" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
   int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
