@@ -21,6 +21,9 @@ import urllib
 import tarfile
 import shutil
 
+# checking out libfastsparse
+import subprocess
+
 ## how to test -fopenmp: https://github.com/hickford/primesieve-python/blob/master/setup.py
 def is_openblas_installed():
     """check if the C module can be build by trying to compile a small 
@@ -158,6 +161,14 @@ def download_eigen_if_needed():
     ## deleting tmp
     shutil.rmtree(tmpdir)
 
+def checkout_libfastsparse():
+    if os.path.exists("lib/libfastsparse/csr.h") or os.path.exists("lib/libfastsparse/LICENSE"):
+        return
+    print("Checking out git submodules (libfastsparse).")
+    status = subprocess.call(["git", "submodule", "update", "--init", "--recursive"])
+    if status != 0:
+        raise RuntimeError("Could not checkout submodule. Please run 'git submodule update --init --recursive'.")
+    print("Checking out completed.")
 
 class build_clibx(build_clib):
     def build_libraries(self, libraries):
@@ -222,6 +233,7 @@ def main():
     else:
         print("OpenBLAS found.")
     download_eigen_if_needed()
+    checkout_libfastsparse()
 
     setup(
         name = 'macau',
