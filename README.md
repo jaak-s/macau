@@ -4,7 +4,7 @@ Highly optimized and parallelized implementation of Bayesian Factorization calle
 # Installation on Ubuntu
 ```bash
 # install dependencies:
-sudo apt-get install python-pip python-numpy python-scipy cython
+sudo apt-get install python-pip python-numpy python-scipy python-pandas cython
 sudo apt-get install libopenblas-dev autoconf gfortran
 sudo pip install cysignals
 

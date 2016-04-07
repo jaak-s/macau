@@ -61,5 +61,8 @@ cdef extern from "macau.h":
         void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols)
         void setVerbose(bool v)
         double getRmseTest()
+        VectorXd getPredictions()
+        VectorXd getStds()
+        MatrixXd getTestData()
         void run()
 

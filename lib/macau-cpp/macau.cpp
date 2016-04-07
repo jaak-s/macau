@@ -86,7 +86,8 @@ void Macau::run() {
 
   const int num_rows = Y.rows();
   const int num_cols = Y.cols();
-  VectorXd predictions = VectorXd::Zero( Ytest.nonZeros() );
+  predictions     = VectorXd::Zero( Ytest.nonZeros() );
+  predictions_var = VectorXd::Zero( Ytest.nonZeros() );
 
   auto start = tick();
   for (int i = 0; i < burnin + nsamples; i++) {
@@ -103,7 +104,7 @@ void Macau::run() {
     priors[0]->update_prior(*samples[0]);
     priors[1]->update_prior(*samples[1]);
 
-    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin + 1), predictions, *samples[1], *samples[0], mean_rating);
+    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
 
     auto endi = tick();
     auto elapsed = endi - start;
@@ -129,17 +130,25 @@ void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, do
   }
 }
 
-std::pair<double,double> eval_rmse(SparseMatrix<double> & P, const int n, VectorXd & predictions, const MatrixXd &sample_m, const MatrixXd &sample_u, double mean_rating)
+std::pair<double,double> eval_rmse(SparseMatrix<double> & P, const int n, VectorXd & predictions, Eigen::VectorXd & predictions_var, const MatrixXd &sample_m, const MatrixXd &sample_u, double mean_rating)
 {
-  // TODO: parallelize
   double se = 0.0, se_avg = 0.0;
-  unsigned idx = 0;
+#pragma omp parallel for schedule(dynamic,8) reduction(+:se, se_avg)
   for (int k = 0; k < P.outerSize(); ++k) {
+    int idx = P.outerIndexPtr()[k];
     for (SparseMatrix<double>::InnerIterator it(P,k); it; ++it) {
       const double pred = sample_m.col(it.col()).dot(sample_u.col(it.row())) + mean_rating;
       se += sqr(it.value() - pred);
 
-      const double pred_avg = (n == 0) ? pred : (predictions[idx] + (pred - predictions[idx]) / n);
+      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+      double pred_avg;
+      if (n == 0) {
+        pred_avg = pred;
+      } else {
+        double delta = pred - predictions[idx];
+        pred_avg = (predictions[idx] + delta / (n + 1));
+        predictions_var[idx] += delta * (pred - pred_avg);
+      }
       se_avg += sqr(it.value() - pred_avg);
       predictions[idx++] = pred_avg;
     }
@@ -149,4 +158,31 @@ std::pair<double,double> eval_rmse(SparseMatrix<double> & P, const int n, Vector
   const double rmse = sqrt( se / N );
   const double rmse_avg = sqrt( se_avg / N );
   return std::make_pair(rmse, rmse_avg);
+}
+
+Eigen::VectorXd Macau::getStds() {
+  VectorXd std(Ytest.nonZeros());
+  const int n = std.size();
+  const double inorm = 1.0 / (burnin - 1);
+#pragma omp parallel for schedule(static)
+  for (int i = 0; i < n; i++) {
+    std[i] = sqrt(predictions_var[i] * inorm);
+  }
+  return std;
+}
+
+// assumes matrix (not tensor)
+Eigen::MatrixXd Macau::getTestData() {
+  MatrixXd coords(Ytest.nonZeros(), 3);
+#pragma omp parallel for schedule(static)
+  for (int k = 0; k < Ytest.outerSize(); ++k) {
+    int idx = Ytest.outerIndexPtr()[k];
+    for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
+      coords(idx, 0) = it.row();
+      coords(idx, 1) = it.col();
+      coords(idx, 2) = it.value();
+      idx++;
+    }
+  }
+  return coords;
 }
