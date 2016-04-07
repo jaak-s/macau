@@ -58,8 +58,9 @@ def is_openblas_installed():
     }
     """)
     c_code_lapack = dedent("""
-    #include <lapacke.h>
-    #include<stdio.h>
+    #include <stdio.h>
+    extern "C" void dpotrf_(char *uplo, int *n, double *a, int *lda, int *info);
+    extern "C" void dpotrs_(char *uplo, int* n, int* nrhs, double* A, int* lda, double* B, int* ldb, int* info);
 
     int main(int argc, char* argv[])
     {
@@ -67,7 +68,7 @@ def is_openblas_installed():
         int nn = n*n;
         int nrhs = 2;
         int info;
-        const char lower = 'L';
+        char lower = 'L';
         double *A = new double[nn];
         double *B = new double[nrhs*nn];
         A[0] = 6.1;   A[1] = -0.65; A[2] = 5.1;
@@ -77,9 +78,9 @@ def is_openblas_installed():
         B[2] = 1.0; B[3] = 1.3;
         B[4] = 0.2; B[5] = -0.15;
 
-        info = LAPACKE_dpotrf(LAPACK_COL_MAJOR, lower, n, A, n);
+        dpotrf_(&lower, &n, A, &n, &info);
         if(info != 0){ printf("c++ error: Cholesky decomp failed"); }
-        info = LAPACKE_dpotrs(LAPACK_COL_MAJOR, lower, n, nrhs, A, n, B, n);
+        dpotrs_(&lower, &n, &nrhs, A, &n, B, &n, &info);
         if(info != 0){ printf("c++ error: Cholesky solve failed"); }
 
         return 0;
@@ -100,7 +101,7 @@ def is_openblas_installed():
     compiler = distutils.ccompiler.new_compiler(verbose=5)
     assert isinstance(compiler, distutils.ccompiler.CCompiler)
     distutils.sysconfig.customize_compiler(compiler)
-    ldirs = ["/usr/lib/openblas-base", "/opt/OpenBLAS/lib", "/usr/local/lib"]
+    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base"]
 
     try:
         compiler.link_executable(

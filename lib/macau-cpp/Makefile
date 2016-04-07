@@ -3,7 +3,7 @@ CXXFLAGS=-std=c++11 -Wall -Wno-unknown-pragmas -DNDEBUG -O3 -fopenmp -fstrict-al
 LINK.o=$(CXX) $(CXXFLAGS)
 
 INCLUDES := -I ../eigen3 -I ../libfastsparse
-LIBLOCS := -L/usr/lib/openblas-base -L/opt/OpenBLAS/lib -L/usr/local/lib
+LIBLOCS := -L/opt/OpenBLAS/lib -L/usr/local/lib -L/usr/lib/openblas-base
 LDFLAGS := -lm -lopenblas -lpthread
 
 all: test
