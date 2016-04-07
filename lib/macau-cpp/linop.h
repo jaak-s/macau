@@ -66,13 +66,13 @@ void AtA_mul_B(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Ei
 // compile-time optimized versions (N - number of RHSs)
 template<typename T>
 inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
-template<unsigned N>
+template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
-template<unsigned N>
+template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp);
-template<unsigned N>
+template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B);
-template<unsigned N>
+template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B);
 
 
@@ -340,7 +340,7 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   return iter;
 }
 
-template<unsigned N>
+template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B) {
   assert(N == out.rows());
   assert(N == B.rows());
@@ -369,7 +369,7 @@ void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B) {
   }
 }
 
-template<unsigned N>
+template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B) {
   assert(N == out.rows());
   assert(N == B.rows());
@@ -455,7 +455,7 @@ inline void AtA_mul_B_switch(Eigen::MatrixXd & out, T & A, double reg, Eigen::Ma
   }
 }
 
-template<unsigned N>
+template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
   assert(N == out.rows());
   assert(N == B.rows());
@@ -488,7 +488,7 @@ void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::Matrix
   }
 }
 
-template<unsigned N>
+template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
   assert(N == out.rows());
   assert(N == B.rows());
