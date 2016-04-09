@@ -85,11 +85,15 @@ cpdef blockcg(X, np.ndarray[np.double_t, ndim=2] B, double reg, double tol = 1e-
 cdef matview(MatrixXd *A):
     cdef int nrow = A.rows()
     cdef int ncol = A.cols()
+    if nrow == 0:
+      return np.zeros( (nrow, ncol) )
     cdef np.double_t[:,:] view = <np.double_t[:nrow:1, :ncol]> A.data()
     return np.asarray(view)
 
 cdef vecview(VectorXd *v):
     cdef int size = v.size()
+    if size == 0:
+      return np.zeros( 0 )
     cdef np.double_t[:] view = <np.double_t[:size]> v.data()
     return np.asarray(view)
 
