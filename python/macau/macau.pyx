@@ -11,6 +11,16 @@ cimport macau
 ## using cysignals to catch CTRL-C interrupt
 include "cysignals/signals.pxi"
 
+class MacauResult(object):
+  def __init__(self):
+    pass
+  def __repr__(self):
+    s = ("Matrix factorization results\n" + 
+         "Number of train: %d\n" % self.ntrain + 
+         "Number of test:  %d\n" % self.ntest  +
+         "Test RMSE:       %.4f\n" % self.rmse_test + 
+         "To see predictions on test set see '.prediction' field.")
+    return s
 
 cpdef mul_blas(np.ndarray[np.double_t, ndim=2] x, np.ndarray[np.double_t, ndim=2] y):
     if y.shape[0] != y.shape[1]:
@@ -223,12 +233,11 @@ def macau(Y,
       "y_pred_std" : pd.Series(yhat_sd)
     })
 
-    result = dict(
-        rmse_test = macau.getRmseTest(),
-        ntrain    = Y.nnz,
-        ntest     = Ytest.nnz if Ytest != None else 0,
-        prediction = pd.DataFrame(df)
-    )
+    result = MacauResult()
+    result.rmse_test  = macau.getRmseTest()
+    result.ntrain     = Y.nnz
+    result.ntest      = Ytest.nnz if Ytest != None else 0
+    result.prediction = pd.DataFrame(df)
 
     del macau
 
