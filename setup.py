@@ -101,7 +101,7 @@ def is_openblas_installed():
     compiler = distutils.ccompiler.new_compiler(verbose=5)
     assert isinstance(compiler, distutils.ccompiler.CCompiler)
     distutils.sysconfig.customize_compiler(compiler)
-    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base"]
+    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib"]
 
     try:
         compiler.link_executable(
@@ -206,7 +206,7 @@ class build_clibx(build_clib):
                                             output_dir = self.build_clib,
                                             debug=self.debug)
 
-inc = ['lib/macau-cpp', 'lib/eigen3', 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include"]
+inc = ['lib/macau-cpp', 'lib/eigen3', 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]
 
 libmacau = ('macau-cpp', dict(
     package='macau',

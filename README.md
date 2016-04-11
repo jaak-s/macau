@@ -14,6 +14,23 @@ cd macau
 sudo python setup.py install
 ```
 
+# Installation on Mac
+```bash
+# install dependencies
+pip install numpy
+pip install scipy
+pip install pandas
+pip install cython
+pip install cysignals
+# install brew (http://brew.sh/)
+brew install homebrew/science/openblas
+
+# checkout and install Macau
+git clone https://github.com/jaak-s/macau.git
+cd macau
+sudo python setup.py install
+```
+
 # Contributors
 In alphabetical order:
 - Tom Vander Aa
