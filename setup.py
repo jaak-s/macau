@@ -101,7 +101,7 @@ def is_openblas_installed():
     compiler = distutils.ccompiler.new_compiler(verbose=5)
     assert isinstance(compiler, distutils.ccompiler.CCompiler)
     distutils.sysconfig.customize_compiler(compiler)
-    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib"]
+    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
 
     try:
         compiler.link_executable(
@@ -222,6 +222,8 @@ ext_modules=[
               sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
               include_dirs = inc,
               libraries = ["openblas", "pthread"],
+              library_dirs = ["/usr/local/opt/gcc/lib/gcc/5"],
+              runtime_library_dirs = ["/usr/local/opt/gcc/lib/gcc/5"],
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")

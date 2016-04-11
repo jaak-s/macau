@@ -24,6 +24,7 @@ pip install cython
 pip install cysignals
 # install brew (http://brew.sh/)
 brew install homebrew/science/openblas
+brew install gcc
 
 # checkout and install Macau
 git clone https://github.com/jaak-s/macau.git
