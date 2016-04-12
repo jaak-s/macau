@@ -223,8 +223,8 @@ ext_modules=[
               sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
               include_dirs = inc,
               libraries = ["openblas", "pthread"],
-              library_dirs = ["/usr/local/opt/gcc/lib/gcc/5"],
-              runtime_library_dirs = ["/usr/local/opt/gcc/lib/gcc/5"],
+              library_dirs = ["/usr/local/opt/gcc/lib/gcc/5", "/usr/local/opt/openblas/lib"],
+              runtime_library_dirs = ["/usr/local/opt/gcc/lib/gcc/5", "/usr/local/opt/openblas/lib"],
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")
