@@ -101,6 +101,7 @@ def is_openblas_installed():
     compiler = distutils.ccompiler.new_compiler(verbose=5)
     assert isinstance(compiler, distutils.ccompiler.CCompiler)
     distutils.sysconfig.customize_compiler(compiler)
+    compiler.add_include_dir("/usr/local/opt/openblas/include")
     ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
 
     try:
