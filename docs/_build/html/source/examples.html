@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Examples &mdash; Macau 0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Macau 0.2 documentation" href="../index.html" />
+    <link rel="prev" title="Welcome to Macau’s documentation!" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to Macau’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Macau 0.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<p>In this examples we use ChEMBL IC50 dataset for proteins. The IC50 values and ECFP fingerprints can be downloaded from these two urls:
+.. code-block:: bash</p>
+<blockquote>
+<div>wget <a class="reference external" href="http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-346targets.mm">http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-346targets.mm</a>
+wget <a class="reference external" href="http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm">http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm</a></div></blockquote>
+<div class="section" id="matrix-factorization-with-side-information">
+<h2>Matrix Factorization with Side Information<a class="headerlink" href="#matrix-factorization-with-side-information" title="Permalink to this headline">¶</a></h2>
+<p>Next we factorize the <cite>compound x protein</cite> IC50 matrix by using side information on the compounds
+.. code-block:: python</p>
+<blockquote>
+<div><p>import macau
+import scipy.io</p>
+<p>## loading data
+ic50 = scipy.io.mmread(&#8220;/home/jaak/Dropbox/two/matrix-factorization/chembl_19_mf1c/chembl-IC50-346targets.mm&#8221;)
+ecfp = scipy.io.mmread(&#8220;/home/jaak/Dropbox/two/matrix-factorization/chembl_19_mf1c/chembl-IC50-compound-feat.mm&#8221;)</p>
+<p>## running factorization (Macau)
+result = macau.macau(Y = ic50, Ytest = 0.2, side=[ecfp, None], num_latent = 32, precision=5.0, burnin = 50, nsamples = 200)</p>
+</div></blockquote>
+<p>In this example we have used 20% of the data for test by setting <code class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">0.2</span></span></code> and use burn-in of 50 samples and then collect 200 samples of the model.
+For obtaining higher accuracy, try <cite>burnin = 200, nsamples = 800</cite>.</p>
+<p>The parameter <code class="code python docutils literal"><span class="name"><span class="pre">side</span></span><span class="operator"><span class="pre">=</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">ecfp</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name builtin pseudo"><span class="pre">None</span></span><span class="punctuation"><span class="pre">]</span></span></code> gets vector of two objects, the side information for rows and columns, respectively.
+In this example we only use side information for the compounds.</p>
+<p>The <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span><span class="operator"><span class="pre">=</span></span><span class="literal number float"><span class="pre">5.0</span></span></code> specifies the precision of the IC50 observations, i.e., 1 / variance.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Examples</a><ul>
+<li><a class="reference internal" href="#matrix-factorization-with-side-information">Matrix Factorization with Side Information</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to Macau&#8217;s documentation!</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/examples.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to Macau’s documentation!"
+             >previous</a> |</li>
+        <li><a href="../index.html">Macau 0.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Jaak Simm.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+    </div>
+  </body>
+</html>
