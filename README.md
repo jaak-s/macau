@@ -29,7 +29,7 @@ brew install gcc
 # checkout and install Macau
 git clone https://github.com/jaak-s/macau.git
 cd macau
-sudo CC=g++-5 CXX=g++-5 python setup.py install
+CC=g++-5 CXX=g++-5 python setup.py install
 ```
 
 # Contributors
