@@ -162,8 +162,12 @@ std::pair<double,double> eval_rmse(SparseMatrix<double> & P, const int n, Vector
 
 Eigen::VectorXd Macau::getStds() {
   VectorXd std(Ytest.nonZeros());
+  if (nsamples <= 1) {
+    std.setConstant(NAN);
+    return std;
+  }
   const int n = std.size();
-  const double inorm = 1.0 / (burnin - 1);
+  const double inorm = 1.0 / (nsamples - 1);
 #pragma omp parallel for schedule(static)
   for (int i = 0; i < n; i++) {
     std[i] = sqrt(predictions_var[i] * inorm);
