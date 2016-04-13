@@ -17,7 +17,7 @@ class MacauResult(object):
   def __repr__(self):
     s = ("Matrix factorization results\n" + 
          "Test RMSE:        %.4f\n" % self.rmse_test + 
-         "Matrix size:      [%d x %d]\n" % (Yshape[0], Yshape[1]) + 
+         "Matrix size:      [%d x %d]\n" % (self.Yshape[0], self.Yshape[1]) + 
          "Number of train:  %d\n" % self.ntrain + 
          "Number of test:   %d\n" % self.ntest  +
          "To see predictions on test set see '.prediction' field.")
