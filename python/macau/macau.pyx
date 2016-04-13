@@ -161,15 +161,7 @@ def bpmf(Y,
                  burnin     = burnin,
                  nsamples   = nsamples)
 
-def macau(Y,
-          Ytest      = None,
-          side       = [],
-          lambda_beta = 5.0,
-          num_latent = 10,
-          precision  = 1.0, 
-          burnin     = 50,
-          nsamples   = 400,
-          verbose    = True):
+def prepare_Y(Y, Ytest):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
     Y = Y.tocoo(copy = False)
@@ -181,6 +173,18 @@ def macau(Y,
         if Ytest.shape != Y.shape:
             raise ValueError("Ytest and Y must have the same shape")
         Ytest = Ytest.tocoo(copy = False)
+    return Y, Ytest
+
+def macau(Y,
+          Ytest      = None,
+          side       = [],
+          lambda_beta = 5.0,
+          num_latent = 10,
+          precision  = 1.0, 
+          burnin     = 50,
+          nsamples   = 400,
+          verbose    = True):
+    Y, Ytest = prepare_Y(Y, Ytest)
 
     cdef np.ndarray[int] irows = Y.row.astype(np.int32, copy=False)
     cdef np.ndarray[int] icols = Y.col.astype(np.int32, copy=False)
@@ -248,3 +252,51 @@ def macau(Y,
     #cdef np.ndarray[np.double_t] mu = vecview(&macau.prior_u.mu)
     return result
 
+
+######################## Variational Bayes Macau ######################
+
+cdef ILatentPriorVB* make_prior(side, int num_latent, int max_ff_size):
+    if side == None or side == ():
+        return new BPMFPriorVB(num_latent)
+    if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+        raise ValueError("Unsupported side information type: %s" + type(side))
+    raise ValueError("Unimplented (TODO)")
+
+#    cdef bool compute_ff = (side.shape[1] <= max_ff_size)
+#
+#    ## binary
+#    cdef SparseFeat* sf
+#    if (side.data == 1).all():
+#        sf = sparse2SparseBinFeat(side)
+#        return new MacauPrior[SparseFeat](num_latent, sf, compute_ff)
+#
+#    ## double CSR
+#    cdef SparseDoubleFeat* sdf
+#    sdf = sparse2SparseDoubleFeat(side)
+#    return new MacauPrior[SparseDoubleFeat](num_latent, sdf, compute_ff)
+
+
+def macau_vb(Y,
+             Ytest       = None,
+             side        = [],
+             lambda_beta = 5.0,
+             num_latent  = 10,
+             precision   = 1.0, 
+             niter       = 100,
+             verbose     = True):
+    Y, Ytest = prepare_Y(Y, Ytest)
+
+    cdef np.ndarray[int] irows = Y.row.astype(np.int32, copy=False)
+    cdef np.ndarray[int] icols = Y.col.astype(np.int32, copy=False)
+    cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
+
+    ## side information
+    if not side:
+        side = [None, None]
+    if type(side) not in [list, tuple]:
+        raise ValueError("Parameter 'side' must be a tuple or a list.")
+    if len(side) != 2:
+        raise ValueError("If specified 'side' must contain 2 elements.")
+
+    cdef int D = np.int32(num_latent)
+    return D

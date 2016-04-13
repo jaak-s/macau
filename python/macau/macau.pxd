@@ -50,6 +50,13 @@ cdef extern from "latentprior.h":
         MacauPrior()
         MacauPrior(int nlatent, FType* Fmat, bool comp_FtF)
 
+cdef extern from "latentpriorvb.h":
+    cdef cppclass ILatentPriorVB:
+        pass
+    cdef cppclass BPMFPriorVB(ILatentPriorVB):
+        BPMFPriorVB()
+        BPMFPriorVB(int num_latent)
+
 cdef extern from "macau.h":
     cdef cppclass Macau:
         Macau()
