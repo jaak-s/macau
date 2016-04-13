@@ -4,7 +4,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <memory>
-//#include "linop.h"
+#include "linop.h"
 
 /** interface */
 class ILatentPriorVB {
@@ -28,14 +28,12 @@ class BPMFPriorVB : public ILatentPriorVB {
   public:
     Eigen::VectorXd mu_mean, mu_var; 
     Eigen::VectorXd lambda_a, lambda_b;
-    Eigen::MatrixXd lambda_a0, lambda_b0;
-    Eigen::VectorXd mu0;
-
-    int b0;
+    double lambda_a0, lambda_b0;   // Hyper-prior for lambda-s
+    double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
   public:
-    BPMFPrior(const int nlatent) { init(nlatent); }
-    BPMFPrior() : BPMFPrior(10) {}
+    BPMFPriorVB(const int nlatent) { init(nlatent); }
+    BPMFPriorVB() : BPMFPriorVB(10) {}
 
     void init(const int num_latent);
     void update_latents(

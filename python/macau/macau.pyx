@@ -255,7 +255,7 @@ def macau(Y,
 
 ######################## Variational Bayes Macau ######################
 
-cdef ILatentPriorVB* make_prior(side, int num_latent, int max_ff_size):
+cdef ILatentPriorVB* make_prior_vb(side, int num_latent, int max_ff_size):
     if side == None or side == ():
         return new BPMFPriorVB(num_latent)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
