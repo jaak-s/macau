@@ -27,7 +27,7 @@ class ILatentPriorVB {
 class BPMFPriorVB : public ILatentPriorVB {
   public:
     Eigen::VectorXd mu_mean, mu_var; 
-    Eigen::VectorXd lambda_a, lambda_b;
+    Eigen::VectorXd lambda_b;
     double lambda_a0, lambda_b0;   // Hyper-prior for lambda-s
     double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
@@ -45,6 +45,7 @@ class BPMFPriorVB : public ILatentPriorVB {
         const Eigen::MatrixXd &Vvar,
         const double alpha);
     void update_prior(const Eigen::MatrixXd &Umean, const Eigen::MatrixXd &Uvar);
+    Eigen::VectorXd getElambda(int N);
 };
 
 /** Prior without side information (pure BPMF) */
@@ -72,8 +73,8 @@ class MacauPriorVB : public ILatentPriorVB {
     double tol = 1e-6;
 
   public:
-    MacauPrior(const int nlatent, FType * Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
-    MacauPrior() {}
+    MacauPriorVB(const int nlatent, FType * Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
+    MacauPriorVB() {}
 
     void init(const int num_latent, FType * Fmat, bool comp_FtF);
 
