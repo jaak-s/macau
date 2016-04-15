@@ -92,6 +92,9 @@ void BPMFPriorVB::update_latents(
 }
 
 void BPMFPriorVB::update_prior(const Eigen::MatrixXd &Umean, const Eigen::MatrixXd &Uvar) {
+  // TODO: parallelize or turn on Eigen's parallelism
+  assert(Umean.rows() == Uvar.rows());
+  assert(Vmean.rows() == Vvar.rows());
   const int N = Umean.cols();
   // updating mu_d
   VectorXd Elambda = getElambda(N);
@@ -101,4 +104,14 @@ void BPMFPriorVB::update_prior(const Eigen::MatrixXd &Umean, const Eigen::Matrix
   for (int i = 0; i < A.size(); i++) {
     mu_var(i) = 1.0 / A(i);
   }
+
+  // updating lambda_b
+  lambda_b.setConstant(lambda_b0);
+  // += b0 E[mu_d^2]
+  lambda_b += 0.5 * b0 * (mu_mean.cwiseProduct(mu_mean) + mu_var);
+  // += sum_i (E[uid] - E[mu_d])^2
+  lambda_b += 0.5 * (Umean.colwise() - mu_mean).cwiseProduct(Umean.colwise() - mu_mean).rowwise().sum();
+  // += sum_i (Var[uid])
+  lambda_b += 0.5 * Uvar.rowwise().sum();
+  lambda_b += 0.5 * mu_var * N;
 }

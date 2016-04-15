@@ -26,7 +26,8 @@ class MacauVB {
 
   /** BPMF model */
   std::vector< std::unique_ptr<ILatentPriorVB> > priors;
-  std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
+  std::vector< std::unique_ptr<Eigen::MatrixXd> > samples_mean;
+  std::vector< std::unique_ptr<Eigen::MatrixXd> > samples_var;
   bool verbose = true;
 
   public:

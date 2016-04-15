@@ -48,7 +48,7 @@ class BPMFPriorVB : public ILatentPriorVB {
     Eigen::VectorXd getElambda(int N);
 };
 
-/** Prior without side information (pure BPMF) */
+/** Prior with side information (Macau) */
 /*
 template<class FType>
 class MacauPriorVB : public ILatentPriorVB {
