@@ -1,5 +1,6 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <iostream>
 
 #include "latentpriorvb.h"
 
@@ -62,8 +63,7 @@ void BPMFPriorVB::update_latents(
     int idx = 0;
     for (SparseMatrix<double>::InnerIterator it(Ymat, i); it; ++it, idx++) {
       Qi += alpha * Vsq.col(it.row());
-      Yhat(idx) = Umean.col(i).dot( Vmean.col(it.row()) );
-      idx++;
+      Yhat(idx) = mean_value + Umean.col(i).dot( Vmean.col(it.row()) );
     }
     for (int d = 0; d < D; d++) {
       // computing Lid
@@ -74,7 +74,7 @@ void BPMFPriorVB::update_latents(
       for ( SparseMatrix<double>::InnerIterator it(Ymat, i); it; ++it, idx++) {
         const double vjd = Vmean(d, it.row());
         // Lid += alpha * (Yij - E[kijd]) * E[vjd]
-        Lid += alpha * (it.value() - (Yhat(idx) - uid)) * vjd;
+        Lid += alpha * (it.value() - (Yhat(idx) - uid*vjd)) * vjd;
       }
       // Now use Lid and Qid to update uid
       double uid_old = Umean(d, i);
