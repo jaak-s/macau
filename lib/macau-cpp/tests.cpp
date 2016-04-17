@@ -374,3 +374,41 @@ TEST_CASE( "latentpriorvb/update_latents", "LatentPriorVB update_latents") {
   REQUIRE( Umean(1, 2) == Approx(L21 / Q21) );
   REQUIRE( Uvar (1, 2) == Approx(1.0 / Q21) );
 }
+
+TEST_CASE( "latentpriorvb/update_prior", "LatentPriorVB update_prior") {
+  BPMFPriorVB prior(2);
+  prior.mu_mean  << 0.3, -0.2;
+  prior.mu_var   << 1.5,  1.7;
+  prior.lambda_b << 0.6,  0.7;
+  const double mean_value = 1.7;
+  const double alpha      = 2.1;
+
+  Eigen::MatrixXd Umean(2, 3);
+  Eigen::MatrixXd Uvar(2, 3);
+  Umean << 0.9, -1.2, 0.7,
+           1.2, -0.8, 1.9;
+  Uvar  << 0.9, -1.2, 0.7,
+           1.2, -0.8, 1.9;
+  // mu_mean and mu_var
+  const double ad = prior.lambda_a0 + (1 + Umean.cols()) / 2.0;
+  Eigen::VectorXd Elambda = Eigen::VectorXd::Constant(2, ad).cwiseQuotient( prior.lambda_b );
+  Eigen::VectorXd A = Elambda * (prior.b0 + Umean.cols());
+  Eigen::VectorXd B = Elambda.cwiseProduct( Umean.rowwise().sum() );
+  Eigen::VectorXd mu_mean = B.cwiseQuotient(A);
+  Eigen::VectorXd mu_var  = A.cwiseInverse();
+
+  // lambda_b
+  Eigen::VectorXd lambda_b = Eigen::VectorXd::Constant(2, prior.lambda_b0);
+  lambda_b += 0.5 * prior.b0 * (mu_mean.cwiseProduct(mu_mean) + mu_var);
+  auto udiff = Umean.colwise() - mu_mean;
+  lambda_b += 0.5 * (udiff.cwiseProduct(udiff).rowwise().sum() + Uvar.rowwise().sum() + Umean.cols() * mu_var);
+
+  prior.update_prior(Umean, Uvar);
+  REQUIRE( prior.mu_mean(0) == Approx(mu_mean(0)) );
+  REQUIRE( prior.mu_mean(1) == Approx(mu_mean(1)) );
+  REQUIRE( prior.mu_var(0)  == Approx(mu_var(0))  );
+  REQUIRE( prior.mu_var(1)  == Approx(mu_var(1))  );
+
+  REQUIRE( prior.lambda_b(0) == Approx(lambda_b(0)) );
+  REQUIRE( prior.lambda_b(1) == Approx(lambda_b(1)) );
+}

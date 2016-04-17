@@ -44,7 +44,7 @@ class BPMFPriorVB : public ILatentPriorVB {
         const Eigen::MatrixXd &Vmean,
         const Eigen::MatrixXd &Vvar,
         const double alpha);
-    void update_prior(const Eigen::MatrixXd &Umean, const Eigen::MatrixXd &Uvar);
+    void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar);
     Eigen::VectorXd getElambda(int N);
 };
 
