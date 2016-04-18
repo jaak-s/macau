@@ -7,19 +7,19 @@
 using namespace std; 
 using namespace Eigen;
 
-void BPMFPriorVB::init(const int num_latent) {
+void BPMFPriorVB::init(const int num_latent, const double u_expected_squares) {
   mu_mean.resize(num_latent);
   mu_var.resize(num_latent);
   mu_mean.setZero();
   mu_var.setOnes();
 
-  lambda_b.resize(num_latent);
-  lambda_b.setConstant(0.1);
-
   // parameters of Normal-Gamma distribution
   lambda_a0 = 1.0;
   lambda_b0 = 1.0;
   b0 = 2.0;
+
+  lambda_b.resize(num_latent);
+  lambda_b.setConstant(lambda_b0 + 0.5 * u_expected_squares);
 }
 
 Eigen::VectorXd BPMFPriorVB::getElambda(int N) {

@@ -39,7 +39,7 @@ void MacauVB::setRelationData(int* rows, int* cols, double* values, int N, int n
   Y.resize(nrows, ncols);
   sparseFromIJV(Y, rows, cols, values, N);
   Yt = Y.transpose();
-  mean_rating = Y.sum() / Y.nonZeros();
+  mean_value = Y.sum() / Y.nonZeros();
 }
 
 void MacauVB::setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) {
@@ -76,7 +76,7 @@ void MacauVB::init() {
 void MacauVB::run() {
   init();
   if (verbose) {
-    std::cout << "Sampling" << endl;
+    std::cout << "Estimating model" << endl;
   }
 
   const int num_rows = Y.rows();
@@ -84,18 +84,38 @@ void MacauVB::run() {
   predictions     = VectorXd::Zero( Ytest.nonZeros() );
 
   auto start = tick();
+  /*
+  std::cout << "Umean: " << *samples_mean[0] << std::endl;
+  std::cout << "Uvar:  " << *samples_var[0]  << std::endl;
+  std::cout << "Vmean: " << *samples_mean[1] << std::endl;
+  std::cout << "Vvar:  " << *samples_var[1]  << std::endl;
+  std::cout << "Uprior.mu_mean:  " << ((BPMFPriorVB*)priors[0].get())->mu_mean   << std::endl;
+  std::cout << "Uprior.mu_var:   " << ((BPMFPriorVB*)priors[0].get())->mu_var    << std::endl;
+  std::cout << "Uprior.lambda_b: " << ((BPMFPriorVB*)priors[0].get())->lambda_b  << std::endl;
+  std::cout << "Uprior.lambda_a0:" << ((BPMFPriorVB*)priors[0].get())->lambda_a0 << std::endl;
+  std::cout << "Uprior.lambda_b0:" << ((BPMFPriorVB*)priors[0].get())->lambda_b0 << std::endl;
+  std::cout << "Uprior.b0:       " << ((BPMFPriorVB*)priors[0].get())->b0        << std::endl;
+  std::cout << "Uprior.Elambda:  " << ((BPMFPriorVB*)priors[0].get())->getElambda(Y.rows()) << std::endl;
+  std::cout << "-----\n";
+  */
   for (int i = 0; i < niter; i++) {
     auto starti = tick();
 
     // update latent vectors
-    priors[0]->update_latents(*samples_mean[0], *samples_var[0], Yt, mean_rating,
+    priors[0]->update_latents(*samples_mean[0], *samples_var[0], Yt, mean_value,
                               *samples_mean[1], *samples_var[1], alpha);
-    priors[1]->update_latents(*samples_mean[1], *samples_var[1],  Y, mean_rating,
+    //std::cout << "Umean: " << *samples_mean[0] << std::endl;
+    //std::cout << "Uvar:  " << *samples_var[0]  << std::endl;
+    priors[1]->update_latents(*samples_mean[1], *samples_var[1],  Y, mean_value,
                               *samples_mean[0], *samples_var[0], alpha);
+    //std::cout << "Vmean: " << *samples_mean[1] << std::endl;
+    //std::cout << "Vvar:  " << *samples_var[1]  << std::endl;
 
     // update hyperparams
     priors[0]->update_prior(*samples_mean[0], *samples_var[0]);
     priors[1]->update_prior(*samples_mean[1], *samples_var[1]);
+
+    rmse_test = eval_rmse(predictions, Ytest, *samples_mean[1], *samples_mean[0], mean_value);
 
     auto endi = tick();
     auto elapsed = endi - start;
@@ -103,9 +123,8 @@ void MacauVB::run() {
     double elapsedi = endi - starti;
 
     if (verbose) {
-      printStatus(i, NAN, elapsedi, updates_per_sec);
+      printStatus(i, rmse_test, elapsedi, updates_per_sec);
     }
-    //rmse_test = eval.second;
   }
 }
 
@@ -120,4 +139,39 @@ void MacauVB::printStatus(int i, double rmse, double elapsedi, double updates_pe
     if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
     printf("\n");
   }*/
+}
+
+double inline sqr(double x) {
+  return x * x;
+}
+
+double eval_rmse(VectorXd & predictions, const SparseMatrix<double> & P, const MatrixXd &sample_m, const MatrixXd &sample_u, const double mean_value)
+{
+  double se = 0.0;
+#pragma omp parallel for schedule(dynamic,8) reduction(+:se)
+  for (int k = 0; k < P.outerSize(); ++k) {
+    int idx = P.outerIndexPtr()[k];
+    for (SparseMatrix<double>::InnerIterator it(P,k); it; ++it) {
+      const double pred = sample_m.col(it.col()).dot(sample_u.col(it.row())) + mean_value;
+      se += sqr(it.value() - pred);
+      predictions[idx++] = pred;
+    }
+  }
+
+  return sqrt( se / P.nonZeros() );
+}
+
+Eigen::MatrixXd MacauVB::getTestData() {
+  MatrixXd coords(Ytest.nonZeros(), 3);
+#pragma omp parallel for schedule(static)
+  for (int k = 0; k < Ytest.outerSize(); ++k) {
+    int idx = Ytest.outerIndexPtr()[k];
+    for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
+      coords(idx, 0) = it.row();
+      coords(idx, 1) = it.col();
+      coords(idx, 2) = it.value();
+      idx++;
+    }
+  }
+  return coords;
 }

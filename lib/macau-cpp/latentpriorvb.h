@@ -9,15 +9,15 @@
 /** interface */
 class ILatentPriorVB {
   public:
-    void virtual update_latents(
+    virtual void update_latents(
         Eigen::MatrixXd &Umean,
         Eigen::MatrixXd &Uvar,
         const Eigen::SparseMatrix<double> &Y,
         const double mean_value,
         const Eigen::MatrixXd &Vmean,
         const Eigen::MatrixXd &Vvar,
-        const double alpha) {};
-    void virtual update_prior(const Eigen::MatrixXd &Umean, const Eigen::MatrixXd &Uvar) {};
+        const double alpha) = 0;
+    virtual void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) = 0;
     virtual double getLinkNorm() { return NAN; };
     virtual double getLinkLambda() { return NAN; };
     virtual ~ILatentPriorVB() {};
@@ -32,10 +32,10 @@ class BPMFPriorVB : public ILatentPriorVB {
     double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
   public:
-    BPMFPriorVB(const int nlatent) { init(nlatent); }
-    BPMFPriorVB() : BPMFPriorVB(10) {}
+    BPMFPriorVB(const int nlatent, const int usquares) { init(nlatent, usquares); }
+    BPMFPriorVB() : BPMFPriorVB(10, 1.0) {}
 
-    void init(const int num_latent);
+    void init(const int num_latent, const double u_expected_squares);
     void update_latents(
         Eigen::MatrixXd &Umean,
         Eigen::MatrixXd &Uvar,

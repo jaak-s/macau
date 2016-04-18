@@ -14,9 +14,9 @@ class MacauVB {
 
   double alpha = 2.0; 
   int niter = 100;
-  double latent_init_std = 0.3;
+  double latent_init_std = 1.0;
 
-  double mean_rating = .0; 
+  double mean_value = .0; 
   Eigen::SparseMatrix<double> Y, Yt, Ytest;
   Eigen::VectorXd predictions;
   Eigen::VectorXd predictions_var;
@@ -31,8 +31,8 @@ class MacauVB {
   bool verbose = true;
 
   public:
-    MacauVB(int D) : num_latent{D} {}
-    MacauVB() : MacauVB(10) {}
+    MacauVB(int D) : num_latent{D} {};
+    MacauVB() : MacauVB(10) {};
     void addPrior(std::unique_ptr<ILatentPriorVB> & prior);
     void setPrecision(double p);
     void setNiter(int niter);
@@ -42,13 +42,13 @@ class MacauVB {
     void run();
     void printStatus(int i, double rmse, double elapsedi, double updates_per_sec);
     void setVerbose(bool v) { verbose = v; };
-    double getRmseTest();
+    double getRmseTest() { return rmse_test; };
     Eigen::VectorXd getPredictions() { return predictions; };
     Eigen::VectorXd getStds();
     Eigen::MatrixXd getTestData();
-    ~MacauVB();
+    ~MacauVB() {};
 };
 
-//std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, double mean_rating);
+double eval_rmse(Eigen::VectorXd & predictions, const Eigen::SparseMatrix<double> & P, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, const double mean_value);
 
 #endif /* MACAUVB_H */

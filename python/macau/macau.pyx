@@ -247,17 +247,14 @@ def macau(Y,
 
     del macau
 
-    #print("rows=%d, cols=%d" % ( macau.prior_u.Lambda.rows(), macau.prior_u.Lambda.cols()))
-    #cdef np.ndarray[np.double_t, ndim=2] L = matview(&macau.prior_u.Lambda)
-    #cdef np.ndarray[np.double_t] mu = vecview(&macau.prior_u.mu)
     return result
 
 
 ######################## Variational Bayes Macau ######################
 
-cdef ILatentPriorVB* make_prior_vb(side, int num_latent, int max_ff_size):
+cdef ILatentPriorVB* make_prior_vb(side, int num_latent, double usquares):
     if side == None or side == ():
-        return new BPMFPriorVB(num_latent)
+        return new BPMFPriorVB(num_latent, usquares)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Unsupported side information type: %s" + type(side))
     raise ValueError("Unimplented (TODO)")
@@ -276,7 +273,7 @@ cdef ILatentPriorVB* make_prior_vb(side, int num_latent, int max_ff_size):
 #    return new MacauPrior[SparseDoubleFeat](num_latent, sdf, compute_ff)
 
 
-def macau_vb(Y,
+def macau_varbayes(Y,
              Ytest       = None,
              side        = [],
              lambda_beta = 5.0,
@@ -299,4 +296,54 @@ def macau_vb(Y,
         raise ValueError("If specified 'side' must contain 2 elements.")
 
     cdef int D = np.int32(num_latent)
+    cdef double init_uvar = 4.0
+    cdef unique_ptr[ILatentPriorVB] prior_u = unique_ptr[ILatentPriorVB](make_prior_vb(side[0], D, init_uvar * Y.shape[0]))
+    cdef unique_ptr[ILatentPriorVB] prior_v = unique_ptr[ILatentPriorVB](make_prior_vb(side[1], D, init_uvar * Y.shape[1]))
+
+    sig_on()
+    cdef MacauVB *macau = new MacauVB(D)
+    macau.addPrior(prior_u)
+    macau.addPrior(prior_v)
+    macau.setPrecision(np.float64(precision))
+    macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
+    macau.setNiter(np.int32(niter))
+    macau.setVerbose(verbose)
+
+    cdef np.ndarray[int] trows, tcols
+    cdef np.ndarray[np.double_t] tvals
+
+    if Ytest != None:
+        trows = Ytest.row.astype(np.int32, copy=False)
+        tcols = Ytest.col.astype(np.int32, copy=False)
+        tvals = Ytest.data.astype(np.double, copy=False)
+        macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
+
+    macau.run()
+    sig_off()
+
+    cdef VectorXd yhat_raw     = macau.getPredictions()
+    #cdef VectorXd yhat_sd_raw  = macau.getStds()
+    cdef MatrixXd testdata_raw = macau.getTestData()
+
+    cdef np.ndarray[np.double_t] yhat    = vecview( & yhat_raw ).copy()
+    #cdef np.ndarray[np.double_t] yhat_sd = vecview( & yhat_sd_raw ).copy()
+    cdef np.ndarray[np.double_t, ndim=2] testdata = matview( & testdata_raw ).copy()
+
+    df = pd.DataFrame({
+      "row" : pd.Series(testdata[:,0], dtype='int'),
+      "col" : pd.Series(testdata[:,1], dtype='int'),
+      "y"   : pd.Series(testdata[:,2]),
+      "y_pred" : pd.Series(yhat)#,
+      #"y_pred_std" : pd.Series(yhat_sd)
+    })
+
+    result = MacauResult()
+    result.rmse_test  = macau.getRmseTest()
+    result.Yshape     = Y.shape
+    result.ntrain     = Y.nnz
+    result.ntest      = Ytest.nnz if Ytest != None else 0
+    result.prediction = pd.DataFrame(df)
+
+    del macau
+
     return D

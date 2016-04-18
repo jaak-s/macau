@@ -304,7 +304,7 @@ TEST_CASE( "linop/A_mul_B_add", "Fast parallel A_mul_B with adding") {
 }
 
 TEST_CASE( "latentpriorvb/update_latents", "LatentPriorVB update_latents") {
-  BPMFPriorVB prior(2);
+  BPMFPriorVB prior(2, 3.0);
   prior.mu_mean  << 0.3, -0.2;
   prior.mu_var   << 1.5,  1.7;
   prior.lambda_b << 0.6,  0.7;
@@ -376,7 +376,7 @@ TEST_CASE( "latentpriorvb/update_latents", "LatentPriorVB update_latents") {
 }
 
 TEST_CASE( "latentpriorvb/update_prior", "LatentPriorVB update_prior") {
-  BPMFPriorVB prior(2);
+  BPMFPriorVB prior(2, 3.0);
   prior.mu_mean  << 0.3, -0.2;
   prior.mu_var   << 1.5,  1.7;
   prior.lambda_b << 0.6,  0.7;

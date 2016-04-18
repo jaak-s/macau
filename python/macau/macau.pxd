@@ -55,7 +55,7 @@ cdef extern from "latentpriorvb.h":
         pass
     cdef cppclass BPMFPriorVB(ILatentPriorVB):
         BPMFPriorVB()
-        BPMFPriorVB(int num_latent)
+        BPMFPriorVB(int num_latent, double usquares)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:
@@ -70,6 +70,21 @@ cdef extern from "macau.h":
         double getRmseTest()
         VectorXd getPredictions()
         VectorXd getStds()
+        MatrixXd getTestData()
+        void run()
+
+cdef extern from "macauvb.h":
+    cdef cppclass MacauVB:
+        MacauVB()
+        MacauVB(int num_latent)
+        void addPrior(unique_ptr[ILatentPriorVB] & prior)
+        void setPrecision(double p)
+        void setNiter(int n)
+        void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols)
+        void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols)
+        void setVerbose(bool v)
+        double getRmseTest()
+        VectorXd getPredictions()
         MatrixXd getTestData()
         void run()
 
