@@ -346,4 +346,4 @@ def macau_varbayes(Y,
 
     del macau
 
-    return D
+    return result
