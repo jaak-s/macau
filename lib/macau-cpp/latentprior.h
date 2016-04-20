@@ -63,10 +63,10 @@ class MacauPrior : public ILatentPrior {
     double tol = 1e-6;
 
   public:
-    MacauPrior(const int nlatent, FType * Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
+    MacauPrior(const int nlatent, std::unique_ptr<FType> &Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
     MacauPrior() {}
 
-    void init(const int num_latent, FType * Fmat, bool comp_FtF);
+    void init(const int num_latent, std::unique_ptr<FType> &Fmat, bool comp_FtF);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);

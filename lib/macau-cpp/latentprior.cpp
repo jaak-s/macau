@@ -51,7 +51,7 @@ void BPMFPrior::init(const int num_latent) {
 
 /** MacauPrior */
 template<class FType>
-void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) {
+void MacauPrior<FType>::init(const int num_latent, std::unique_ptr<FType> &Fmat, bool comp_FtF) {
   mu.resize(num_latent);
   mu.setZero();
 
@@ -68,7 +68,8 @@ void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) 
   df = num_latent;
 
   // side information
-  F = std::unique_ptr<FType>(Fmat);
+  //F = std::unique_ptr<FType>(Fmat);
+  F = std::move(Fmat);
   use_FtF = comp_FtF;
   if (use_FtF) {
     FtF.resize(F->cols(), F->cols());

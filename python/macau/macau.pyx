@@ -133,15 +133,16 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size):
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
 
     ## binary
-    cdef SparseFeat* sf
+    #cdef SparseFeat* sf
+    cdef unique_ptr[SparseFeat] sf_ptr
     if (side.data == 1).all():
-        sf = sparse2SparseBinFeat(side)
-        return new MacauPrior[SparseFeat](num_latent, sf, compute_ff)
+        sf_ptr = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
+        return new MacauPrior[SparseFeat](num_latent, sf_ptr, compute_ff)
 
     ## double CSR
-    cdef SparseDoubleFeat* sdf
-    sdf = sparse2SparseDoubleFeat(side)
-    return new MacauPrior[SparseDoubleFeat](num_latent, sdf, compute_ff)
+    cdef unique_ptr[SparseDoubleFeat] sdf_ptr
+    sdf_ptr = unique_ptr[SparseDoubleFeat]( sparse2SparseDoubleFeat(side) )
+    return new MacauPrior[SparseDoubleFeat](num_latent, sdf_ptr, compute_ff)
 
 ## API functions:
 ## 1) F'F
