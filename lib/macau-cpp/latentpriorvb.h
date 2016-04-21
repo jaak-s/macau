@@ -69,10 +69,10 @@ class MacauPriorVB : public ILatentPriorVB {
     double lambda_beta_b0;     // Hyper-prior for lambda_beta
 
   public:
-    MacauPriorVB(const int nlatent, FType * Fmat) { init(nlatent, Fmat); }
+    MacauPriorVB(const int nlatent, std::unique_ptr[FType] & Fmat) { init(nlatent, Fmat); }
     MacauPriorVB() {}
 
-    void init(const int num_latent, FType * Fmat);
+    void init(const int num_latent, std::unique_ptr[FType] & Fmat);
 
     void update_latents(
         Eigen::MatrixXd &Umean,
