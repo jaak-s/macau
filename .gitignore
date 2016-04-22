@@ -1,1 +1,3 @@
 build/
+tmp/
+lib/eigen3/
