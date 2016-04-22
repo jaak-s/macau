@@ -4,7 +4,8 @@ LINK.o=$(CXX) $(CXXFLAGS)
 
 INCLUDES := -I ../eigen3 -I ../libfastsparse
 LIBLOCS := -L/opt/OpenBLAS/lib -L/usr/local/lib -L/usr/lib/openblas-base
-LDFLAGS := -lm -lopenblas -lpthread
+#LDFLAGS := -lm -lopenblas -lpthread -lgfortran
+LDFLAGS := -lm -lblas -llapack -lpthread -lgfortran
 
 all: test
 test: tests
@@ -16,7 +17,7 @@ test: tests
 
 OBJS = mvnormal.o chol.o linop.o latentprior.o latentpriorvb.o tests.o
 tests: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o tests $(OBJS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o tests $(OBJS) $(LIBLOCS) $(LDFLAGS)
 
 clean:
 	rm -f tests *.o
