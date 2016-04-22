@@ -60,6 +60,7 @@ class MacauPriorVB : public ILatentPriorVB {
 
     Eigen::MatrixXd Uhat;
     std::unique_ptr<FType> F;  // side information
+    Eigen::VectorXd F_colsq;   // sum-of-squares for every feature (column)
     Eigen::MatrixXd beta;      // link matrix
     Eigen::MatrixXd beta_var;  // link matrix variance
 
@@ -88,6 +89,5 @@ class MacauPriorVB : public ILatentPriorVB {
     double getLinkNorm() override;
     double getLinkLambda() override { return lambda_beta; };
     Eigen::VectorXd getElambda(int N);
-};
-*/
+}; */
 #endif /* LATENTPRIORVB_H */

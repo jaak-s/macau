@@ -100,13 +100,8 @@ void sample_latent_blas(Eigen::MatrixXd &s,
                         const Eigen::MatrixXd &Lambda_u,
                         const int num_latent);
 
-template<typename T>
-Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, T & B);
-template<>
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
-template<>
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
-template<>
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
 
 #endif /* LATENTPRIOR_H */

@@ -68,7 +68,6 @@ void MacauPrior<FType>::init(const int num_latent, std::unique_ptr<FType> &Fmat,
   df = num_latent;
 
   // side information
-  //F = std::unique_ptr<FType>(Fmat);
   F = std::move(Fmat);
   use_FtF = comp_FtF;
   if (use_FtF) {
