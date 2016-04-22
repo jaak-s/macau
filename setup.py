@@ -208,6 +208,7 @@ class build_clibx(build_clib):
                                             debug=self.debug)
 
 inc = ['lib/macau-cpp', 'lib/eigen3', 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]
+ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
 
 libmacau = ('macau-cpp', dict(
     package='macau',
@@ -223,8 +224,8 @@ ext_modules=[
               sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
               include_dirs = inc,
               libraries = ["openblas", "pthread"],
-              library_dirs = ["/usr/local/opt/gcc/lib/gcc/5", "/usr/local/opt/openblas/lib"],
-              runtime_library_dirs = ["/usr/local/opt/gcc/lib/gcc/5", "/usr/local/opt/openblas/lib"],
+              library_dirs = ldirs,
+              runtime_library_dirs = ldirs,
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")
