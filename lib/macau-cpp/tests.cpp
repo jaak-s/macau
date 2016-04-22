@@ -93,7 +93,21 @@ TEST_CASE( "linop/AtA_mul_Bx(csr)", "AtA_mul_Bx for CSR" ) {
   REQUIRE( (out - outtr).norm() == Approx(0) );
 }
 
-TEST_CASE( "SparseFeat/compute_uhat", "compute_uhat" ) {
+TEST_CASE( "linop/SparseFeat/col_square_sum", "sum of squares of a column" ) {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::VectorXd sq(4), sq_true(4);
+
+  sq_true << 2, 3, 2, 2;
+  sq = col_square_sum(sf);
+  REQUIRE( sq(0) == Approx(sq_true(0)) );
+  REQUIRE( sq(1) == Approx(sq_true(1)) );
+  REQUIRE( sq(2) == Approx(sq_true(2)) );
+  REQUIRE( sq(3) == Approx(sq_true(3)) );
+}
+
+TEST_CASE( "linop/SparseFeat/compute_uhat", "compute_uhat" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
   int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
   SparseFeat sf(6, 4, 9, rows, cols);
@@ -114,7 +128,7 @@ TEST_CASE( "SparseFeat/compute_uhat", "compute_uhat" ) {
   }
 }
 
-TEST_CASE( "SparseFeat/solve_blockcg", "BlockCG solver (1rhs)" ) {
+TEST_CASE( "linop/SparseFeat/solve_blockcg", "BlockCG solver (1rhs)" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
   int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
   SparseFeat sf(6, 4, 9, rows, cols);
@@ -132,7 +146,7 @@ TEST_CASE( "SparseFeat/solve_blockcg", "BlockCG solver (1rhs)" ) {
 }
 
 
-TEST_CASE( "SparseFeat/solve_blockcg_1_0", "BlockCG solver (3rhs separately)" ) {
+TEST_CASE( "linop/SparseFeat/solve_blockcg_1_0", "BlockCG solver (3rhs separately)" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
   int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
   SparseFeat sf(6, 4, 9, rows, cols);
@@ -154,7 +168,7 @@ TEST_CASE( "SparseFeat/solve_blockcg_1_0", "BlockCG solver (3rhs separately)" ) 
   }
 }
 
-TEST_CASE( "MatrixXd/compute_uhat", "compute_uhat for MatrixXd" ) {
+TEST_CASE( "linop/MatrixXd/compute_uhat", "compute_uhat for MatrixXd" ) {
   Eigen::MatrixXd beta(2, 4), feat(6, 4), uhat(2, 6), uhat_true(2, 6);
   beta << 0.56,  0.55,  0.3 , -1.78,
           1.63, -0.71,  0.8 , -0.28;
