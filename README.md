@@ -9,7 +9,7 @@ sudo apt-get install libopenblas-dev autoconf gfortran
 sudo pip install cysignals
 
 # checkout and install Macau
-git clone https://github.com/jaak-s/macau.git
+git clone --recursive https://github.com/jaak-s/macau.git
 cd macau
 sudo python setup.py install
 ```
@@ -27,7 +27,7 @@ brew install homebrew/science/openblas
 brew install gcc
 
 # checkout and install Macau
-git clone https://github.com/jaak-s/macau.git
+git clone --recursive https://github.com/jaak-s/macau.git
 cd macau
 CC=g++-5 CXX=g++-5 python setup.py install
 ```
