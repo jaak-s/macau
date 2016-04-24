@@ -19,7 +19,6 @@ class MacauVB {
   double mean_value = .0; 
   Eigen::SparseMatrix<double> Y, Yt, Ytest;
   Eigen::VectorXd predictions;
-  Eigen::VectorXd predictions_var;
 
   double rmse_test  = .0;
   double rmse_train = .0;

@@ -323,19 +323,19 @@ def macau_varbayes(Y,
     sig_off()
 
     cdef VectorXd yhat_raw     = macau.getPredictions()
-    #cdef VectorXd yhat_sd_raw  = macau.getStds()
+    cdef VectorXd yhat_sd_raw  = macau.getStds()
     cdef MatrixXd testdata_raw = macau.getTestData()
 
     cdef np.ndarray[np.double_t] yhat    = vecview( & yhat_raw ).copy()
-    #cdef np.ndarray[np.double_t] yhat_sd = vecview( & yhat_sd_raw ).copy()
+    cdef np.ndarray[np.double_t] yhat_sd = vecview( & yhat_sd_raw ).copy()
     cdef np.ndarray[np.double_t, ndim=2] testdata = matview( & testdata_raw ).copy()
 
     df = pd.DataFrame({
       "row" : pd.Series(testdata[:,0], dtype='int'),
       "col" : pd.Series(testdata[:,1], dtype='int'),
       "y"   : pd.Series(testdata[:,2]),
-      "y_pred" : pd.Series(yhat)#,
-      #"y_pred_std" : pd.Series(yhat_sd)
+      "y_pred" : pd.Series(yhat),
+      "y_pred_std" : pd.Series(yhat_sd)
     })
 
     result = MacauResult()

@@ -85,6 +85,7 @@ cdef extern from "macauvb.h":
         void setVerbose(bool v)
         double getRmseTest()
         VectorXd getPredictions()
+        VectorXd getStds()
         MatrixXd getTestData()
         void run()
 

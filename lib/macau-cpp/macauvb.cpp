@@ -161,6 +161,29 @@ double eval_rmse(VectorXd & predictions, const SparseMatrix<double> & P, const M
   return sqrt( se / P.nonZeros() );
 }
 
+Eigen::VectorXd MacauVB::getStds() {
+  VectorXd stds(Ytest.nonZeros());
+  const MatrixXd & Umean = *samples_mean[0];
+  const MatrixXd & Vmean = *samples_mean[1];
+  const MatrixXd & Uvar  = *samples_var[0];
+  const MatrixXd & Vvar  = *samples_var[1];
+#pragma omp parallel for schedule(dynamic, 4)
+  for (int col = 0; col < Ytest.outerSize(); col++) {
+    int idx = Ytest.outerIndexPtr()[col];
+    for (SparseMatrix<double>::InnerIterator it(Ytest, col); it; ++it) {
+      int row = it.row();
+      double var = 0.0;
+      for (int d = 0; d < num_latent; d++) {
+        var += Umean(d, row) * Umean(d, row) * Vvar(d, col) +
+               Vmean(d, col) * Vmean(d, col) * Uvar(d, row) +
+               Uvar(d, row) * Vvar(d, col);
+      }
+      stds(idx++) = sqrt(var);
+    }
+  }
+  return stds;
+}
+
 Eigen::MatrixXd MacauVB::getTestData() {
   MatrixXd coords(Ytest.nonZeros(), 3);
 #pragma omp parallel for schedule(static)
