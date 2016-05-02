@@ -19,7 +19,7 @@ class ILatentPriorVB {
         const double alpha) = 0;
     virtual void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) = 0;
     virtual double getLinkNorm() { return NAN; };
-    virtual double getLinkLambda() { return NAN; };
+    virtual double getLinkLambdaNorm() { return NAN; };
     virtual ~ILatentPriorVB() {};
 };
 
@@ -32,7 +32,7 @@ class BPMFPriorVB : public ILatentPriorVB {
     double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
   public:
-    BPMFPriorVB(const int nlatent, const int usquares) { init(nlatent, usquares); }
+    BPMFPriorVB(const int nlatent, const double usquares) { init(nlatent, usquares); }
     BPMFPriorVB() : BPMFPriorVB(10, 1.0) {}
 
     void init(const int num_latent, const double u_expected_squares);
@@ -48,11 +48,10 @@ class BPMFPriorVB : public ILatentPriorVB {
     Eigen::VectorXd getElambda(int N);
 };
 
-/** Prior with side information (Macau) */
-/*
+/** Prior with side information (MacauVB) */
 template<class FType>
 class MacauPriorVB : public ILatentPriorVB {
-  private:
+  public:
     Eigen::VectorXd mu_mean, mu_var; 
     Eigen::VectorXd lambda_b;
     double lambda_a0, lambda_b0;   // Hyper-prior for lambda-s
@@ -70,10 +69,10 @@ class MacauPriorVB : public ILatentPriorVB {
     double lambda_beta_b0;     // Hyper-prior for lambda_beta
 
   public:
-    MacauPriorVB(const int nlatent, std::unique_ptr[FType] & Fmat) { init(nlatent, Fmat); }
+    MacauPriorVB(const int nlatent, std::unique_ptr<FType> & Fmat, double usquares) { init(nlatent, Fmat, usquares); }
     MacauPriorVB() {}
 
-    void init(const int num_latent, std::unique_ptr[FType] & Fmat);
+    void init(const int num_latent, std::unique_ptr<FType> & Fmat, double usquares);
 
     void update_latents(
         Eigen::MatrixXd &Umean,
@@ -85,9 +84,9 @@ class MacauPriorVB : public ILatentPriorVB {
         const double alpha) override;
     void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) override;
     void update_beta(const Eigen::MatrixXd &U);
-    void update_lambda_beta(double lambda_beta);
+    void update_lambda_beta();
     double getLinkNorm() override;
-    double getLinkLambda() override { return lambda_beta; };
+    //double getLinkLambdaNorm() override { return lambda_beta; };
     Eigen::VectorXd getElambda(int N);
-}; */
+};
 #endif /* LATENTPRIORVB_H */
