@@ -1,5 +1,8 @@
 # Macau-cpp - Bayesian Factorization with Side Information
-Highly optimized and parallelized implementation of Bayesian Factorization called Macau.
+Macau is highly optimized and parallelized implementation of Bayesian Factorization.
+
+Macau trains a Bayesian model for **collaborative filtering** by also incorporating side information on rows and/or columns to improve the accuracy of the predictions.
+Macau employs Gibbs sampling to sample both the latent vectors and the link matrix that connects the side information to the latent vectors. Macau supports **high-dimensional** side information (e.g., millions of features) by using **conjugate gradient** based noise injection sampler.
 
 # Installation on Ubuntu
 ```bash
