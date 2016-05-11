@@ -224,6 +224,52 @@ void MacauPriorVB<FType>::update_latents(
 }
 
 template<class FType>
+void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar, Eigen::VectorXd &E_lambda) {
+  // updating beta and beta_var
+  const int nfeat = beta.cols();
+  const int blocksize = 4;
+  const int num_latent = Umean.rows();
+
+  // E[a_d] - precision for every dimension
+  VectorXd E_lambda_beta = lambda_beta_a.cwiseQuotient(lambda_beta_b);
+
+  MatrixXd Z;
+  VectorXd beta_new;
+
+#pragma omp parallel for private(Z, beta_new) schedule(static, 1)
+  for (int dstart = 0; dstart < num_latent; dstart += blocksize) {
+    const int dcount = std::min(blocksize, num_latent - dstart);
+    Z.resize(dcount, Umean.cols());
+
+    for (int i = 0; i < Umean.cols(); i++) {
+      for (int d = 0; d < dcount; d++) {
+        int dx = d + dstart;
+        Z(d, i) = Umean(dx, i) - mu_mean(dx) - Uhat(dx, i);
+      }
+    }
+
+    for (int f = 0; f < nfeat; f++) {
+      VectorXd zx(dcount), delta_beta(dcount);
+      // zx = Z[dstart : dstart + dcount, :] * X[:, f]
+      At_mul_Bt(zx, *F, f, Z);
+
+      for (int d = 0; d < dcount; d++) {
+        int dx = d + dstart;
+        double A_df     = E_lambda_beta(dx) + E_lambda(dx) * F_colsq(f);
+        double B_df     = E_lambda(dx) * (zx(d) + beta(dx,f) * F_colsq(f));
+        double A_inv    = 1.0 / A_df;
+        double beta_new = B_df * A_inv;
+        delta_beta(d)   = beta(dx,f) - beta_new;
+
+        beta_var(dx, f) = A_inv;
+        beta(dx, f)     = beta_new;
+      }
+      // TODO: use delta_beta to update Z[dstart : dstart + dcount, :]
+    }
+  }
+}
+
+template<class FType>
 void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) {
   // TODO: parallelize or turn on Eigen's parallelism
   assert(Umean.rows() == Uvar.rows());
@@ -254,8 +300,10 @@ void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &
   lambda_b += 0.5 * Uvar.rowwise().sum();
   // += 0.5 * sum_i (Var[mu_d])
   lambda_b += 0.5 * mu_var * N;
-  // += 0.5 * sum_i sum_f Var[beta_df] * x_if)
+  // += 0.5 * sum_i sum_f Var[beta_df] * x_if * x_if)
   lambda_b += 0.5 * beta_var * F_colsq;
+
+  update_beta(Umean, Uvar, Elambda);
 }
 
 template<class FType>

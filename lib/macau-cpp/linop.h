@@ -114,6 +114,20 @@ void makeSymmetric(Eigen::MatrixXd & A);
 void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 
+// Y = X[:,f]' * B'
+inline void At_mul_Bt(Eigen::VectorXd & Y, SparseFeat & X, const int col, Eigen::MatrixXd & B) {
+  const int* cols = X.Mt.cols;
+  const int end   = X.Mt.row_ptr[col + 1];
+  const int D     = Y.size();
+  Y.setZero();
+  for (int i = X.Mt.row_ptr[col]; i < end; i++) {
+    int col = cols[i];
+    for (int d = 0; d < D; d++) {
+      Y(d) += B(d, col);
+    }
+  }
+}
+
 ///////////////////////////////////
 //     Template functions
 ///////////////////////////////////
