@@ -1,6 +1,9 @@
 # Macau-cpp - Bayesian Factorization with Side Information
 Highly optimized and parallelized implementation of Bayesian Factorization called Macau.
 
+# Examples
+For examples see [documentation](http://macau.readthedocs.io/)
+
 # Installation on Ubuntu
 ```bash
 # install dependencies:
