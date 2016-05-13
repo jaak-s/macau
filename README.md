@@ -2,7 +2,7 @@
 Highly optimized and parallelized implementation of Bayesian Factorization called Macau.
 
 # Examples
-For examples see [documentation](http://macau.readthedocs.io/)
+For examples see [documentation](http://macau.readthedocs.io/en/latest/source/examples.html).
 
 # Installation on Ubuntu
 ```bash
