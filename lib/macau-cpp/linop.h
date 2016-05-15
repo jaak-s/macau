@@ -114,16 +114,30 @@ void makeSymmetric(Eigen::MatrixXd & A);
 void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 
-// Y = X[:,f]' * B'
+// Y = X[:,col]' * B'
 inline void At_mul_Bt(Eigen::VectorXd & Y, SparseFeat & X, const int col, Eigen::MatrixXd & B) {
   const int* cols = X.Mt.cols;
   const int end   = X.Mt.row_ptr[col + 1];
   const int D     = Y.size();
   Y.setZero();
   for (int i = X.Mt.row_ptr[col]; i < end; i++) {
-    int col = cols[i];
+    int c = cols[i];
     for (int d = 0; d < D; d++) {
-      Y(d) += B(d, col);
+      Y(d) += B(d, c);
+    }
+  }
+}
+
+// computes Z += A[:,col] * b', where a and b are vectors
+inline void add_Acol_mul_bt(Eigen::MatrixXd & Z, SparseFeat & A, const int col, Eigen::VectorXd & b) {
+  const int* cols = A.Mt.cols;
+  int i           = A.Mt.row_ptr[col];
+  const int end   = A.Mt.row_ptr[col + 1];
+  const int D     = b.size();
+  for (; i < end; i++) {
+    int c = cols[i];
+    for (int d = 0; d < D; d++) {
+      Z(d, c) += b(d);
     }
   }
 }

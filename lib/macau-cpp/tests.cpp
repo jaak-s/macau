@@ -333,6 +333,22 @@ TEST_CASE( "linop/At_mul_Bt/SparseFeat", "At_mul_Bt of single col for SparseFeat
   REQUIRE( Y(1) == Approx(Y_true(1)) );
 }
 
+TEST_CASE( "linop/add_Acol_mul_bt/SparseFeat", "add_Acol_mul_bt for SparseFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::MatrixXd Z(2, 6), Z_added(2, 6);
+  Eigen::VectorXd b(2);
+  Z << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  b << -4.16, 0.41;
+  Z_added << -4.39, -7.05, -5.2 , -0.52, -1.45, -1.42,
+              0.25, -0.21,  1.6 ,  1.12,  0.11,  0.61;
+
+  add_Acol_mul_bt(Z, sf, 1, b);
+  REQUIRE( (Z - Z_added).norm() == Approx(0.0) );
+}
+
 TEST_CASE( "latentpriorvb/bpmfpriorvb/update_latents", "BPMFPriorVB update_latents") {
   BPMFPriorVB prior(2, 3.0);
   prior.mu_mean  << 0.3, -0.2;
