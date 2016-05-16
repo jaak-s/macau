@@ -595,6 +595,31 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_beta", "MacauPriorVB update_beta")
   REQUIRE( (prior.beta - beta).norm() == Approx(0.0) );
 }
 
+TEST_CASE( "latentpriorvb/macaupriorvb/update_lambda_beta", "update_lambda_beta") {
+  int rows[5] = { 0, 0, 1, 2, 2 };
+  int cols[5] = { 0, 1, 1, 2, 3 };
+  std::unique_ptr<SparseFeat> sf = std::unique_ptr<SparseFeat>(new SparseFeat(3, 4, 5, rows, cols));
+  MacauPriorVB<SparseFeat> prior(2, sf, 3.0);
+  prior.beta <<  0.5, 1.4, 0.7, -0.3,
+                -0.2, 0.6, 0.6, -0.5;
+  prior.beta_var <<  0.5, 1.4, 0.9, 0.8,
+                     0.7, 0.3, 0.4, 0.5;
+  prior.lambda_beta_a0 = 0.17;
+  prior.lambda_beta_b0 = 0.11;
+  Eigen::VectorXd lambda_beta_a(2);
+  Eigen::VectorXd lambda_beta_b(2);
+  lambda_beta_a = Eigen::VectorXd::Constant(2, prior.lambda_beta_a0 + prior.beta.cols() / 2.0);
+  lambda_beta_b = Eigen::VectorXd::Constant(2, prior.lambda_beta_b0) + prior.beta.cwiseProduct(prior.beta).rowwise().sum() / 2.0 + prior.beta_var.rowwise().sum() / 2.0;
+
+  prior.update_lambda_beta();
+
+  REQUIRE( prior.lambda_beta_a(0) == Approx(lambda_beta_a(0)) );
+  REQUIRE( prior.lambda_beta_a(1) == Approx(lambda_beta_a(1)) );
+
+  REQUIRE( prior.lambda_beta_b(0) == Approx(lambda_beta_b(0)) );
+  REQUIRE( prior.lambda_beta_b(1) == Approx(lambda_beta_b(1)) );
+}
+
 TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_latents") {
   int rows[5] = { 0, 0, 1, 2, 2 };
   int cols[5] = { 0, 1, 1, 2, 3 };

@@ -306,7 +306,29 @@ void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &
 
   update_beta(Umean);
 
-  // update beta_lambda
+  update_lambda_beta();
+}
+
+template<class FType>
+void MacauPriorVB<FType>::update_lambda_beta() {
+  lambda_beta_a = VectorXd::Constant(beta.rows(), lambda_beta_a0 + beta.cols() / 2.0);
+  lambda_beta_b = VectorXd::Constant(beta.rows(), lambda_beta_b0);
+  const int D = beta.rows();
+#pragma omp parallel
+  {
+    VectorXd tmp(D);
+    tmp.setZero();
+#pragma omp for schedule(static)
+    for (int i = 0; i < beta.cols(); i++) {
+      for (int d = 0; d < D; d++) {
+        tmp(d) += beta(d, i) * beta(d, i) + beta_var(d, i);
+      }
+    }
+#pragma omp critical
+    {
+      lambda_beta_b += tmp / 2;
+    }
+  }
 }
 
 template<class FType>
