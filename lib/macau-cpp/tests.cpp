@@ -478,6 +478,8 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_prior", "MacauPriorVB update_prior
                 -0.2, 0.6, 0.6, -0.5;
   prior.beta_var <<  0.5, 1.4, 0.9, 0.8,
                      0.7, 0.3, 0.4, 0.5;
+  prior.lambda_beta_a << 0.9, 0.4;
+  prior.lambda_beta_b << 0.7, 0.6;
 
   Eigen::SparseMatrix<double> Y(3, 4), Yt;
   Y.insert(0, 1) = 3.0;
@@ -526,6 +528,71 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_prior", "MacauPriorVB update_prior
 
   REQUIRE( prior.lambda_b(0) == Approx(lambda_b(0)) );
   REQUIRE( prior.lambda_b(1) == Approx(lambda_b(1)) );
+}
+
+TEST_CASE( "latentpriorvb/macaupriorvb/update_beta", "MacauPriorVB update_beta") {
+  int rows[5] = { 0, 0, 1, 2, 2 };
+  int cols[5] = { 0, 1, 1, 2, 3 };
+  std::unique_ptr<SparseFeat> sf = std::unique_ptr<SparseFeat>(new SparseFeat(3, 4, 5, rows, cols));
+  Eigen::MatrixXd Fdense(3, 4);
+  Fdense << 1.,  1.,  0.,  0.,
+            0.,  1.,  0.,  0.,
+            0.,  0.,  1.,  1.;
+
+  MacauPriorVB<SparseFeat> prior(2, sf, 3.0);
+  prior.mu_mean  << 0.3, -0.2;
+  prior.lambda_b << 0.6,  0.7;
+  prior.beta <<  0.5, 1.4, 0.7, -0.3,
+                -0.2, 0.6, 0.6, -0.5;
+  prior.beta_var <<  0.5, 1.4, 0.9, 0.8,
+                     0.7, 0.3, 0.4, 0.5;
+  prior.lambda_beta_a << 0.9, 0.4;
+  prior.lambda_beta_b << 0.7, 0.6;
+
+  Eigen::MatrixXd Umean(2, 3);
+  Umean << 0.9, -1.2, 0.7,
+           1.2, -0.8, 1.9;
+  Eigen::MatrixXd Uhat(2, 3);
+  Uhat = prior.beta * Fdense.transpose();
+  prior.Uhat = Uhat;
+
+  // beta and beta_var
+  Eigen::VectorXd Fsq = Fdense.colwise().sum();
+  double ad = prior.lambda_a0 + (1 + Umean.cols()) / 2.0;
+  Eigen::VectorXd E_lambda = Eigen::VectorXd::Constant(2, ad).cwiseQuotient( prior.lambda_b );
+  Eigen::VectorXd E_lambda_beta = prior.lambda_beta_a.cwiseQuotient( prior.lambda_beta_b );
+
+  Eigen::MatrixXd beta     = prior.beta;
+  Eigen::MatrixXd beta_var = prior.beta_var;
+  for (int f = 0; f < Fdense.cols(); f++) {
+    Eigen::VectorXd Adf = E_lambda_beta + E_lambda * Fsq(f);
+    Eigen::VectorXd Bdf(2);
+    for (int d = 0; d < 2; d++) {
+      double tmp = 0;
+      for (int i = 0; i < Fdense.rows(); i++) {
+        double diff = Umean(d, i) - prior.mu_mean(d);
+        for (int e = 0; e < Fdense.cols(); e++) {
+          if (e == f) continue;
+          diff -= Fdense(i, e) * beta(d, e);
+        }
+        tmp += diff * Fdense(i, f);
+      }
+      Bdf(d)        = tmp * E_lambda(d);
+      beta(d, f)    = Bdf(d) / Adf(d);
+      beta_var(d,f) = 1.0 / Adf(d);
+    }
+  }
+
+  prior.update_beta(Umean);
+
+  REQUIRE( prior.beta_var(0, 0) == Approx(beta_var(0, 0)) );
+  REQUIRE( prior.beta_var(1, 0) == Approx(beta_var(1, 0)) );
+
+  REQUIRE( prior.beta(0, 0) == Approx(beta(0, 0)) );
+  REQUIRE( prior.beta(1, 0) == Approx(beta(1, 0)) );
+
+  REQUIRE( (prior.beta_var - beta_var).norm() == Approx(0.0) );
+  REQUIRE( (prior.beta - beta).norm() == Approx(0.0) );
 }
 
 TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_latents") {

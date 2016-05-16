@@ -83,7 +83,7 @@ class MacauPriorVB : public ILatentPriorVB {
         const Eigen::MatrixXd &Vvar,
         const double alpha) override;
     void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) override;
-    void update_beta(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar, Eigen::VectorXd &Elambda);
+    void update_beta(Eigen::MatrixXd &Umean);
     void update_lambda_beta();
     double getLinkNorm() override;
     //double getLinkLambdaNorm() override { return lambda_beta; };
