@@ -143,6 +143,7 @@ void MacauPriorVB<FType>::init(const int num_latent, std::unique_ptr<FType> & Fm
 
   Uhat.resize(num_latent, F->rows());
   Uhat.setZero();
+  Uhat_valid = true;
 
   beta.resize(num_latent, F->cols());
   beta.setZero();
@@ -175,6 +176,8 @@ void MacauPriorVB<FType>::update_latents(
   const VectorXd Elambda     = getElambda(N);
   const VectorXd Elambda_Emu = Elambda.cwiseProduct( mu_mean );
 
+  update_uhat();
+
   // Vsq = E[ V^2 ] = E[V] .* E[V] + Var(V)
   MatrixXd Vsq( Vmean.rows(), Vmean.cols() );
 #pragma omp parallel for schedule(static)
@@ -200,7 +203,7 @@ void MacauPriorVB<FType>::update_latents(
     for (int d = 0; d < D; d++) {
       // computing Lid
       const double uid = Umean(d, i);
-      double Lid = Elambda_Emu(d);
+      double Lid = Elambda_Emu(d) + Uhat(d, i) * Elambda(d);
 
       idx = 0;
       for ( SparseMatrix<double>::InnerIterator it(Ymat, i); it; ++it, idx++) {
@@ -235,6 +238,8 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
   VectorXd E_lambda_beta = lambda_beta_a.cwiseQuotient(lambda_beta_b);
 
   MatrixXd Z;
+  // just in case
+  update_uhat();
 
 #pragma omp parallel for private(Z) schedule(static, 1)
   for (int dstart = 0; dstart < num_latent; dstart += blocksize) {
@@ -268,6 +273,15 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
       add_Acol_mul_bt(Z, *F, f, delta_beta);
     }
   }
+  Uhat_valid = false;
+}
+
+template<class FType>
+void MacauPriorVB<FType>::update_uhat() {
+  if ( ! Uhat_valid) {
+    compute_uhat(Uhat, *F, beta);
+    Uhat_valid = true;
+  }
 }
 
 template<class FType>
@@ -278,7 +292,7 @@ void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &
   const int N = Umean.cols();
 
   // Uhat = F * beta
-  compute_uhat(Uhat, *F, beta);
+  update_uhat();
 
   // updating mu_d
   VectorXd Elambda = getElambda(N);

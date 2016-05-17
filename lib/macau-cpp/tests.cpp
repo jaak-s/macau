@@ -194,7 +194,7 @@ TEST_CASE( "chol/chol_solve_t", "[chol_solve_t]" ) {
   m << 7, 0, 0,
        2, 5, 0,
        6, 1, 6;
-  
+
   rhs << -1.227, -0.890,  0.293,
           0.356, -0.733, -1.201,
          -0.003, -0.091, -1.467,
@@ -379,22 +379,22 @@ TEST_CASE( "latentpriorvb/bpmfpriorvb/update_latents", "BPMFPriorVB update_laten
   const double ad = prior.lambda_a0 + (1 + Y.rows()) / 2.0;
   const Eigen::VectorXd Elambda = Eigen::VectorXd::Constant(2, ad).cwiseQuotient( prior.lambda_b );
   const double Q00 = Elambda(0) + alpha * (Vmean(0,1)*Vmean(0,1) + Vmean(0,2)*Vmean(0,2) + Vvar(0, 1) + Vvar(0, 2));
-  const double L00 = Elambda(0) * prior.mu_mean(0) + alpha*( 
+  const double L00 = Elambda(0) * prior.mu_mean(0) + alpha*(
                   (Y.coeff(0, 1) - mean_value - Umean(1, 0) * Vmean(1, 1)) * Vmean(0, 1) +
                   (Y.coeff(0, 2) - mean_value - Umean(1, 0) * Vmean(1, 2)) * Vmean(0, 2)
                );
   const double Q01 = Elambda(1) + alpha * (Vmean(1,1)*Vmean(1,1) + Vmean(1,2)*Vmean(1,2) + Vvar(1, 1) + Vvar(1, 2));
-  const double L01 = Elambda(1) * prior.mu_mean(1) + alpha*( 
+  const double L01 = Elambda(1) * prior.mu_mean(1) + alpha*(
                   (Y.coeff(0, 1) - mean_value - (L00 / Q00) * Vmean(0, 1)) * Vmean(1, 1) +
                   (Y.coeff(0, 2) - mean_value - (L00 / Q00) * Vmean(0, 2)) * Vmean(1, 2)
                );
 
   const double Q10 = Elambda(0) + alpha * (Vmean(0,0)*Vmean(0,0) + Vvar(0, 0));
-  const double L10 = Elambda(0) * prior.mu_mean(0) + alpha*( 
+  const double L10 = Elambda(0) * prior.mu_mean(0) + alpha*(
                   (Y.coeff(1, 0) - mean_value - Umean(1, 1) * Vmean(1, 0)) * Vmean(0, 0)
                );
   const double Q11 = Elambda(1) + alpha * (Vmean(1,0)*Vmean(1,0) + Vvar(1, 0));
-  const double L11 = Elambda(1) * prior.mu_mean(1) + alpha*( 
+  const double L11 = Elambda(1) * prior.mu_mean(1) + alpha*(
                   (Y.coeff(1, 0) - mean_value - (L10 / Q10) * Vmean(0, 0)) * Vmean(1, 0)
                );
 
@@ -402,7 +402,7 @@ TEST_CASE( "latentpriorvb/bpmfpriorvb/update_latents", "BPMFPriorVB update_laten
   const double L20 = Elambda(0) * prior.mu_mean(0);
   const double Q21 = Elambda(1);
   const double L21 = Elambda(1) * prior.mu_mean(1);
-  
+
   prior.update_latents(Umean, Uvar, Yt, mean_value, Vmean, Vvar, alpha);
 
   REQUIRE( Umean(0, 0) == Approx(L00 / Q00) );
@@ -480,6 +480,7 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_prior", "MacauPriorVB update_prior
                      0.7, 0.3, 0.4, 0.5;
   prior.lambda_beta_a << 0.9, 0.4;
   prior.lambda_beta_b << 0.7, 0.6;
+  prior.Uhat_valid = false;
 
   Eigen::SparseMatrix<double> Y(3, 4), Yt;
   Y.insert(0, 1) = 3.0;
@@ -593,6 +594,7 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_beta", "MacauPriorVB update_beta")
 
   REQUIRE( (prior.beta_var - beta_var).norm() == Approx(0.0) );
   REQUIRE( (prior.beta - beta).norm() == Approx(0.0) );
+  REQUIRE( prior.Uhat_valid == false );
 }
 
 TEST_CASE( "latentpriorvb/macaupriorvb/update_lambda_beta", "update_lambda_beta") {
@@ -606,6 +608,8 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_lambda_beta", "update_lambda_beta"
                      0.7, 0.3, 0.4, 0.5;
   prior.lambda_beta_a0 = 0.17;
   prior.lambda_beta_b0 = 0.11;
+  prior.Uhat_valid = false;
+
   Eigen::VectorXd lambda_beta_a(2);
   Eigen::VectorXd lambda_beta_b(2);
   lambda_beta_a = Eigen::VectorXd::Constant(2, prior.lambda_beta_a0 + prior.beta.cols() / 2.0);
@@ -625,6 +629,12 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_lat
   int cols[5] = { 0, 1, 1, 2, 3 };
   std::unique_ptr<SparseFeat> sf = std::unique_ptr<SparseFeat>(new SparseFeat(3, 4, 5, rows, cols));
 
+  // for testing
+  Eigen::MatrixXd Fdense(3, 4);
+  Fdense << 1.,  1.,  0.,  0.,
+            0.,  1.,  0.,  0.,
+            0.,  0.,  1.,  1.;
+
   MacauPriorVB<SparseFeat> prior(2, sf, 3.0);
   prior.mu_mean  << 0.3, -0.2;
   prior.mu_var   << 1.5,  1.7;
@@ -635,6 +645,10 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_lat
   REQUIRE( prior.beta.cols() == 4 );
   prior.beta <<  0.5, 1.4, 0.7, -0.3,
                 -0.2, 0.6, 0.6, -0.5;
+  prior.Uhat_valid = false;
+
+  Eigen::MatrixXd Uhat(2, 3);
+  Uhat = prior.beta * Fdense.transpose();
 
   Eigen::SparseMatrix<double> Y(3, 4), Yt;
   Y.insert(0, 1) = 3.0;
@@ -655,34 +669,34 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_lat
            1.2, -0.8, 1.9;
   Uvar  << 0.9, -1.2, 0.7,
            1.2, -0.8, 1.9;
-  /*
+
   const double ad = prior.lambda_a0 + (1 + Y.rows()) / 2.0;
   const Eigen::VectorXd Elambda = Eigen::VectorXd::Constant(2, ad).cwiseQuotient( prior.lambda_b );
   const double Q00 = Elambda(0) + alpha * (Vmean(0,1)*Vmean(0,1) + Vmean(0,2)*Vmean(0,2) + Vvar(0, 1) + Vvar(0, 2));
-  const double L00 = Elambda(0) * prior.mu_mean(0) + alpha*( 
+  const double L00 = Elambda(0) * (prior.mu_mean(0) + Uhat(0, 0)) + alpha*(
                   (Y.coeff(0, 1) - mean_value - Umean(1, 0) * Vmean(1, 1)) * Vmean(0, 1) +
                   (Y.coeff(0, 2) - mean_value - Umean(1, 0) * Vmean(1, 2)) * Vmean(0, 2)
                );
   const double Q01 = Elambda(1) + alpha * (Vmean(1,1)*Vmean(1,1) + Vmean(1,2)*Vmean(1,2) + Vvar(1, 1) + Vvar(1, 2));
-  const double L01 = Elambda(1) * prior.mu_mean(1) + alpha*( 
+  const double L01 = Elambda(1) * (prior.mu_mean(1) + Uhat(1, 0)) + alpha*(
                   (Y.coeff(0, 1) - mean_value - (L00 / Q00) * Vmean(0, 1)) * Vmean(1, 1) +
                   (Y.coeff(0, 2) - mean_value - (L00 / Q00) * Vmean(0, 2)) * Vmean(1, 2)
                );
 
   const double Q10 = Elambda(0) + alpha * (Vmean(0,0)*Vmean(0,0) + Vvar(0, 0));
-  const double L10 = Elambda(0) * prior.mu_mean(0) + alpha*( 
+  const double L10 = Elambda(0) * (prior.mu_mean(0) + Uhat(0, 1)) + alpha*(
                   (Y.coeff(1, 0) - mean_value - Umean(1, 1) * Vmean(1, 0)) * Vmean(0, 0)
                );
   const double Q11 = Elambda(1) + alpha * (Vmean(1,0)*Vmean(1,0) + Vvar(1, 0));
-  const double L11 = Elambda(1) * prior.mu_mean(1) + alpha*( 
+  const double L11 = Elambda(1) * (prior.mu_mean(1) + Uhat(1, 1)) + alpha*(
                   (Y.coeff(1, 0) - mean_value - (L10 / Q10) * Vmean(0, 0)) * Vmean(1, 0)
                );
 
   const double Q20 = Elambda(0);
-  const double L20 = Elambda(0) * prior.mu_mean(0);
+  const double L20 = Elambda(0) * (prior.mu_mean(0) + Uhat(0, 2));
   const double Q21 = Elambda(1);
-  const double L21 = Elambda(1) * prior.mu_mean(1);
-  
+  const double L21 = Elambda(1) * (prior.mu_mean(1) + Uhat(1, 2));
+
   prior.update_latents(Umean, Uvar, Yt, mean_value, Vmean, Vvar, alpha);
 
   REQUIRE( Umean(0, 0) == Approx(L00 / Q00) );
@@ -699,5 +713,4 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_lat
   REQUIRE( Uvar (0, 2) == Approx(1.0 / Q20) );
   REQUIRE( Umean(1, 2) == Approx(L21 / Q21) );
   REQUIRE( Uvar (1, 2) == Approx(1.0 / Q21) );
-  */
 }

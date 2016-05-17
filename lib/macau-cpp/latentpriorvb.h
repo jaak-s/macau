@@ -58,6 +58,7 @@ class MacauPriorVB : public ILatentPriorVB {
     double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
     Eigen::MatrixXd Uhat;
+    bool Uhat_valid;
     std::unique_ptr<FType> F;  // side information
     Eigen::VectorXd F_colsq;   // sum-of-squares for every feature (column)
     Eigen::MatrixXd beta;      // link matrix
@@ -85,6 +86,7 @@ class MacauPriorVB : public ILatentPriorVB {
     void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) override;
     void update_beta(Eigen::MatrixXd &Umean);
     void update_lambda_beta();
+    void update_uhat();
     double getLinkNorm() override;
     //double getLinkLambdaNorm() override { return lambda_beta; };
     Eigen::VectorXd getElambda(int N);
