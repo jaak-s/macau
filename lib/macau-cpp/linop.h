@@ -61,6 +61,7 @@ void At_mul_A(Eigen::MatrixXd & out, SparseDoubleFeat & A);
 void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
 
 Eigen::VectorXd col_square_sum(SparseFeat & A);
+Eigen::VectorXd col_square_sum(SparseDoubleFeat & A);
 
 template<typename T>
 void compute_uhat(Eigen::MatrixXd & uhat, T & feat, Eigen::MatrixXd & beta);
@@ -128,6 +129,22 @@ inline void At_mul_Bt(Eigen::VectorXd & Y, SparseFeat & X, const int col, Eigen:
   }
 }
 
+// Y = X[:,col]' * B'
+inline void At_mul_Bt(Eigen::VectorXd & Y, SparseDoubleFeat & X, const int col, Eigen::MatrixXd & B) {
+  const int* cols    = X.Mt.cols;
+  const double* vals = X.Mt.vals;
+  const int end      = X.Mt.row_ptr[col + 1];
+  const int D        = Y.size();
+  Y.setZero();
+  for (int i = X.Mt.row_ptr[col]; i < end; i++) {
+    int c    = cols[i];
+    double v = vals[i];
+    for (int d = 0; d < D; d++) {
+      Y(d) += v * B(d, c);
+    }
+  }
+}
+
 // computes Z += A[:,col] * b', where a and b are vectors
 inline void add_Acol_mul_bt(Eigen::MatrixXd & Z, SparseFeat & A, const int col, Eigen::VectorXd & b) {
   const int* cols = A.Mt.cols;
@@ -138,6 +155,22 @@ inline void add_Acol_mul_bt(Eigen::MatrixXd & Z, SparseFeat & A, const int col, 
     int c = cols[i];
     for (int d = 0; d < D; d++) {
       Z(d, c) += b(d);
+    }
+  }
+}
+
+// computes Z += A[:,col] * b', where a and b are vectors
+inline void add_Acol_mul_bt(Eigen::MatrixXd & Z, SparseDoubleFeat & A, const int col, Eigen::VectorXd & b) {
+  const int*    cols = A.Mt.cols;
+  const double* vals = A.Mt.vals;
+  const int D        = b.size();
+  int i              = A.Mt.row_ptr[col];
+  const int end      = A.Mt.row_ptr[col + 1];
+  for (; i < end; i++) {
+    int c    = cols[i];
+    double v = vals[i];
+    for (int d = 0; d < D; d++) {
+      Z(d, c) += v * b(d);
     }
   }
 }

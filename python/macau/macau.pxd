@@ -56,6 +56,9 @@ cdef extern from "latentpriorvb.h":
     cdef cppclass BPMFPriorVB(ILatentPriorVB):
         BPMFPriorVB()
         BPMFPriorVB(int num_latent, double usquares)
+    cdef cppclass MacauPriorVB[FType](ILatentPriorVB):
+        MacauPriorVB()
+        MacauPriorVB(int num_latent, unique_ptr[FType] & Fmat, double usquares)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:

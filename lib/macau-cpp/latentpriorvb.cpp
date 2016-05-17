@@ -357,5 +357,5 @@ double MacauPriorVB<FType>::getLinkNorm() {
 }
 
 template class MacauPriorVB<SparseFeat>;
-//template class MacauPriorVB<SparseDoubleFeat>;
+template class MacauPriorVB<SparseDoubleFeat>;
 //template class MacauPriorVB<Eigen::MatrixXd>;

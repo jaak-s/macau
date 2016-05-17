@@ -334,3 +334,22 @@ Eigen::VectorXd col_square_sum(SparseFeat & A) {
   }
   return out;
 }
+
+Eigen::VectorXd col_square_sum(SparseDoubleFeat & A) {
+  const int ncol = A.cols();
+  const int* row_ptr = A.Mt.row_ptr;
+  const double* vals = A.Mt.vals;
+  VectorXd out(ncol);
+
+#pragma omp parallel for schedule(dynamic, 256)
+  for (int col = 0; col < ncol; col++) {
+    double tmp = 0;
+    int i   = row_ptr[col];
+    int end = row_ptr[col + 1];
+    for (; i < end; i++) {
+      tmp += vals[i] * vals[i];
+    }
+    out(col) = tmp;
+  }
+  return out;
+}

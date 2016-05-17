@@ -258,20 +258,16 @@ cdef ILatentPriorVB* make_prior_vb(side, int num_latent, double usquares):
         return new BPMFPriorVB(num_latent, usquares)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Unsupported side information type: %s" + type(side))
-    raise ValueError("Unimplented (TODO)")
 
-#    cdef bool compute_ff = (side.shape[1] <= max_ff_size)
-#
-#    ## binary
-#    cdef SparseFeat* sf
-#    if (side.data == 1).all():
-#        sf = sparse2SparseBinFeat(side)
-#        return new MacauPrior[SparseFeat](num_latent, sf, compute_ff)
-#
-#    ## double CSR
-#    cdef SparseDoubleFeat* sdf
-#    sdf = sparse2SparseDoubleFeat(side)
-#    return new MacauPrior[SparseDoubleFeat](num_latent, sdf, compute_ff)
+    ## binary
+    cdef unique_ptr[SparseFeat] sf_ptr
+    if (side.data == 1).all():
+        sf_ptr = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
+        return new MacauPriorVB[SparseFeat](num_latent, sf_ptr, usquares)
+    ## double CSR
+    cdef unique_ptr[SparseDoubleFeat] sdf_ptr
+    sdf_ptr = unique_ptr[SparseDoubleFeat]( sparse2SparseDoubleFeat(side) )
+    return new MacauPriorVB[SparseDoubleFeat](num_latent, sdf_ptr, usquares)
 
 
 def macau_varbayes(Y,
