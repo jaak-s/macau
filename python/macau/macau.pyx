@@ -124,11 +124,11 @@ def make_train_test(Y, ntest):
     Ytest  = sp.sparse.coo_matrix( (Y.data[test],  (Y.row[test],  Y.col[test])),  shape=Y.shape )
     return Ytrain, Ytest
 
-cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size):
-    if side == None or side == ():
+cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size) except NULL:
+    if (side is None) or side == ():
         return new BPMFPrior(num_latent)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
-        raise ValueError("Unsupported side information type: %s" + type(side))
+        raise ValueError("Unsupported side information type: '%s'" % type(side).__name__)
 
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
 
@@ -166,7 +166,7 @@ def prepare_Y(Y, Ytest):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
     Y = Y.tocoo(copy = False)
-    if Ytest != None:
+    if Ytest is not None:
         if isinstance(Ytest, numbers.Real):
             Y, Ytest = make_train_test(Y, Ytest)
         if type(Ytest) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
@@ -215,7 +215,7 @@ def macau(Y,
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals
 
-    if Ytest != None:
+    if Ytest is not None:
         trows = Ytest.row.astype(np.int32, copy=False)
         tcols = Ytest.col.astype(np.int32, copy=False)
         tvals = Ytest.data.astype(np.double, copy=False)
@@ -243,7 +243,7 @@ def macau(Y,
     result.rmse_test  = macau.getRmseTest()
     result.Yshape     = Y.shape
     result.ntrain     = Y.nnz
-    result.ntest      = Ytest.nnz if Ytest != None else 0
+    result.ntest      = Ytest.nnz if Ytest is not None else 0
     result.prediction = pd.DataFrame(df)
 
     del macau
@@ -253,11 +253,11 @@ def macau(Y,
 
 ######################## Variational Bayes Macau ######################
 
-cdef ILatentPriorVB* make_prior_vb(side, int num_latent, double usquares):
-    if side == None or side == ():
+cdef ILatentPriorVB* make_prior_vb(side, int num_latent, double usquares) except NULL:
+    if (side is None) or side == ():
         return new BPMFPriorVB(num_latent, usquares)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
-        raise ValueError("Unsupported side information type: %s" + type(side))
+        raise ValueError("Unsupported side information type: '%s'" % type(side).__name__)
 
     ## binary
     cdef unique_ptr[SparseFeat] sf_ptr
@@ -309,7 +309,7 @@ def macau_varbayes(Y,
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals
 
-    if Ytest != None:
+    if Ytest is not None:
         trows = Ytest.row.astype(np.int32, copy=False)
         tcols = Ytest.col.astype(np.int32, copy=False)
         tvals = Ytest.data.astype(np.double, copy=False)
@@ -338,7 +338,7 @@ def macau_varbayes(Y,
     result.rmse_test  = macau.getRmseTest()
     result.Yshape     = Y.shape
     result.ntrain     = Y.nnz
-    result.ntest      = Ytest.nnz if Ytest != None else 0
+    result.ntest      = Ytest.nnz if Ytest is not None else 0
     result.prediction = pd.DataFrame(df)
 
     del macau
