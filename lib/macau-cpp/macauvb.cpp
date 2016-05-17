@@ -134,8 +134,8 @@ void MacauVB::printStatus(int i, double rmse, double elapsedi, double updates_pe
   double norm1 = priors[1]->getLinkNorm();
   if (!std::isnan(norm0) || !std::isnan(norm1)) {
     printf("          Side: ");
-    if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%1.2e) ", norm0, priors[0]->getLinkLambdaNorm());
-    if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%1.2e)",  norm1, priors[1]->getLinkLambdaNorm());
+    if (!std::isnan(norm0)) printf("U.link(%1.2e) ", norm0);
+    if (!std::isnan(norm1)) printf("V.link(%1.2e)",  norm1);
     printf("\n");
   }
 }
