@@ -560,8 +560,13 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_prior", "MacauPriorVB update_prior
   // lambda_b
   Eigen::VectorXd lambda_b = Eigen::VectorXd::Constant(2, prior.lambda_b0);
   lambda_b += 0.5 * prior.b0 * (mu_mean.cwiseProduct(mu_mean) + mu_var);
-  auto udiff = (Umean - Uhat).colwise() - mu_mean;
-  lambda_b += 0.5 * (udiff.cwiseProduct(udiff).rowwise().sum() + Uvar.rowwise().sum() + Umean.cols() * mu_var);
+  for (int d = 0; d < 2; d++) {
+    for (int i = 0; i < Fdense.rows(); i++) {
+      double du = Umean(d,i) - Uhat(d,i) - mu_mean(d);
+      lambda_b(d) += 0.5 * (du * du + Uvar(d, i) + mu_var(d));
+    }
+  }
+
   for (int d = 0; d < 2; d++) {
     for (int i = 0; i < Fdense.rows(); i++) {
       for (int f = 0; f < Fdense.cols(); f++) {
