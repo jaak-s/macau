@@ -90,5 +90,6 @@ class MacauPriorVB : public ILatentPriorVB {
     double getLinkNorm() override;
     double getLinkLambdaNorm() override { return lambda_beta_a.cwiseQuotient(lambda_beta_b).norm(); };
     Eigen::VectorXd getElambda(int N);
+    Eigen::VectorXd getElambdabeta();
 };
 #endif /* LATENTPRIORVB_H */

@@ -227,6 +227,11 @@ void MacauPriorVB<FType>::update_latents(
 }
 
 template<class FType>
+Eigen::VectorXd MacauPriorVB<FType>::getElambdabeta() {
+  return lambda_beta_a.cwiseQuotient(lambda_beta_b);
+}
+
+template<class FType>
 void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
   // updating beta and beta_var
   const int nfeat = beta.cols();
@@ -235,7 +240,7 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
 
   VectorXd E_lambda      = getElambda( Umean.cols() );
   // E[a_d] - precision for every dimension
-  VectorXd E_lambda_beta = lambda_beta_a.cwiseQuotient(lambda_beta_b);
+  VectorXd E_lambda_beta = getElambdabeta();
 
   MatrixXd Z;
   // just in case
