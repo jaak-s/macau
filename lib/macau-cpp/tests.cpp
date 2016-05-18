@@ -529,8 +529,7 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_prior", "MacauPriorVB update_prior
                 -0.2, 0.6, 0.6, -0.5;
   prior.beta_var <<  0.5, 1.4, 0.9, 0.8,
                      0.7, 0.3, 0.4, 0.5;
-  prior.lambda_beta_a << 0.9, 0.4;
-  prior.lambda_beta_b << 0.7, 0.6;
+  prior.lambda_beta << 0.9/0.7, 0.4/0.6;
   prior.Uhat_valid = false;
 
   Eigen::SparseMatrix<double> Y(3, 4), Yt;
@@ -603,8 +602,7 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_beta", "MacauPriorVB update_beta")
                 -0.2, 0.6, 0.6, -0.5;
   prior.beta_var <<  0.5, 1.4, 0.9, 0.8,
                      0.7, 0.3, 0.4, 0.5;
-  prior.lambda_beta_a << 0.9, 0.4;
-  prior.lambda_beta_b << 0.7, 0.6;
+  prior.lambda_beta << 0.9 / 0.7, 0.4 / 0.6;
 
   Eigen::MatrixXd Umean(2, 3);
   Umean << 0.9, -1.2, 0.7,
@@ -617,7 +615,7 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_beta", "MacauPriorVB update_beta")
   Eigen::VectorXd Fsq = Fdense.colwise().sum();
   double ad = prior.lambda_a0 + (1 + Umean.cols()) / 2.0;
   Eigen::VectorXd E_lambda = Eigen::VectorXd::Constant(2, ad).cwiseQuotient( prior.lambda_b );
-  Eigen::VectorXd E_lambda_beta = prior.lambda_beta_a.cwiseQuotient( prior.lambda_beta_b );
+  Eigen::VectorXd E_lambda_beta = prior.lambda_beta;
 
   Eigen::MatrixXd beta     = prior.beta;
   Eigen::MatrixXd beta_var = prior.beta_var;
@@ -670,14 +668,12 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_lambda_beta", "update_lambda_beta"
   Eigen::VectorXd lambda_beta_b(2);
   lambda_beta_a = Eigen::VectorXd::Constant(2, prior.lambda_beta_a0 + prior.beta.cols() / 2.0);
   lambda_beta_b = Eigen::VectorXd::Constant(2, prior.lambda_beta_b0) + prior.beta.cwiseProduct(prior.beta).rowwise().sum() / 2.0 + prior.beta_var.rowwise().sum() / 2.0;
+  Eigen::VectorXd lambda_beta = lambda_beta_a.cwiseQuotient(lambda_beta_b);
 
   prior.update_lambda_beta();
 
-  REQUIRE( prior.lambda_beta_a(0) == Approx(lambda_beta_a(0)) );
-  REQUIRE( prior.lambda_beta_a(1) == Approx(lambda_beta_a(1)) );
-
-  REQUIRE( prior.lambda_beta_b(0) == Approx(lambda_beta_b(0)) );
-  REQUIRE( prior.lambda_beta_b(1) == Approx(lambda_beta_b(1)) );
+  REQUIRE( prior.lambda_beta(0) == Approx(lambda_beta(0)) );
+  REQUIRE( prior.lambda_beta(1) == Approx(lambda_beta(1)) );
 }
 
 TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_latents") {

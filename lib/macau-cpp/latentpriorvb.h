@@ -64,8 +64,7 @@ class MacauPriorVB : public ILatentPriorVB {
     Eigen::MatrixXd beta;      // link matrix
     Eigen::MatrixXd beta_var;  // link matrix variance
 
-    Eigen::VectorXd lambda_beta_a;
-    Eigen::VectorXd lambda_beta_b;
+    Eigen::VectorXd lambda_beta;
     double lambda_beta_a0;     // Hyper-prior for lambda_beta
     double lambda_beta_b0;     // Hyper-prior for lambda_beta
 
@@ -88,8 +87,7 @@ class MacauPriorVB : public ILatentPriorVB {
     void update_lambda_beta();
     void update_uhat();
     double getLinkNorm() override;
-    double getLinkLambdaNorm() override { return lambda_beta_a.cwiseQuotient(lambda_beta_b).norm(); };
+    double getLinkLambdaNorm() override { return lambda_beta.norm(); };
     Eigen::VectorXd getElambda(int N);
-    Eigen::VectorXd getElambdabeta();
 };
 #endif /* LATENTPRIORVB_H */

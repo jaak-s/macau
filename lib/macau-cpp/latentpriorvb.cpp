@@ -152,9 +152,8 @@ void MacauPriorVB<FType>::init(const int num_latent, std::unique_ptr<FType> & Fm
   beta_var.setOnes();
 
   // initial value (should be determined automatically)
-  // Hyper-prior for lambda_beta (mean 1.0, var of 1e+3):
-  lambda_beta_a  = VectorXd::Constant(num_latent, 0.5);
-  lambda_beta_b  = VectorXd::Constant(num_latent, 0.1);
+  // Hyper-prior for lambda_beta (mean 1.0):
+  lambda_beta    = VectorXd::Constant(num_latent, 5.0);
   lambda_beta_a0 = 0.001;     // Hyper-prior for lambda_beta
   lambda_beta_b0 = 0.001;     // Hyper-prior for lambda_beta
 }
@@ -227,11 +226,6 @@ void MacauPriorVB<FType>::update_latents(
 }
 
 template<class FType>
-Eigen::VectorXd MacauPriorVB<FType>::getElambdabeta() {
-  return lambda_beta_a.cwiseQuotient(lambda_beta_b);
-}
-
-template<class FType>
 void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
   // updating beta and beta_var
   const int nfeat = beta.cols();
@@ -239,8 +233,6 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
   const int num_latent = Umean.rows();
 
   VectorXd E_lambda      = getElambda( Umean.cols() );
-  // E[a_d] - precision for every dimension
-  VectorXd E_lambda_beta = getElambdabeta();
 
   MatrixXd Z;
   // just in case
@@ -265,7 +257,7 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
 
       for (int d = 0; d < dcount; d++) {
         int dx = d + dstart;
-        double A_df     = E_lambda_beta(dx) + E_lambda(dx) * F_colsq(f);
+        double A_df     = lambda_beta(dx) + E_lambda(dx) * F_colsq(f);
         double B_df     = E_lambda(dx) * (zx(d) + beta(dx,f) * F_colsq(f));
         double A_inv    = 1.0 / A_df;
         double beta_new = B_df * A_inv;
@@ -330,8 +322,8 @@ void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &
 
 template<class FType>
 void MacauPriorVB<FType>::update_lambda_beta() {
-  lambda_beta_a = VectorXd::Constant(beta.rows(), lambda_beta_a0 + beta.cols() / 2.0);
-  lambda_beta_b = VectorXd::Constant(beta.rows(), lambda_beta_b0);
+  VectorXd lambda_beta_a = VectorXd::Constant(beta.rows(), lambda_beta_a0 + beta.cols() / 2.0);
+  VectorXd lambda_beta_b = VectorXd::Constant(beta.rows(), lambda_beta_b0);
   const int D = beta.rows();
 #pragma omp parallel
   {
@@ -348,6 +340,7 @@ void MacauPriorVB<FType>::update_lambda_beta() {
       lambda_beta_b += tmp / 2;
     }
   }
+  lambda_beta = lambda_beta_a.cwiseQuotient(lambda_beta_b);
 }
 
 template<class FType>
