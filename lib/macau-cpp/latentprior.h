@@ -42,7 +42,7 @@ class BPMFPrior : public ILatentPrior {
 /** Prior without side information (pure BPMF) */
 template<class FType>
 class MacauPrior : public ILatentPrior {
-  private:
+  public:
     Eigen::MatrixXd Uhat;
     std::unique_ptr<FType> F;  /* side information */
     Eigen::MatrixXd FtF;       /* F'F */
@@ -63,10 +63,10 @@ class MacauPrior : public ILatentPrior {
     double tol = 1e-6;
 
   public:
-    MacauPrior(const int nlatent, FType * Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
+    MacauPrior(const int nlatent, std::unique_ptr<FType> &Fmat, bool comp_FtF) { init(nlatent, Fmat, comp_FtF); }
     MacauPrior() {}
 
-    void init(const int num_latent, FType * Fmat, bool comp_FtF);
+    void init(const int num_latent, std::unique_ptr<FType> &Fmat, bool comp_FtF);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
@@ -74,7 +74,8 @@ class MacauPrior : public ILatentPrior {
     double getLinkNorm();
     double getLinkLambda() { return lambda_beta; };
     void sample_beta(const Eigen::MatrixXd &U);
-    void setLambdaBeta(double lambda_beta);
+    void setLambdaBeta(double lb) { lambda_beta = lb; };
+    void setTol(double t) { tol = t; };
 };
 
 std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);
@@ -100,13 +101,8 @@ void sample_latent_blas(Eigen::MatrixXd &s,
                         const Eigen::MatrixXd &Lambda_u,
                         const int num_latent);
 
-template<typename T>
-Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, T & B);
-template<>
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
-template<>
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
-template<>
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
 
 #endif /* LATENTPRIOR_H */

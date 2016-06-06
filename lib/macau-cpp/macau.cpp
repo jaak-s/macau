@@ -82,7 +82,9 @@ inline double sqr(double x) { return x*x; }
 
 void Macau::run() {
   init();
-  std::cout << "Sampling" << endl;
+  if (verbose) {
+    std::cout << "Sampling" << endl;
+  }
 
   const int num_rows = Y.rows();
   const int num_cols = Y.cols();

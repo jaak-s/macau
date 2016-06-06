@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-std=c++11 -Wall -Wno-unknown-pragmas -DNDEBUG -O3 -fopenmp -fstrict-aliasing
+CXXFLAGS=-std=c++11 -Wall -Wno-unknown-pragmas -O3 -fopenmp -fstrict-aliasing
 LINK.o=$(CXX) $(CXXFLAGS)
 
 INCLUDES := -I ../eigen3 -I ../libfastsparse
@@ -16,7 +16,7 @@ test: tests
 
 OBJS = mvnormal.o chol.o linop.o latentprior.o tests.o
 tests: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o tests $(OBJS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o tests $(OBJS) $(LDFLAGS) $(LIBLOCS)
 
 clean:
 	rm -f tests *.o

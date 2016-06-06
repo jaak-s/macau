@@ -1,6 +1,5 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <cblas.h>
 #include <math.h>
 #include <omp.h>
 #include <iomanip>
@@ -51,7 +50,7 @@ void BPMFPrior::init(const int num_latent) {
 
 /** MacauPrior */
 template<class FType>
-void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) {
+void MacauPrior<FType>::init(const int num_latent, std::unique_ptr<FType> &Fmat, bool comp_FtF) {
   mu.resize(num_latent);
   mu.setZero();
 
@@ -68,7 +67,7 @@ void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) 
   df = num_latent;
 
   // side information
-  F = std::unique_ptr<FType>(Fmat);
+  F = std::move(Fmat);
   use_FtF = comp_FtF;
   if (use_FtF) {
     FtF.resize(F->cols(), F->cols());
@@ -86,11 +85,6 @@ void MacauPrior<FType>::init(const int num_latent, FType * Fmat, bool comp_FtF) 
   // Hyper-prior for lambda_beta (mean 1.0, var of 1e+3):
   lambda_beta_mu0 = 1.0;
   lambda_beta_nu0 = 1e-3;
-}
-
-template<class FType>
-void MacauPrior<FType>::setLambdaBeta(double lb) {
-  lambda_beta = lb;
 }
 
 template<class FType>

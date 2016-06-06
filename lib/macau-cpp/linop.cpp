@@ -44,6 +44,67 @@ void A_mul_Bt(Eigen::MatrixXd & out, CSR & csr, Eigen::MatrixXd & B) {
   csr_A_mul_Bn( out.data(), & csr, B.data(), B.rows() );
 }
 
+void At_mul_A(Eigen::MatrixXd & out, SparseFeat & A) {
+  if (out.cols() != A.cols()) {
+    throw std::runtime_error("At_mul_A(SparseFeat): out.cols() must equal A.cols()");
+  }
+  if (out.cols() != out.rows()) {
+    throw std::runtime_error("At_mul_A(SparseFeat): out must be square matrix.)");
+  }
+
+  out.setZero();
+  const int nfeat = A.M.ncol;
+
+#pragma omp parallel for schedule(dynamic, 8)
+  for (int f1 = 0; f1 < nfeat; f1++) {
+    int end = A.Mt.row_ptr[f1 + 1];
+    out(f1, f1) = end - A.Mt.row_ptr[f1];
+    // looping over all non-zero rows of f1
+    for (int i = A.Mt.row_ptr[f1]; i < end; i++) {
+      int Mrow = A.Mt.cols[i]; /* row in M */
+      int end2 = A.M.row_ptr[Mrow + 1];
+      for (int j = A.M.row_ptr[Mrow]; j < end2; j++) {
+        int f2 = A.M.cols[j];
+        if (f1 < f2) {
+          out(f2, f1) += 1;
+        }
+      }
+    }
+  }
+}
+
+void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
+  // TODO: use blas
+  out.triangularView<Eigen::Lower>() = A.transpose() * A;
+}
+
+void At_mul_A(Eigen::MatrixXd & out, SparseDoubleFeat & A) {
+  if (out.cols() != A.cols()) {
+    throw std::runtime_error("At_mul_A(SparseDoubleFeat): out.cols() must equal A.cols()");
+  }
+  if (out.cols() != out.rows()) {
+    throw std::runtime_error("At_mul_A(SparseDoubleFeat): out must be square matrix.)");
+  }
+  out.setZero();
+  const int nfeat = A.M.ncol;
+
+#pragma omp parallel for schedule(dynamic, 8)
+  for (int f1 = 0; f1 < nfeat; f1++) {
+    // looping over all non-zero rows of f1
+    for (int i = A.Mt.row_ptr[f1], end = A.Mt.row_ptr[f1 + 1]; i < end; i++) {
+      int Mrow     = A.Mt.cols[i]; /* row in M */
+      double val1  = A.Mt.vals[i]; /* value for Mrow */
+
+      for (int j = A.M.row_ptr[Mrow], end2 = A.M.row_ptr[Mrow + 1]; j < end2; j++) {
+        int f2 = A.M.cols[j];
+        if (f1 <= f2) {
+          out(f2, f1) += A.M.vals[j] * val1;
+        }
+      }
+    }
+  }
+}
+
 void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA) {
   cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, A.cols(), A.rows(), 1.0, A.data(), A.rows(), 0.0, AtA, A.cols());
 }
@@ -262,4 +323,33 @@ void A_mul_Bt_omp_sym(Eigen::MatrixXd & out, Eigen::MatrixXd & A, Eigen::MatrixX
       out(j, i) = tmp;
     }
   }
+}
+
+Eigen::VectorXd col_square_sum(SparseFeat & A) {
+  const int ncol = A.cols();
+  VectorXd out(ncol);
+#pragma omp parallel for schedule(static)
+  for (int col = 0; col < ncol; col++) {
+    out(col) = A.Mt.row_ptr[col + 1] - A.Mt.row_ptr[col];
+  }
+  return out;
+}
+
+Eigen::VectorXd col_square_sum(SparseDoubleFeat & A) {
+  const int ncol = A.cols();
+  const int* row_ptr = A.Mt.row_ptr;
+  const double* vals = A.Mt.vals;
+  VectorXd out(ncol);
+
+#pragma omp parallel for schedule(dynamic, 256)
+  for (int col = 0; col < ncol; col++) {
+    double tmp = 0;
+    int i   = row_ptr[col];
+    int end = row_ptr[col + 1];
+    for (; i < end; i++) {
+      tmp += vals[i] * vals[i];
+    }
+    out(col) = tmp;
+  }
+  return out;
 }
