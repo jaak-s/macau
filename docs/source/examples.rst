@@ -31,7 +31,7 @@ In this example we use MCMC (Gibbs) sampling to perform factorization of the `co
                         num_latent = 32,
                         precision  = 5.0,
                         burnin     = 50,
-                        nsamples   = 200)
+                        nsamples   = 500)
 
 Input matrix for :python:`Y` is a sparse scipy matrix (either coo_matrix, csr_matrix or csc_matrix).
 

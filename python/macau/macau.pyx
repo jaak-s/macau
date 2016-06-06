@@ -6,8 +6,6 @@ import timeit
 import numbers
 import pandas as pd
 
-cimport macau
-
 ## using cysignals to catch CTRL-C interrupt
 include "cysignals/signals.pxi"
 
