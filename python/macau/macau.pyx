@@ -166,10 +166,17 @@ def bpmf(Y,
                  burnin     = burnin,
                  nsamples   = nsamples)
 
+def remove_nan(Y):
+    if not np.any(np.isnan(Y.data)):
+        return Y
+    idx = np.where(np.isnan(Y.data) == False)[0]
+    return sp.sparse.coo_matrix( (Y.data[idx], (Y.row[idx], Y.col[idx])), shape = Y.shape )
+
 def prepare_Y(Y, Ytest):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
     Y = Y.tocoo(copy = False)
+    Y = remove_nan(Y)
     if Ytest is not None:
         if isinstance(Ytest, numbers.Real):
             Y, Ytest = make_train_test(Y, Ytest)
@@ -178,6 +185,7 @@ def prepare_Y(Y, Ytest):
         if Ytest.shape != Y.shape:
             raise ValueError("Ytest and Y must have the same shape")
         Ytest = Ytest.tocoo(copy = False)
+        Ytest = remove_nan(Ytest)
     return Y, Ytest
 
 def macau(Y,

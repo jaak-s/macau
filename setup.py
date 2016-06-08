@@ -6,7 +6,7 @@ from distutils.command.build_clib import build_clib
 from distutils.errors    import DistutilsSetupError
 from distutils.sysconfig import get_python_inc
 from setuptools          import setup
-from distutils.extension import Extension
+from setuptools          import Extension
 
 import Cython
 from Cython.Distutils import build_ext
@@ -231,7 +231,7 @@ libmacau = ('macau-cpp', dict(
     ))
 
 ext_modules=[
-    Extension("macau", 
+    Extension("macau.macau",
               sources = ["python/macau/macau.pyx",
                          "python/macau/myblas.cpp"],
               include_dirs = inc,

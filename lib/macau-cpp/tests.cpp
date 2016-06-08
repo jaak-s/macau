@@ -332,3 +332,14 @@ TEST_CASE( "bpmfutils/split_work_mpi", "Test if work splitting is correct") {
    REQUIRE( work5[3] == 2 );
    REQUIRE( work5[4] == 2 );
 }
+
+TEST_CASE( "macau/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") {
+  int rows[3] = {0, 1, 2};
+  int cols[3] = {2, 1, 0};
+  double vals[3] = {1.0, 0.0, 2.0};
+  Eigen::SparseMatrix<double> Y;
+  Y.resize(3, 3);
+
+  sparseFromIJV(Y, rows, cols, vals, 3);
+  REQUIRE( Y.nonZeros() == 3 );
+}

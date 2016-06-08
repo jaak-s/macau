@@ -47,3 +47,13 @@ inline void split_work_mpi(int num_latent, int num_nodes, int* work) {
       i = (i + 1) % num_nodes;
    }
 }
+
+inline void sparseFromIJV(Eigen::SparseMatrix<double> &X, int* rows, int* cols, double* values, int N) {
+  typedef Eigen::Triplet<double> T;
+  std::vector<T> tripletList;
+  tripletList.reserve(N);
+  for (int n = 0; n < N; n++) {
+    tripletList.push_back(T(rows[n], cols[n], values[n]));
+  }
+  X.setFromTriplets(tripletList.begin(), tripletList.end());
+}

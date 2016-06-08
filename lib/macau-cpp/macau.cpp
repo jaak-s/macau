@@ -51,16 +51,6 @@ void Macau::setRelationDataTest(int* rows, int* cols, double* values, int N, int
 
 double Macau::getRmseTest() { return rmse_test; }
 
-void sparseFromIJV(SparseMatrix<double> &X, int* rows, int* cols, double* values, int N) {
-  typedef Triplet<double> T;
-  std::vector<T> tripletList;
-  tripletList.reserve(N);
-  for (int n = 0; n < N; n++) {
-    tripletList.push_back(T(rows[n], cols[n], values[n]));
-  }
-  X.setFromTriplets(tripletList.begin(), tripletList.end());
-}
-
 void Macau::init() {
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
   if (priors.size() != 2) {
