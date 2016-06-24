@@ -42,7 +42,7 @@ class BPMFPrior : public ILatentPrior {
 /** Prior without side information (pure BPMF) */
 template<class FType>
 class MacauPrior : public ILatentPrior {
-  private:
+  public:
     Eigen::MatrixXd Uhat;
     std::unique_ptr<FType> F;  /* side information */
     Eigen::MatrixXd FtF;       /* F'F */
@@ -74,7 +74,8 @@ class MacauPrior : public ILatentPrior {
     double getLinkNorm();
     double getLinkLambda() { return lambda_beta; };
     void sample_beta(const Eigen::MatrixXd &U);
-    void setLambdaBeta(double lambda_beta);
+    void setLambdaBeta(double lb) { lambda_beta = lb; };
+    void setTol(double t) { tol = t; };
 };
 
 std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);

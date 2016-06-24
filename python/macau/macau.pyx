@@ -1,12 +1,10 @@
-cimport cython                                                                                                         
+cimport cython
 import numpy as np
 cimport numpy as np
 import scipy as sp
 import timeit
 import numbers
 import pandas as pd
-
-cimport macau
 
 ## using cysignals to catch CTRL-C interrupt
 include "cysignals/signals.pxi"
@@ -15,10 +13,10 @@ class MacauResult(object):
   def __init__(self):
     pass
   def __repr__(self):
-    s = ("Matrix factorization results\n" + 
-         "Test RMSE:        %.4f\n" % self.rmse_test + 
-         "Matrix size:      [%d x %d]\n" % (self.Yshape[0], self.Yshape[1]) + 
-         "Number of train:  %d\n" % self.ntrain + 
+    s = ("Matrix factorization results\n" +
+         "Test RMSE:        %.4f\n" % self.rmse_test +
+         "Matrix size:      [%d x %d]\n" % (self.Yshape[0], self.Yshape[1]) +
+         "Number of train:  %d\n" % self.ntrain +
          "Number of test:   %d\n" % self.ntest  +
          "To see predictions on test set see '.prediction' field.")
     return s
@@ -124,7 +122,7 @@ def make_train_test(Y, ntest):
     Ytest  = sp.sparse.coo_matrix( (Y.data[test],  (Y.row[test],  Y.col[test])),  shape=Y.shape )
     return Ytrain, Ytest
 
-cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size) except NULL:
+cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lambda_beta, double tol) except NULL:
     if (side is None) or side == ():
         return new BPMFPrior(num_latent)
     if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
@@ -132,17 +130,23 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size) except NULL
 
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
 
-    ## binary
-    #cdef SparseFeat* sf
+    ## binary CSR
     cdef unique_ptr[SparseFeat] sf_ptr
+    cdef MacauPrior[SparseFeat]* sf_prior
     if (side.data == 1).all():
-        sf_ptr = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
-        return new MacauPrior[SparseFeat](num_latent, sf_ptr, compute_ff)
+        sf_ptr   = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
+        sf_prior = new MacauPrior[SparseFeat](num_latent, sf_ptr, compute_ff)
+        sf_prior.setLambdaBeta(lambda_beta)
+        sf_prior.setTol(tol)
+        return sf_prior
 
     ## double CSR
     cdef unique_ptr[SparseDoubleFeat] sdf_ptr
     sdf_ptr = unique_ptr[SparseDoubleFeat]( sparse2SparseDoubleFeat(side) )
-    return new MacauPrior[SparseDoubleFeat](num_latent, sdf_ptr, compute_ff)
+    cdef MacauPrior[SparseDoubleFeat]* sdf_prior = new MacauPrior[SparseDoubleFeat](num_latent, sdf_ptr, compute_ff)
+    sdf_prior.setLambdaBeta(lambda_beta)
+    sdf_prior.setTol(tol)
+    return sdf_prior
 
 ## API functions:
 ## 1) F'F
@@ -152,7 +156,7 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size) except NULL
 def bpmf(Y,
          Ytest      = None,
          num_latent = 10,
-         precision  = 1.0, 
+         precision  = 1.0,
          burnin     = 50,
          nsamples   = 400):
     return macau(Y,
@@ -162,10 +166,17 @@ def bpmf(Y,
                  burnin     = burnin,
                  nsamples   = nsamples)
 
+def remove_nan(Y):
+    if not np.any(np.isnan(Y.data)):
+        return Y
+    idx = np.where(np.isnan(Y.data) == False)[0]
+    return sp.sparse.coo_matrix( (Y.data[idx], (Y.row[idx], Y.col[idx])), shape = Y.shape )
+
 def prepare_Y(Y, Ytest):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
     Y = Y.tocoo(copy = False)
+    Y = remove_nan(Y)
     if Ytest is not None:
         if isinstance(Ytest, numbers.Real):
             Y, Ytest = make_train_test(Y, Ytest)
@@ -174,6 +185,7 @@ def prepare_Y(Y, Ytest):
         if Ytest.shape != Y.shape:
             raise ValueError("Ytest and Y must have the same shape")
         Ytest = Ytest.tocoo(copy = False)
+        Ytest = remove_nan(Ytest)
     return Y, Ytest
 
 def macau(Y,
@@ -181,9 +193,10 @@ def macau(Y,
           side       = [],
           lambda_beta = 5.0,
           num_latent = 10,
-          precision  = 1.0, 
+          precision  = 1.0,
           burnin     = 50,
           nsamples   = 400,
+          tol        = 1e-6,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
 
@@ -200,8 +213,8 @@ def macau(Y,
         raise ValueError("If specified 'side' must contain 2 elements.")
 
     cdef int D = np.int32(num_latent)
-    cdef unique_ptr[ILatentPrior] prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000))
-    cdef unique_ptr[ILatentPrior] prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000))
+    cdef unique_ptr[ILatentPrior] prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
+    cdef unique_ptr[ILatentPrior] prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
 
     sig_on()
     cdef Macau *macau = new Macau(D)

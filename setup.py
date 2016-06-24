@@ -2,15 +2,15 @@ import sys
 import numpy as np
 from glob import glob
 
-from distutils.core import setup
 from distutils.command.build_clib import build_clib
-from distutils.extension import Extension
-from distutils.errors import DistutilsSetupError
+from distutils.errors    import DistutilsSetupError
+from distutils.sysconfig import get_python_inc
+from setuptools          import setup
+from setuptools          import Extension
+
+import Cython
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
-from distutils.sysconfig import get_python_inc
-
-from distutils import log
 
 import os
 from textwrap import dedent
@@ -23,6 +23,17 @@ import shutil
 
 # checking out libfastsparse
 import subprocess
+
+
+# checking cython version
+def vercmp(version1, version2):
+    import re
+    def normalize(v):
+        return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
+    return cmp(normalize(version1), normalize(version2))
+
+if vercmp(Cython.__version__, "0.23") < 0:
+    print("Cython 0.23 or higher is required for installating from source.")
 
 ## how to test -fopenmp: https://github.com/hickford/primesieve-python/blob/master/setup.py
 def is_openblas_installed():
@@ -183,7 +194,6 @@ class build_clibx(build_clib):
                        "'sources' must be present and must be "
                        "a list of source filenames" % lib_name)
 
-            log.info("building '%s' library", lib_name)
             include_dirs = build_info.get('include_dirs')
             extra_compile_args = build_info.get('extra_compile_args')
             extra_link_args = build_info.get('extra_link_args')
@@ -212,7 +222,8 @@ ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/
 
 libmacau = ('macau-cpp', dict(
     package='macau',
-    sources = filter(lambda a: a.find("tests.cpp") < 0, glob('lib/macau-cpp/*.cpp')),
+    sources = filter(lambda a: a.find("tests.cpp") < 0 and a.find("macau_mpi.cpp") < 0,
+                               glob('lib/macau-cpp/*.cpp')),
     include_dirs = inc,
     extra_compile_args = ['-fopenmp', '-O3', '-fstrict-aliasing', '-std=c++11'],
     #extra_link_args = ['-fopenmp'],
@@ -220,8 +231,9 @@ libmacau = ('macau-cpp', dict(
     ))
 
 ext_modules=[
-    Extension("macau", 
-              sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
+    Extension("macau.macau",
+              sources = ["python/macau/macau.pyx",
+                         "python/macau/myblas.cpp"],
               include_dirs = inc,
               libraries = ["openblas", "pthread"],
               library_dirs = ldirs,
@@ -229,6 +241,22 @@ ext_modules=[
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")
+]
+
+CLASSIFIERS = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Topic :: Machine Learning",
+    "Topic :: Matrix Factorization",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS"
 ]
 
 def main():
@@ -240,19 +268,26 @@ def main():
     download_eigen_if_needed()
     checkout_libfastsparse()
 
+    ## reading __version__:
+    exec(open('python/macau/version.py').read())
+
     setup(
         name = 'macau',
-        version = "0.2",
-        requires = ['numpy', 'scipy', 'cython(>=0.21)', 'cysignals', 'pandas'],
+        version = __version__,
+        requires = ['numpy', 'scipy', 'cython(>=0.23)', 'cysignals', 'pandas'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},
-        author = "Jaak Simm",
-        url = "http://google.com",
+        url = "http://github.com/jaak-s/macau",
         license = "MIT",
+        description = 'Bayesian Factorization Methods',
+        long_description = 'Highly optimized and parallelized methods for Bayesian Factorization, including BPMF and Macau. The package uses optimized OpenMP/C++ code with a Cython wrapper to factorize large scale matrices. Macau method provides also the ability to incorporate high-dimensional side information to the factorization.',
+        author = "Jaak Simm",
         author_email = "jaak.simm@gmail.com",
         cmdclass = {'build_clib': build_clibx, 'build_ext': build_ext},
-        ext_modules = cythonize(ext_modules, include_path=sys.path)
+        ext_modules = cythonize(ext_modules, include_path=sys.path),
+        classifiers = CLASSIFIERS,
+        keywords = "bayesian factorization machine-learning high-dimensional side-information"
     )
 
 if __name__ == '__main__':

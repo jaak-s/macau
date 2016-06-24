@@ -4,7 +4,13 @@ Macau is highly optimized and parallelized implementation of Bayesian Factorizat
 Macau trains a Bayesian model for **collaborative filtering** by also incorporating side information on rows and/or columns to improve the accuracy of the predictions.
 Macau employs Gibbs sampling to sample both the latent vectors and the link matrix that connects the side information to the latent vectors. Macau supports **high-dimensional** side information (e.g., millions of features) by using **conjugate gradient** based noise injection sampler.
 
-# Installation on Ubuntu
+# Examples
+For examples see [documentation](http://macau.readthedocs.io/en/latest/source/examples.html).
+
+# Installation
+To install Macau it possible to use pre-compiled binaries or compile it from source.
+
+## Source installation on Ubuntu
 ```bash
 # install dependencies:
 sudo apt-get install python-pip python-numpy python-scipy python-pandas cython
@@ -17,7 +23,7 @@ cd macau
 sudo python setup.py install
 ```
 
-# Installation on Mac
+## Source installation on Mac
 ```bash
 # install dependencies
 pip install numpy
@@ -34,6 +40,9 @@ git clone --recursive https://github.com/jaak-s/macau.git
 cd macau
 CC=g++-5 CXX=g++-5 python setup.py install
 ```
+
+## Binary installion on Ubuntu
+There is a plan to support Python wheel packages. Currently, we do not have one built yet.
 
 # Contributors
 In alphabetical order:

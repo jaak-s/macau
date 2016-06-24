@@ -460,9 +460,9 @@ template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
   assert(N == out.rows());
   assert(N == B.rows());
-  assert(A.M.cols() == B.cols());
-  assert(A.M.cols() == out.cols());
-  assert(A.M.rows() == inner.cols());
+  assert(A.cols() == B.cols());
+  assert(A.cols() == out.cols());
+  assert(A.rows() == inner.cols());
 
   A_mul_Bx<N>(inner, A.M,  B);
 
@@ -493,9 +493,9 @@ template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
   assert(N == out.rows());
   assert(N == B.rows());
-  assert(A.M.cols() == B.cols());
-  assert(A.M.cols() == out.cols());
-  assert(A.M.rows() == inner.cols());
+  assert(A.cols() == B.cols());
+  assert(A.cols() == out.cols());
+  assert(A.rows() == inner.cols());
 
   A_mul_Bx<N>(inner, A.M,  B);
 

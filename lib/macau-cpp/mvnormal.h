@@ -13,6 +13,7 @@ double randn(double);
 
 void bmrandn(double* x, long n);
 void bmrandn(Eigen::MatrixXd & X);
+void init_bmrng();
 void init_bmrng(int seed);
 
 double rgamma(double shape, double scale);

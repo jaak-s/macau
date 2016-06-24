@@ -7,14 +7,16 @@
 #include <iostream>
 #include <random>                                                                                
 #include <Eigen/Dense>
+#include <omp.h>
+#include <chrono>
 
 #include "mvnormal.h"
 
 using namespace std;
 using namespace Eigen;
+using namespace std::chrono;
 
-std::mt19937 *bmrng;
-#pragma omp threadprivate(bmrng)
+std::mt19937 **bmrngs;
 
 /*
   We need a functor that can pretend it's const,
@@ -22,7 +24,13 @@ std::mt19937 *bmrng;
   it needs mutable state.
 */
 
+#ifdef __INTEL_COMPILER
+std::random_device srd;
+#pragma omp threadprivate(srd)
+#else
+// use thread_local for gcc 
 thread_local static std::random_device srd;
+#endif
 
 #ifndef __clang__
 thread_local 
@@ -49,16 +57,32 @@ nrandn(int n) -> decltype( VectorXd::NullaryExpr(n, std::cref(randn)) )
 }
 
 void init_bmrng(int seed) {
+   int nthreads = -1;
 #pragma omp parallel 
-  {
-    bmrng = new std::mt19937(seed + omp_get_thread_num() * 1999);
-  }
+   {
+#pragma omp single
+      {
+         nthreads = omp_get_num_threads();
+      }
+   }
+   bmrngs = new std::mt19937*[nthreads];
+   for (int i = 0; i < nthreads; i++) {
+      bmrngs[i] = new std::mt19937(seed + i * 1999);
+   }
+}
+
+void init_bmrng() {
+   auto ms = (duration_cast< milliseconds >(
+             system_clock::now().time_since_epoch()
+         )).count();
+   init_bmrng(ms);
 }
 
 void bmrandn(double* x, long n) {
 #pragma omp parallel 
   {
     std::uniform_real_distribution<double> unif(-1.0, 1.0);
+    std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
 #pragma omp for schedule(static)
     for (long i = 0; i < n; i += 2) {
       double x1, x2, w;
@@ -86,7 +110,7 @@ void bmrandn(MatrixXd & X) {
  *  with the given shape (k) and scale (theta). See wiki. */
 double rgamma(double shape, double scale) {
   std::gamma_distribution<double> gamma(shape, scale);
-  return gamma(*bmrng);
+  return gamma(*bmrngs[0]);
 }
 
 /** Normal(0, Lambda^-1) for nn columns */

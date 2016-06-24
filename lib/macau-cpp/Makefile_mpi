@@ -1,0 +1,20 @@
+EXECS=macau_mpi
+MPICXX?=mpic++
+CXXFLAGS=-std=c++11 -Wall -Wno-unknown-pragmas -DNDEBUG -O2 -fopenmp -fstrict-aliasing
+
+INCLUDES := -I ../eigen3 -I ../libfastsparse
+LIBLOCS := -L/opt/OpenBLAS/lib -L/usr/local/lib -L/usr/lib/openblas-base
+LDFLAGS := -lm -lopenblas -lpthread
+
+all: ${EXECS}
+
+%.o: %.cpp %.h
+	$(MPICXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+OBJS = mvnormal.o chol.o linop.o latentprior.o macau.o macau_mpi.o
+
+macau_mpi: ${OBJS}
+	${MPICXX} ${CXXFLAGS} ${INCLUDES} -o macau_mpi ${OBJS} ${LDFLAGS} ${LIBLOCS}
+
+clean:
+	rm -f ${EXECS} *.o

@@ -5,6 +5,7 @@
 #include "mvnormal.h"
 #include "latentprior.h"
 #include "latentpriorvb.h"
+#include "bpmfutils.h"
 #include <cmath>
 #include <memory>
 
@@ -765,4 +766,45 @@ TEST_CASE( "latentpriorvb/macaupriorvb/update_latents", "MacauPriorVB update_lat
   REQUIRE( Uvar (0, 2) == Approx(1.0 / Q20) );
   REQUIRE( Umean(1, 2) == Approx(L21 / Q21) );
   REQUIRE( Uvar (1, 2) == Approx(1.0 / Q21) );
+}
+
+TEST_CASE( "bpmfutils/split_work_mpi", "Test if work splitting is correct") {
+   int work3[3], work5[5];
+   split_work_mpi(96, 3, work3);
+   REQUIRE( work3[0] == 32 );
+   REQUIRE( work3[1] == 32 );
+   REQUIRE( work3[2] == 32 );
+
+   split_work_mpi(97, 3, work3);
+   REQUIRE( work3[0] == 33 );
+   REQUIRE( work3[1] == 32 );
+   REQUIRE( work3[2] == 32 );
+
+   split_work_mpi(95, 3, work3);
+   REQUIRE( work3[0] == 32 );
+   REQUIRE( work3[1] == 32 );
+   REQUIRE( work3[2] == 31 );
+
+   split_work_mpi(80, 3, work3);
+   REQUIRE( work3[0] == 28 );
+   REQUIRE( work3[1] == 26 );
+   REQUIRE( work3[2] == 26 );
+
+   split_work_mpi(11, 5, work5);
+   REQUIRE( work5[0] == 3 );
+   REQUIRE( work5[1] == 2 );
+   REQUIRE( work5[2] == 2 );
+   REQUIRE( work5[3] == 2 );
+   REQUIRE( work5[4] == 2 );
+}
+
+TEST_CASE( "macau/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") {
+  int rows[3] = {0, 1, 2};
+  int cols[3] = {2, 1, 0};
+  double vals[3] = {1.0, 0.0, 2.0};
+  Eigen::SparseMatrix<double> Y;
+  Y.resize(3, 3);
+
+  sparseFromIJV(Y, rows, cols, vals, 3);
+  REQUIRE( Y.nonZeros() == 3 );
 }
