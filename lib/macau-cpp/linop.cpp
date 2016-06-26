@@ -353,3 +353,24 @@ Eigen::VectorXd col_square_sum(SparseDoubleFeat & A) {
   }
   return out;
 }
+
+/**
+ * X = A * B
+ */
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
+  MatrixXd out(A.rows(), B.cols());
+  A_mul_B_blas(out, A, B);
+  return out;
+}
+
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B) {
+  MatrixXd out(A.rows(), B.cols());
+  A_mul_Bt(out, B.Mt, A);
+  return out;
+}
+
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B) {
+  MatrixXd out(A.rows(), B.cols());
+  A_mul_Bt(out, B.Mt, A);
+  return out;
+}

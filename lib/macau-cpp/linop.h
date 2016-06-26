@@ -1,7 +1,7 @@
-#ifndef LINOP_H
-#define LINOP_H
+#pragma once
 
 #include <Eigen/Dense>
+#include <algorithm>
 #include "chol.h"
 #include "bpmfutils.h"
 
@@ -79,6 +79,9 @@ template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B);
 template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B);
+
+void AtA_mul_B_1thread(Eigen::VectorXd & out, SparseFeat & A,       double reg, Eigen::VectorXd & b, Eigen::VectorXd & tmp);
+void AtA_mul_B_1thread(Eigen::VectorXd & out, SparseDoubleFeat & A, double reg, Eigen::VectorXd & b, Eigen::VectorXd & tmp);
 
 
 void At_mul_B_blas(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
@@ -341,6 +344,133 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   return iter;
 }
 
+// uses x also as the initial vector
+template<typename T>
+inline void solve_blockcg_1thread(Eigen::VectorXd & x, T & K, double reg, Eigen::VectorXd & b, double tol, double tol_b) {
+  // initialize
+  const int nfeat    = b.size();
+
+  if (nfeat != K.cols()) {throw std::runtime_error("B.cols() must equal K.cols()");}
+
+  // init:
+  Eigen::VectorXd r(nfeat);
+  Eigen::VectorXd p(nfeat);
+  Eigen::VectorXd AAp(nfeat);
+  Eigen::VectorXd tmp(K.rows());
+
+  // setting r = A * x, and then r = b - r
+  AtA_mul_B_1thread(r, K, reg, x, tmp);
+  for (int i = 0; i < nfeat; i++) {
+    r(i) = b(i) - r(i);
+    p(i) = r(i);
+  }
+  double rsq_old = r.squaredNorm();
+  // stop if:
+  // a) ||rn|| < tol * ||r0|| or
+  // b) ||rn|| < tol_b * ||b||
+  double etol = std::max(tol * sqrt(rsq_old), tol_b * b.norm());
+
+  int iter;
+  for (iter = 0; iter < nfeat; iter++) {
+    // computing AAp = (At*A + lambda*I) * p
+    AtA_mul_B_1thread(AAp, K, reg, p, tmp);
+    double alpha = rsq_old / AAp.dot(p);
+
+    for (int i = 0; i < nfeat; i++) {
+      x(i) += alpha * p(i);
+      r(i) -= alpha * AAp(i);
+    }
+
+    double rsq_new = r.squaredNorm();
+    if (sqrt(rsq_new) <= etol) break; 
+
+    double beta = rsq_new / rsq_old;
+    for (int i = 0; i < nfeat; i++) {
+      p(i) = r(i) + beta * p(i);
+    }
+    rsq_old = rsq_new;
+  }
+}
+
+// computes out = (A'A*b + reg*b)
+inline void AtA_mul_B_1thread(Eigen::VectorXd & out, SparseFeat & A, double reg, Eigen::VectorXd & b, Eigen::VectorXd & tmp) {
+  assert(A.cols()   == b.size());
+  assert(out.size() == b.size());
+  assert(A.rows()   == tmp.size());
+
+  int *row_ptr, *cols, nrow;
+  double *x, *y;
+  // tmp = A * b
+  row_ptr = A.M.row_ptr;
+  cols    = A.M.cols;
+  nrow    = A.M.nrow;
+  x       = b.data();
+  y       = tmp.data();
+  for (int row = 0; row < nrow; row++) {
+    double sum = 0;
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      sum += x[cols[i]];
+    }
+    y[row] = sum;
+  }
+
+  // out = A' * tmp + reg * b
+  row_ptr = A.Mt.row_ptr;
+  cols    = A.Mt.cols;
+  nrow    = A.Mt.nrow;
+  x       = tmp.data();
+  y       = out.data();
+  for (int row = 0; row < nrow; row++) {
+    double sum = 0;
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      sum += x[cols[i]];
+    }
+    y[row] = sum + reg * b(row);
+  }
+}
+
+inline void AtA_mul_B_1thread(Eigen::VectorXd & out, SparseDoubleFeat & A, double reg, Eigen::VectorXd & b, Eigen::VectorXd & tmp) {
+  assert(A.cols()   == b.size());
+  assert(out.size() == b.size());
+  assert(A.rows()   == tmp.size());
+
+  int *row_ptr, *cols, nrow;
+  double *x, *y, *vals;
+  // tmp = A * b
+  row_ptr = A.M.row_ptr;
+  cols    = A.M.cols;
+  vals    = A.M.vals;
+  nrow    = A.M.nrow;
+  x       = b.data();
+  y       = tmp.data();
+  for (int row = 0; row < nrow; row++) {
+    double sum = 0;
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      sum += vals[i] * x[cols[i]];
+    }
+    y[row] = sum;
+  }
+
+  // out = A' * tmp + reg * b
+  row_ptr = A.Mt.row_ptr;
+  cols    = A.Mt.cols;
+  vals    = A.Mt.vals;
+  nrow    = A.Mt.nrow;
+  x       = tmp.data();
+  y       = out.data();
+  for (int row = 0; row < nrow; row++) {
+    double sum = 0;
+    const int end = row_ptr[row + 1];
+    for (int i = row_ptr[row]; i < end; i++) {
+      sum += vals[i] * x[cols[i]];
+    }
+    y[row] = sum + reg * b(row);
+  }
+}
+
 template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, BinaryCSR & A, Eigen::MatrixXd & B) {
   assert(N == out.rows());
@@ -565,4 +695,7 @@ inline void A_mul_B_omp(
   out.block(0, col, N, out.cols() - col) = alpha * out.block(0, col, N, out.cols() - col) + beta * A * B.block(0, col, N, out.cols() - col);
 }
 */
-#endif /* LINOP_H */
+
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
+Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);

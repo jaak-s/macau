@@ -95,7 +95,6 @@ void BPMFPriorVB::update_latents(
 void BPMFPriorVB::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) {
   // TODO: parallelize or turn on Eigen's parallelism
   assert(Umean.rows() == Uvar.rows());
-  assert(Vmean.rows() == Vvar.rows());
   const int N = Umean.cols();
   // updating mu_d
   VectorXd Elambda = getElambda(N);
@@ -227,6 +226,43 @@ void MacauPriorVB<FType>::update_latents(
 
 template<class FType>
 void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
+  const int nfeat        = beta.cols();
+  const int num_latent   = beta.rows();
+  const VectorXd Elambda = getElambda(Umean.cols());
+  MatrixXd Ubar(Umean.rows(), Umean.cols());
+
+  // 1) compute rhs = X' * (U[d,:] - mu[d])
+  // TODO parallelize Ubar calculation
+  Ubar = Umean.colwise() - mu_mean;
+  MatrixXd RHS = A_mul_B(Ubar, *F);
+
+#pragma omp parallel for schedule(dynamic, 1)
+  for (int d = 0; d < num_latent; d++) {
+    // 2) solve (X'X + lambda[d]) beta = rhs
+    VectorXd beta_d, rhs;
+    beta_d.resize(nfeat);
+    rhs.resize(nfeat);
+
+    rhs    = RHS.row(d);
+    beta_d = beta.row(d);
+    double reg = lambda_beta(d) / Elambda(d);
+    solve_blockcg_1thread(beta_d, *F, reg, rhs, 1e-3, 1e-7);
+
+    // 3) move beta into the model
+    beta.row(d) = beta_d;
+  }
+
+  // updating variance terms
+#pragma omp parallel for schedule(static)
+  for (int f = 0; f < nfeat; f++) {
+    for (int d = 0; d < num_latent; d++) {
+      beta_var(d, f) = 1.0 / (lambda_beta(d) + Elambda(d) * F_colsq(f));
+    }
+  }
+}
+
+template<class FType>
+void MacauPriorVB<FType>::update_beta2(Eigen::MatrixXd &Umean) {
   // updating beta and beta_var
   const int nfeat = beta.cols();
   const int blocksize = 4;
@@ -285,7 +321,6 @@ template<class FType>
 void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) {
   // TODO: parallelize or turn on Eigen's parallelism
   assert(Umean.rows() == Uvar.rows());
-  assert(Vmean.rows() == Vvar.rows());
   const int N = Umean.cols();
 
   // Uhat = F * beta
