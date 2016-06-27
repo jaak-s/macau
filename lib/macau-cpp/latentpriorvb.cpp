@@ -246,7 +246,7 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
     rhs    = RHS.row(d);
     beta_d = beta.row(d);
     double reg = lambda_beta(d) / Elambda(d);
-    solve_blockcg_1thread(beta_d, *F, reg, rhs, 1e-3, 1e-7);
+    solve_blockcg_1thread(beta_d, *F, reg, rhs, 1e-4, 1e-8);
 
     // 3) move beta into the model
     beta.row(d) = beta_d;
@@ -259,6 +259,7 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
       beta_var(d, f) = 1.0 / (lambda_beta(d) + Elambda(d) * F_colsq(f));
     }
   }
+  Uhat_valid = false;
 }
 
 template<class FType>

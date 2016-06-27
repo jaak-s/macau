@@ -129,15 +129,9 @@ void MacauVB::run() {
 }
 
 void MacauVB::printStatus(int i, double rmse, double elapsedi, double updates_per_sec) {
-  printf("Iter %3d: RMSE: %4.4f\tFU(%1.2e) FV(%1.2e) [took %0.1fs, Updates/sec: %6.1f]\n", i, rmse, samples_mean[0]->norm(), samples_mean[1]->norm(), elapsedi, updates_per_sec);
   double norm0 = priors[0]->getLinkNorm();
   double norm1 = priors[1]->getLinkNorm();
-  if (!std::isnan(norm0) || !std::isnan(norm1)) {
-    printf("          Side: ");
-    if (!std::isnan(norm0)) printf("U.link(%1.2e) ", norm0);
-    if (!std::isnan(norm1)) printf("V.link(%1.2e)",  norm1);
-    printf("\n");
-  }
+  printf("Iter %3d: RMSE: %4.4f\tU:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e]  [took %0.1fs]\n", i, rmse, samples_mean[0]->norm(), samples_mean[1]->norm(), norm0, norm1, elapsedi);
 }
 
 double inline sqr(double x) {
