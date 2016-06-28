@@ -111,45 +111,11 @@ void Macau::run() {
 }
 
 void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec) {
-  printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f  FU(%1.2e) FV(%1.2e) [took %0.1fs, Samples/sec: %6.1f]\n", i, rmse, rmse_avg, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
   double norm0 = priors[0]->getLinkNorm();
   double norm1 = priors[1]->getLinkNorm();
-  if (!std::isnan(norm0) || !std::isnan(norm1)) {
-    printf("          [Side info] ");
-    if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
-    if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
-    printf("\n");
-  }
-}
-
-std::pair<double,double> eval_rmse(SparseMatrix<double> & P, const int n, VectorXd & predictions, Eigen::VectorXd & predictions_var, const MatrixXd &sample_m, const MatrixXd &sample_u, double mean_rating)
-{
-  double se = 0.0, se_avg = 0.0;
-#pragma omp parallel for schedule(dynamic,8) reduction(+:se, se_avg)
-  for (int k = 0; k < P.outerSize(); ++k) {
-    int idx = P.outerIndexPtr()[k];
-    for (SparseMatrix<double>::InnerIterator it(P,k); it; ++it) {
-      const double pred = sample_m.col(it.col()).dot(sample_u.col(it.row())) + mean_rating;
-      se += sqr(it.value() - pred);
-
-      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
-      double pred_avg;
-      if (n == 0) {
-        pred_avg = pred;
-      } else {
-        double delta = pred - predictions[idx];
-        pred_avg = (predictions[idx] + delta / (n + 1));
-        predictions_var[idx] += delta * (pred - pred_avg);
-      }
-      se_avg += sqr(it.value() - pred_avg);
-      predictions[idx++] = pred_avg;
-    }
-  }
-
-  const unsigned N = P.nonZeros();
-  const double rmse = sqrt( se / N );
-  const double rmse_avg = sqrt( se_avg / N );
-  return std::make_pair(rmse, rmse_avg);
+  printf("Iter %3d: RMSE: %.4f (1samp: %.4f)  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e]  [took %0.1fs]\n", i, rmse_avg, rmse, samples[0]->norm(), samples[1]->norm(), norm0, norm1, elapsedi);
+  // if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
+  // if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
 }
 
 Eigen::VectorXd Macau::getStds() {

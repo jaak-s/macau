@@ -1,17 +1,24 @@
 #include <Eigen/Dense>
 #include <stdio.h>
-#include <cblas.h>
 #include <math.h>
+#include <omp.h>
 #include "mvnormal.h"
 extern "C" {
 #include <sparse.h>
 }
 
+extern "C" void dsyrk_(char *uplo, char *trans, int *m, int *n, double *alpha, double a[],
+            int *lda, double *beta, double c[], int *ldc);
+
 using namespace Eigen;
 
 void hello(double* x, double* y, int n, int k) {
-  //cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, n, k, 1, x, k, x, k, 0, y, n);
-  cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, n, k, 1.0, x, k, 0.0, y, n);
+  //cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, n, k, 1.0, x, k, 0.0, y, n);
+  char lower  = 'L';
+  char trans  = 'T';
+  double one  = 1.0;
+  double zero = 0.0;
+  dsyrk_(&lower, &trans, &n, &k, &one, x, &k, &zero, y, &n);
 }
 
 void eigenQR(double* x, int nrow, int ncol) {
@@ -37,7 +44,12 @@ MatrixXd getx() {
 void hello2(double* x, double* y, int n, int k) {
   if (n >= 256) {
     // probably broken
-    cblas_dsyrk(CblasColMajor, CblasLower, CblasNoTrans, n, k, 1.0, x, k, 0.0, y, n);
+    //cblas_dsyrk(CblasColMajor, CblasLower, CblasNoTrans, n, k, 1.0, x, k, 0.0, y, n);
+    char lower  = 'L';
+    char trans  = 'N';
+    double one  = 1.0;
+    double zero = 0.0;
+    dsyrk_(&lower, &trans, &n, &k, &one, x, &n, &zero, y, &n);
     return;
   }
   int nthreads = -1;

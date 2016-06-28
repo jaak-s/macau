@@ -303,6 +303,89 @@ TEST_CASE( "linop/A_mul_B_add", "Fast parallel A_mul_B with adding") {
   REQUIRE( (C - Ctr).norm() == Approx(0.0) );
 }
 
+TEST_CASE( "linop/At_mul_A_blas", "A'A with BLAS is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd AtA(2, 2);
+  Eigen::MatrixXd AtAtr(2, 2);
+  A <<  1.7, -3.1,
+        0.7,  2.9,
+       -1.3,  1.5;
+  AtAtr = A.transpose() * A;
+  At_mul_A_blas(A, AtA.data());
+  makeSymmetric(AtA);
+  REQUIRE( (AtA - AtAtr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/A_mul_At_blas", "AA' with BLAS is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd AA(3, 3);
+  Eigen::MatrixXd AAtr(3, 3);
+  A <<  1.7, -3.1,
+        0.7,  2.9,
+       -1.3,  1.5;
+  AAtr = A * A.transpose();
+  A_mul_At_blas(A, AA.data());
+  makeSymmetric(AA);
+  REQUIRE( (AA - AAtr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/A_mul_B_blas", "A_mul_B_blas is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd B(2, 5);
+  Eigen::MatrixXd C(3, 5);
+  Eigen::MatrixXd Ctr(3, 5);
+  A << 3.0, -2.00,
+       1.0,  0.91,
+       1.9, -1.82;
+  B << 0.52, 0.19, 0.25, -0.73, -2.81,
+      -0.15, 0.31,-0.40,  0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  A_mul_B_blas(C, A, B);
+  Ctr = A * B;
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/At_mul_B_blas", "At_mul_B_blas is correct") {
+  Eigen::MatrixXd A(2, 3);
+  Eigen::MatrixXd B(2, 5);
+  Eigen::MatrixXd C(3, 5);
+  Eigen::MatrixXd Ctr(3, 5);
+  A << 3.0, -2.00,  1.0,
+       0.91, 1.90, -1.82;
+  B << 0.52, 0.19, 0.25, -0.73, -2.81,
+      -0.15, 0.31,-0.40,  0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  Ctr = C;
+  At_mul_B_blas(C, A, B);
+  Ctr = A.transpose() * B;
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/A_mul_Bt_blas", "A_mul_Bt_blas is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd B(5, 2);
+  Eigen::MatrixXd C(3, 5);
+  Eigen::MatrixXd Ctr(3, 5);
+  A << 3.0, -2.00,
+       1.0,  0.91,
+       1.9, -1.82;
+  B << 0.52,  0.19,
+       0.25, -0.73,
+      -2.81, -0.15,
+       0.31, -0.40,
+       0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  A_mul_Bt_blas(C, A, B);
+  Ctr = A * B.transpose();
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
 TEST_CASE( "bpmfutils/split_work_mpi", "Test if work splitting is correct") {
    int work3[3], work5[5];
    split_work_mpi(96, 3, work3);
@@ -333,7 +416,7 @@ TEST_CASE( "bpmfutils/split_work_mpi", "Test if work splitting is correct") {
    REQUIRE( work5[4] == 2 );
 }
 
-TEST_CASE( "macau/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") {
+TEST_CASE( "bpmfutils/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") {
   int rows[3] = {0, 1, 2};
   int cols[3] = {2, 1, 0};
   double vals[3] = {1.0, 0.0, 2.0};
@@ -342,4 +425,45 @@ TEST_CASE( "macau/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") {
 
   sparseFromIJV(Y, rows, cols, vals, 3);
   REQUIRE( Y.nonZeros() == 3 );
+}
+
+TEST_CASE( "bpmfutils/eval_rmse", "Test if prediction variance is correctly calculated") {
+  int rows[1] = {0};
+  int cols[1] = {0};
+  double vals[1] = {4.5};
+  Eigen::SparseMatrix<double> Y;
+  Y.resize(1, 1);
+  sparseFromIJV(Y, rows, cols, vals, 1);
+  double mean_value = 2.0;
+
+  Eigen::VectorXd pred     = Eigen::VectorXd::Zero(1);
+  Eigen::VectorXd pred_var = Eigen::VectorXd::Zero(1);
+  Eigen::MatrixXd U(2, 1), V(2, 1);
+
+  // first iteration
+  U << 1.0, 0.0;
+  V << 1.0, 0.0;
+  auto rmse0 = eval_rmse(Y, 0, pred, pred_var, U, V, mean_value);
+  REQUIRE(pred(0)      == Approx(3.0));
+  REQUIRE(pred_var(0)  == Approx(0.0));
+  REQUIRE(rmse0.first  == Approx(1.5));
+  REQUIRE(rmse0.second == Approx(1.5));
+
+  //// second iteration
+  U << 2.0, 0.0;
+  V << 1.0, 0.0;
+  auto rmse1 = eval_rmse(Y, 1, pred, pred_var, U, V, mean_value);
+  REQUIRE(pred(0)      == Approx((3.0 + 4.0) / 2));
+  REQUIRE(pred_var(0)  == Approx(0.5));
+  REQUIRE(rmse1.first  == 0.5);
+  REQUIRE(rmse1.second == 1.0);
+
+  //// third iteration
+  U << 2.0, 0.0;
+  V << 3.0, 0.0;
+  auto rmse2 = eval_rmse(Y, 2, pred, pred_var, U, V, mean_value);
+  REQUIRE(pred(0)      == Approx((3.0 + 4.0 + 8.0) / 3));
+  REQUIRE(pred_var(0)  == Approx(14.0)); // accumulated variance
+  REQUIRE(rmse2.first  == 3.5);
+  REQUIRE(rmse2.second == 0.5);
 }

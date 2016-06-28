@@ -57,3 +57,35 @@ inline void sparseFromIJV(Eigen::SparseMatrix<double> &X, int* rows, int* cols, 
   }
   X.setFromTriplets(tripletList.begin(), tripletList.end());
 }
+
+inline double square(double x) { return x * x; }
+
+inline std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, double mean_rating)
+{
+  double se = 0.0, se_avg = 0.0;
+#pragma omp parallel for schedule(dynamic,8) reduction(+:se, se_avg)
+  for (int k = 0; k < P.outerSize(); ++k) {
+    int idx = P.outerIndexPtr()[k];
+    for (Eigen::SparseMatrix<double>::InnerIterator it(P,k); it; ++it) {
+      const double pred = sample_m.col(it.col()).dot(sample_u.col(it.row())) + mean_rating;
+      se += square(it.value() - pred);
+
+      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+      double pred_avg;
+      if (n == 0) {
+        pred_avg = pred;
+      } else {
+        double delta = pred - predictions[idx];
+        pred_avg = (predictions[idx] + delta / (n + 1));
+        predictions_var[idx] += delta * (pred - pred_avg);
+      }
+      se_avg += square(it.value() - pred_avg);
+      predictions[idx++] = pred_avg;
+    }
+  }
+
+  const unsigned N = P.nonZeros();
+  const double rmse = sqrt( se / N );
+  const double rmse_avg = sqrt( se_avg / N );
+  return std::make_pair(rmse, rmse_avg);
+}

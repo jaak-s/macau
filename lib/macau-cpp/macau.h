@@ -50,6 +50,4 @@ class Macau {
 
 void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);
 
-std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, double mean_rating);
-
 #endif /* MACAU_H */
