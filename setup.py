@@ -303,7 +303,8 @@ def main():
         cmdclass = {'build_clib': build_clibx, 'build_ext': build_ext},
         ext_modules = cythonize(ext_modules, include_path=sys.path),
         classifiers = CLASSIFIERS,
-        keywords = "bayesian factorization machine-learning high-dimensional side-information"
+        keywords = "bayesian factorization machine-learning high-dimensional side-information",
+        install_requires=['numpy', 'scipy', 'pandas']
     )
 
 if __name__ == '__main__':
