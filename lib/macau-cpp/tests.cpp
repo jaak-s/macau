@@ -467,3 +467,16 @@ TEST_CASE( "bpmfutils/eval_rmse", "Test if prediction variance is correctly calc
   REQUIRE(rmse2.first  == 3.5);
   REQUIRE(rmse2.second == 0.5);
 }
+
+TEST_CASE( "bpmfutils/row_mean_var", "Test if row_mean_var is correct") {
+  Eigen::VectorXd mean(3), var(3), mean_tr(3), var_tr(3);
+  Eigen::MatrixXd C(3, 5);
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  row_mean_var(mean, var, C);
+  mean_tr = C.rowwise().mean();
+  var_tr  = (C.colwise() - mean).cwiseAbs2().rowwise().mean();
+  REQUIRE( (mean - mean_tr).norm() == Approx(0.0) );
+  REQUIRE( (var  - var_tr).norm()  == Approx(0.0) );
+}

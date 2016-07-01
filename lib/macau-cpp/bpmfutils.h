@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <Eigen/Sparse>
+#include <Eigen/Dense>
 #include <cmath>
 #include <algorithm>
 
@@ -88,4 +89,49 @@ inline std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, const
   const double rmse = sqrt( se / N );
   const double rmse_avg = sqrt( se_avg / N );
   return std::make_pair(rmse, rmse_avg);
+}
+
+inline void row_mean_var(Eigen::VectorXd & mean, Eigen::VectorXd & var, const Eigen::MatrixXd X) {
+  const int N = X.cols();
+  const int D = X.rows();
+
+  mean.resize(D);
+  var.resize(D);
+  mean.setZero();
+  var.setZero();
+
+#pragma omp parallel
+  {
+    Eigen::VectorXd tmp(D);
+    tmp.setZero();
+#pragma omp for schedule(static)
+    for (int i = 0; i < N; i++) {
+      for (int d = 0; d < D; d++) {
+        tmp(d) += X(d, i);
+      }
+    }
+#pragma omp critical
+    {
+      mean += tmp;
+    }
+  }
+  // computing mean
+  mean /= N;
+
+#pragma omp parallel
+  {
+    Eigen::VectorXd tmp(D);
+    tmp.setZero();
+#pragma omp for schedule(static)
+    for (int i = 0; i < N; i++) {
+      for (int d = 0; d < D; d++) {
+        tmp(d) += square(X(d, i) - mean(d));
+      }
+    }
+#pragma omp critical
+    {
+      var += tmp;
+    }
+  }
+  var /= N;
 }
