@@ -106,6 +106,30 @@ void bmrandn(MatrixXd & X) {
   bmrandn(X.data(), n);
 }
 
+// to be called within OpenMP parallel loop (also from serial code is fine)
+void bmrandn_single(double* x, long n) {
+  std::uniform_real_distribution<double> unif(-1.0, 1.0);
+  std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
+  for (long i = 0; i < n; i += 2) {
+    double x1, x2, w;
+    do {
+      x1 = unif(*bmrng);
+      x2 = unif(*bmrng);
+      w = x1 * x1 + x2 * x2;
+    } while ( w >= 1.0 );
+
+    w = sqrt( (-2.0 * log( w ) ) / w );
+    x[i] = x1 * w;
+    if (i + 1 < n) {
+      x[i+1] = x2 * w;
+    }
+  }
+}
+
+void bmrandn_single(Eigen::VectorXd & x) {
+  bmrandn_single(x.data(), x.size());
+}
+
 /** returns random number according to Gamma distribution
  *  with the given shape (k) and scale (theta). See wiki. */
 double rgamma(double shape, double scale) {

@@ -13,6 +13,8 @@ double randn(double);
 
 void bmrandn(double* x, long n);
 void bmrandn(Eigen::MatrixXd & X);
+void bmrandn_single(double* x, long n);
+void bmrandn_single(Eigen::VectorXd & x);
 void init_bmrng();
 void init_bmrng(int seed);
 
