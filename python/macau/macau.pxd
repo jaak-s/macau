@@ -52,6 +52,12 @@ cdef extern from "latentprior.h":
         void setLambdaBeta(double lb)
         void setTol(double t)
 
+cdef extern from "macauoneprior.h":
+    cdef cppclass MacauOnePrior[FType](ILatentPrior):
+        MacauOnePrior()
+        MacauOnePrior(int nlatent, unique_ptr[FType] & Fmat)
+        void setLambdaBeta(double lb)
+
 cdef extern from "macau.h":
     cdef cppclass Macau:
         Macau()

@@ -148,6 +148,28 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lamb
     sdf_prior.setTol(tol)
     return sdf_prior
 
+cdef ILatentPrior* make_one_prior(side, int num_latent, double lambda_beta) except NULL:
+    if (side is None) or side == ():
+        return new BPMFPrior(num_latent)
+    if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+        raise ValueError("Unsupported side information type: '%s'" % type(side).__name__)
+
+    ## binary CSR
+    cdef unique_ptr[SparseFeat] sf_ptr
+    cdef MacauOnePrior[SparseFeat]* sf_prior
+    if (side.data == 1).all():
+        sf_ptr   = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
+        sf_prior = new MacauOnePrior[SparseFeat](num_latent, sf_ptr)
+        sf_prior.setLambdaBeta(lambda_beta)
+        return sf_prior
+
+    ## double CSR
+    cdef unique_ptr[SparseDoubleFeat] sdf_ptr
+    sdf_ptr = unique_ptr[SparseDoubleFeat]( sparse2SparseDoubleFeat(side) )
+    cdef MacauOnePrior[SparseDoubleFeat]* sdf_prior = new MacauOnePrior[SparseDoubleFeat](num_latent, sdf_ptr)
+    sdf_prior.setLambdaBeta(lambda_beta)
+    return sdf_prior
+
 ## API functions:
 ## 1) F'F
 ## 2) F*X (X is a matrix)
@@ -196,6 +218,7 @@ def macau(Y,
           precision  = 1.0,
           burnin     = 50,
           nsamples   = 400,
+          blocked    = True,
           tol        = 1e-6,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
@@ -213,8 +236,14 @@ def macau(Y,
         raise ValueError("If specified 'side' must contain 2 elements.")
 
     cdef int D = np.int32(num_latent)
-    cdef unique_ptr[ILatentPrior] prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
-    cdef unique_ptr[ILatentPrior] prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
+    cdef unique_ptr[ILatentPrior] prior_u
+    cdef unique_ptr[ILatentPrior] prior_v
+    if blocked:
+        prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
+        prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
+    else:
+        prior_u = unique_ptr[ILatentPrior](make_one_prior(side[0], D, lambda_beta))
+        prior_v = unique_ptr[ILatentPrior](make_one_prior(side[1], D, lambda_beta))
 
     sig_on()
     cdef Macau *macau = new Macau(D)
