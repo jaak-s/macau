@@ -303,6 +303,73 @@ TEST_CASE( "linop/A_mul_B_add", "Fast parallel A_mul_B with adding") {
   REQUIRE( (C - Ctr).norm() == Approx(0.0) );
 }
 
+TEST_CASE( "linop/At_mul_Bt/SparseFeat", "At_mul_Bt of single col for SparseFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::MatrixXd B(2, 6);
+  Eigen::VectorXd Y(2), Y_true(2);
+  B << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  Y_true << -4.16, 0.41;
+
+  At_mul_Bt(Y, sf, 1, B);
+  REQUIRE( Y(0) == Approx(Y_true(0)) );
+  REQUIRE( Y(1) == Approx(Y_true(1)) );
+}
+
+TEST_CASE( "linop/At_mul_Bt/SparseDoubleFeat", "At_mul_Bt of single col for SparseDoubleFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  double vals[9] = { 0.6 , -0.76,  1.48,  1.19,  2.44,  1.95, -0.82,  0.06,  2.54 };
+  SparseDoubleFeat sf(6, 4, 9, rows, cols, vals);
+
+  Eigen::MatrixXd B(2, 6);
+  Eigen::VectorXd Y(2), Y_true(2);
+  B << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  Y_true << 0.9942,  1.8285;
+
+  At_mul_Bt(Y, sf, 1, B);
+  REQUIRE( Y(0) == Approx(Y_true(0)) );
+  REQUIRE( Y(1) == Approx(Y_true(1)) );
+}
+
+TEST_CASE( "linop/add_Acol_mul_bt/SparseFeat", "add_Acol_mul_bt for SparseFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::MatrixXd Z(2, 6), Z_added(2, 6);
+  Eigen::VectorXd b(2);
+  Z << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  b << -4.16, 0.41;
+  Z_added << -4.39, -7.05, -5.2 , -0.52, -1.45, -1.42,
+              0.25, -0.21,  1.6 ,  1.12,  0.11,  0.61;
+
+  add_Acol_mul_bt(Z, sf, 1, b);
+  REQUIRE( (Z - Z_added).norm() == Approx(0.0) );
+}
+
+// computes Z += A[:,col] * b', where a and b are vectors
+TEST_CASE( "linop/add_Acol_mul_bt/SparseDoubleFeat", "add_Acol_mul_bt for SparseDoubleFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  double vals[9] = { 0.6 , -0.76,  1.48,  1.19,  2.44,  1.95, -0.82,  0.06,  2.54 };
+  SparseDoubleFeat sf(6, 4, 9, rows, cols, vals);
+
+  Eigen::MatrixXd Z(2, 6), Z_added(2, 6);
+  Eigen::VectorXd b(2);
+  Z << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  b << -4.16, 0.41;
+  Z_added << -2.726 ,  0.5212, -5.9904, -0.52  , -1.45  , -1.42,
+              0.086 , -0.9562,  1.6779,  1.12  ,  0.11  ,  0.61;
+
+  add_Acol_mul_bt(Z, sf, 1, b);
+  REQUIRE( (Z - Z_added).norm() == Approx(0.0) );
+}
+
 TEST_CASE( "linop/At_mul_A_blas", "A'A with BLAS is correct") {
   Eigen::MatrixXd A(3, 2);
   Eigen::MatrixXd AtA(2, 2);
