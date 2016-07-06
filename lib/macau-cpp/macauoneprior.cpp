@@ -34,8 +34,8 @@ void MacauOnePrior<FType>::init(const int nlatent, std::unique_ptr<FType> &Fmat)
   // initial value (should be determined automatically)
   // Hyper-prior for lambda_beta (mean 1.0):
   lambda_beta     = VectorXd::Constant(num_latent, 5.0);
-  lambda_beta_mu0 = 1.0;
-  lambda_beta_nu0 = 1e-3;
+  lambda_beta_a0 = 0.1;
+  lambda_beta_b0 = 0.1;
 }
 
 template<class FType>
@@ -97,31 +97,97 @@ void MacauOnePrior<FType>::sample_latents(
 template<class FType>
 void MacauOnePrior<FType>::update_prior(const Eigen::MatrixXd &U) {
   sample_mu_lambda(U);
-  /*
   sample_beta(U);
   compute_uhat(Uhat, *F, beta);
   sample_lambda_beta();
-  */
 }
 
 template<class FType>
 void MacauOnePrior<FType>::sample_mu_lambda(const Eigen::MatrixXd &U) {
-  // TODO: use U - Uhat
   MatrixXd Lambda(num_latent, num_latent);
   MatrixXd WI(num_latent, num_latent);
   WI.setIdentity();
+  int N = U.cols();
 
-  tie(mu, Lambda) = CondNormalWishart(U, VectorXd::Constant(num_latent, 0.0), 2.0, WI, num_latent);
+  MatrixXd Udelta(num_latent, N);
+#pragma omp parallel for schedule(static)
+  for (int i = 0; i < N; i++) {
+    for (int d = 0; d < num_latent; d++) {
+      Udelta(d, i) = U(d, i) - Uhat(d, i);
+    }
+  }
+  tie(mu, Lambda) = CondNormalWishart(Udelta, VectorXd::Constant(num_latent, 0.0), 2.0, WI, num_latent);
   lambda = Lambda.diagonal();
 }
 
 template<class FType>
 void MacauOnePrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
+  // updating beta and beta_var
+  const int nfeat = beta.cols();
+  const int N = U.cols();
+  const int blocksize = 4;
+
+  MatrixXd Z;
+
+#pragma omp parallel for private(Z) schedule(static, 1)
+  for (int dstart = 0; dstart < num_latent; dstart += blocksize) {
+    const int dcount = std::min(blocksize, num_latent - dstart);
+    Z.resize(dcount, U.cols());
+
+    for (int i = 0; i < N; i++) {
+      for (int d = 0; d < dcount; d++) {
+        int dx = d + dstart;
+        Z(d, i) = U(dx, i) - mu(dx) - Uhat(dx, i);
+      }
+    }
+
+    for (int f = 0; f < nfeat; f++) {
+      VectorXd zx(dcount), delta_beta(dcount), randvals(dcount);
+      // zx = Z[dstart : dstart + dcount, :] * F[:, f]
+      At_mul_Bt(zx, *F, f, Z);
+      // TODO: check if sampling randvals for whole [nfeat x dcount] matrix works faster
+      bmrandn_single( randvals );
+
+      for (int d = 0; d < dcount; d++) {
+        int dx = d + dstart;
+        double A_df     = lambda_beta(dx) + lambda(dx) * F_colsq(f);
+        double B_df     = lambda(dx) * (zx(d) + beta(dx,f) * F_colsq(f));
+        double A_inv    = 1.0 / A_df;
+        double beta_new = B_df * A_inv + sqrt(A_inv) * randvals(d);
+        delta_beta(d)   = beta(dx,f) - beta_new;
+
+        beta(dx, f)     = beta_new;
+      }
+      // Z[dstart : dstart + dcount, :] += F[:, f] * delta_beta'
+      add_Acol_mul_bt(Z, *F, f, delta_beta);
+    }
+  }
 }
 
 template<class FType>
 void MacauOnePrior<FType>::sample_lambda_beta() {
-  // TODO
+  double lambda_beta_a = lambda_beta_a0 + beta.cols() / 2.0;
+  VectorXd lambda_beta_b = VectorXd::Constant(beta.rows(), lambda_beta_b0);
+  const int D = beta.rows();
+  const int F = beta.cols();
+#pragma omp parallel
+  {
+    VectorXd tmp(D);
+    tmp.setZero();
+#pragma omp for schedule(static)
+    for (int f = 0; f < F; f++) {
+      for (int d = 0; d < D; d++) {
+        tmp(d) += square(beta(d, f));
+      }
+    }
+#pragma omp critical
+    {
+      lambda_beta_b += tmp / 2;
+    }
+  }
+  for (int d = 0; d < D; d++) {
+    lambda_beta(d) = rgamma(lambda_beta_a, 1.0 / lambda_beta_b(d));
+  }
 }
 
 template class MacauOnePrior<SparseFeat>;

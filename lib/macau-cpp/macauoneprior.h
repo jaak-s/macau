@@ -16,8 +16,8 @@ class MacauOnePrior : public ILatentPrior {
 
     Eigen::MatrixXd beta;      /* link matrix */
     Eigen::VectorXd lambda_beta;
-    double lambda_beta_mu0; /* Hyper-prior for lambda_beta */
-    double lambda_beta_nu0; /* Hyper-prior for lambda_beta */
+    double lambda_beta_a0; /* Hyper-prior for lambda_beta */
+    double lambda_beta_b0; /* Hyper-prior for lambda_beta */
 
     Eigen::VectorXd mu; 
     Eigen::VectorXd lambda;
