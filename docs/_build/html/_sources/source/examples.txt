@@ -89,7 +89,7 @@ An example:
                         nsamples   = 1600)
 
 
-When using it we recommend using larger values for `burnin` and `nsamples`, because the univariate sampler has slower mixing.
+When using it we recommend using larger values for :python:`burnin` and :python:`nsamples`, because the univariate sampler has slower mixing.
 
 
 Matrix Factorization without Side Information
