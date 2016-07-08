@@ -23,12 +23,12 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="Macau 0.2 documentation" href="../index.html" />
     <link rel="prev" title="Welcome to Macau’s documentation!" href="../index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -44,7 +44,7 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
@@ -70,18 +70,18 @@ wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
                      <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
                      <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">200</span><span class="p">)</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">500</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Input matrix for <tt class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></tt> is a sparse scipy matrix (either coo_matrix, csr_matrix or csc_matrix).</p>
-<p>In this example, we have assigned 20% of the IC50 data to the test set by setting <tt class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">0.2</span></span></tt>.
-If you want to use a predefined test data, set <tt class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="name"><span class="pre">my_test_matrix</span></span></tt>, where the matrix is a sparse matrix of the same size as <tt class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></tt>.
+<p>Input matrix for <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></code> is a sparse scipy matrix (either coo_matrix, csr_matrix or csc_matrix).</p>
+<p>In this example, we have assigned 20% of the IC50 data to the test set by setting <code class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">0.2</span></span></code>.
+If you want to use a predefined test data, set <code class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="name"><span class="pre">my_test_matrix</span></span></code>, where the matrix is a sparse matrix of the same size as <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></code>.
 Here we have used burn-in of 50 samples for the Gibbs sampler and then collected 200 samples from the model.
-Using higher numbers, like <tt class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">200</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name"><span class="pre">nsamples</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">800</span></span></tt> gives us better accuracy.</p>
-<p>The parameter <tt class="code python docutils literal"><span class="name"><span class="pre">side</span></span> <span class="operator"><span class="pre">=</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">ecfp</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name builtin pseudo"><span class="pre">None</span></span><span class="punctuation"><span class="pre">]</span></span></tt> sets the side information for rows and columns, respectively.
+Using higher numbers, like <code class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">200</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name"><span class="pre">nsamples</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">800</span></span></code> gives us better accuracy.</p>
+<p>The parameter <code class="code python docutils literal"><span class="name"><span class="pre">side</span></span> <span class="operator"><span class="pre">=</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">ecfp</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name builtin pseudo"><span class="pre">None</span></span><span class="punctuation"><span class="pre">]</span></span></code> sets the side information for rows and columns, respectively.
 In this example we only use side information for the compounds (rows of the matrix).</p>
-<p>The <tt class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></tt> specifies the precision of the IC50 observations, i.e., 1 / variance.</p>
-<p>When the run has completed you can check the <tt class="code python docutils literal"><span class="name"><span class="pre">result</span></span></tt> object and its <tt class="code python docutils literal"><span class="name"><span class="pre">prediction</span></span></tt> field, which is a Pandas DataFrame.</p>
+<p>The <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></code> specifies the precision of the IC50 observations, i.e., 1 / variance.</p>
+<p>When the run has completed you can check the <code class="code python docutils literal"><span class="name"><span class="pre">result</span></span></code> object and its <code class="code python docutils literal"><span class="name"><span class="pre">prediction</span></span></code> field, which is a Pandas DataFrame.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span>
 <span class="go">Matrix factorization results</span>
 <span class="go">Test RMSE:        0.6393</span>
@@ -97,10 +97,34 @@ In this example we only use side information for the compounds (rows of the matr
 <span class="gp">...</span>
 </pre></div>
 </div>
+<div class="section" id="univariate-sampler">
+<h3>Univariate sampler<a class="headerlink" href="#univariate-sampler" title="Permalink to this headline">¶</a></h3>
+<p>Macau also includes an option to use a <strong>very fast</strong> univariate sampler, i.e., instead of sampling blocks of variables jointly it samples each individually.
+An example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<span class="kn">import</span> <span class="nn">scipy.io</span>
+
+<span class="c">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+
+<span class="c">## running factorization (Macau)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
+                     <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+                     <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
+                     <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+                     <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+<span class="hll">                     <span class="n">univariate</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+</span>                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">1600</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When using it we recommend using larger values for <cite>burnin</cite> and <cite>nsamples</cite>, because the univariate sampler has slower mixing.</p>
+</div>
 </div>
 <div class="section" id="matrix-factorization-without-side-information">
 <h2>Matrix Factorization without Side Information<a class="headerlink" href="#matrix-factorization-without-side-information" title="Permalink to this headline">¶</a></h2>
-<p>To run matrix factorization without side information you can just drop the <tt class="code python docutils literal"><span class="name"><span class="pre">side</span></span></tt> parameter.</p>
+<p>To run matrix factorization without side information you can just drop the <code class="code python docutils literal"><span class="name"><span class="pre">side</span></span></code> parameter.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
@@ -119,12 +143,15 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Examples</a><ul>
-<li><a class="reference internal" href="#matrix-factorization-with-side-information">Matrix Factorization with Side Information</a></li>
+<li><a class="reference internal" href="#matrix-factorization-with-side-information">Matrix Factorization with Side Information</a><ul>
+<li><a class="reference internal" href="#univariate-sampler">Univariate sampler</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#matrix-factorization-without-side-information">Matrix Factorization without Side Information</a></li>
 </ul>
 </li>
@@ -133,12 +160,14 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
   <h4>Previous topic</h4>
   <p class="topless"><a href="../index.html"
                         title="previous chapter">Welcome to Macau&#8217;s documentation!</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/source/examples.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/examples.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -155,7 +184,7 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -167,9 +196,9 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
         <li><a href="../index.html">Macau 0.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2016, Jaak Simm.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
     </div>
   </body>
 </html>

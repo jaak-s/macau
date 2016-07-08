@@ -218,7 +218,7 @@ def macau(Y,
           precision  = 1.0,
           burnin     = 50,
           nsamples   = 400,
-          blocked    = True,
+          univariate = False,
           tol        = 1e-6,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
@@ -238,12 +238,12 @@ def macau(Y,
     cdef int D = np.int32(num_latent)
     cdef unique_ptr[ILatentPrior] prior_u
     cdef unique_ptr[ILatentPrior] prior_v
-    if blocked:
-        prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
-        prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
-    else:
+    if univariate:
         prior_u = unique_ptr[ILatentPrior](make_one_prior(side[0], D, lambda_beta))
         prior_v = unique_ptr[ILatentPrior](make_one_prior(side[1], D, lambda_beta))
+    else:
+        prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
+        prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
 
     sig_on()
     cdef Macau *macau = new Macau(D)
