@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    source/examples
+   source/saving_models
 
 
 

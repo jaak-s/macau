@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Saving models &mdash; Macau 0.3.4 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.3.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Macau 0.3.4 documentation" href="../index.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="saving-models">
+<h1>Saving models<a class="headerlink" href="#saving-models" title="Permalink to this headline">¶</a></h1>
+<p>To save samples of the Macau model you can add <code class="code python docutils literal"><span class="name"><span class="pre">save_prefix</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string"><span class="pre">&quot;mymodel&quot;</span></span></code> when calling <code class="code python docutils literal"><span class="name"><span class="pre">macau</span></span></code>.
+This option will store all samples of the latent vectors, their mean vectors and link matrices to the disk.
+Additionally, the global mean-value that Macau adds to all predictions is also stored.</p>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<span class="kn">import</span> <span class="nn">scipy.io</span>
+
+<span class="c">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+
+<span class="c">## running factorization (Macau)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
+                     <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+                     <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
+                     <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+                     <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+<span class="hll">                     <span class="n">save_prefix</span> <span class="o">=</span> <span class="s">&quot;chembl19&quot;</span><span class="p">)</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="saved-files">
+<h2>Saved files<a class="headerlink" href="#saved-files" title="Permalink to this headline">¶</a></h2>
+<p>The saved files for sample <code class="code python docutils literal"><span class="name"><span class="pre">N</span></span></code> for the rows are</p>
+<ul class="simple">
+<li>Latent vectors <code class="code python docutils literal"><span class="name"><span class="pre">chembl19</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">sampleN</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">U1</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">latents</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">csv</span></span></code>.</li>
+<li>Latent means: <code class="code python docutils literal"><span class="name"><span class="pre">chembl19</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">sampleN</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">U1</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">latentmeans</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">csv</span></span></code>.</li>
+<li>Link matrix (beta): <code class="code python docutils literal"><span class="name"><span class="pre">chembl19</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">sampleN</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">U1</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">link</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">csv</span></span></code>.</li>
+<li>Global mean value: <code class="code python docutils literal"><span class="name"><span class="pre">chembl19</span></span><span class="operator"><span class="pre">-</span></span><span class="name"><span class="pre">meanvalue</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">csv</span></span></code> (same for all samples).</li>
+</ul>
+<p>Equivalent files for the column latents are stored in <code class="code python docutils literal"><span class="name"><span class="pre">U2</span></span></code> files.</p>
+</div>
+<div class="section" id="using-the-saved-model-to-make-predictions">
+<h2>Using the saved model to make predictions<a class="headerlink" href="#using-the-saved-model-to-make-predictions" title="Permalink to this headline">¶</a></h2>
+<p>These files can be loaded with numpy and used to make predictions.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c">## global mean value (common for all samples)</span>
+<span class="n">meanvalue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-meanvalue.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="c">## loading sample 1</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">U</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-sample</span><span class="si">%d</span><span class="s">-U1-latents.csv&quot;</span> <span class="o">%</span> <span class="n">N</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-sample</span><span class="si">%d</span><span class="s">-U2-latents.csv&quot;</span> <span class="o">%</span> <span class="n">N</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+
+<span class="c">## predicting Y[0, 7] from sample 1</span>
+<span class="n">Yhat_07</span> <span class="o">=</span> <span class="n">U</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">V</span><span class="p">[:,</span><span class="mi">7</span><span class="p">])</span> <span class="o">+</span> <span class="n">meanvalue</span>
+
+<span class="c">## predict the whole matrix from sample 1</span>
+<span class="n">Yhat</span> <span class="o">=</span> <span class="n">U</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">V</span><span class="p">)</span> <span class="o">+</span> <span class="n">meanvalue</span>
+</pre></div>
+</div>
+<p>Note that in Macau the final prediction is the average of the predictions from all samples.
+This can be accomplished by looping over all of the samples and averaging the predictions.</p>
+<p>Similarily, the <code class="code python docutils literal"><span class="name"><span class="pre">link</span></span></code> matrices can be loaded. Here we show an example how to make a new prediction for a compound that was not in the dataset.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.io</span>
+
+<span class="c">## loading side info for arbitrary compound (can be outside of the training set)</span>
+<span class="n">xnew</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()[</span><span class="mi">17</span><span class="p">,:]</span>
+
+<span class="c">## loading sample 1</span>
+<span class="n">meanvalue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-meanvalue.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">lmean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-sample</span><span class="si">%d</span><span class="s">-U1-latentmean.csv&quot;</span> <span class="o">%</span> <span class="n">N</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+<span class="n">link</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-sample</span><span class="si">%d</span><span class="s">-U1-link.csv&quot;</span> <span class="o">%</span> <span class="n">N</span><span class="p">,</span>       <span class="n">delimiter</span><span class="o">=</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+<span class="n">V</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s">&quot;chembl19-sample</span><span class="si">%d</span><span class="s">-U2-latents.csv&quot;</span> <span class="o">%</span> <span class="n">N</span><span class="p">,</span>    <span class="n">delimiter</span><span class="o">=</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+
+<span class="c">## predicted latent vector for xnew from sample 1</span>
+<span class="n">uhat</span> <span class="o">=</span> <span class="n">xnew</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span> <span class="o">+</span> <span class="n">lmean</span>
+
+<span class="c">## use predicted latent vector to predict activities across columns</span>
+<span class="n">Yhat</span> <span class="o">=</span> <span class="n">uhat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">V</span><span class="p">)</span> <span class="o">+</span> <span class="n">meanvalue</span>
+</pre></div>
+</div>
+<p>Again, to make good predictions you would have to change the example to loop over all of the samples (and compute the mean of Yhat&#8217;s).</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Saving models</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#saved-files">Saved files</a></li>
+<li><a class="reference internal" href="#using-the-saved-model-to-make-predictions">Using the saved model to make predictions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/saving_models.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> |</li>
+        <li><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Jaak Simm.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+    </div>
+  </body>
+</html>
