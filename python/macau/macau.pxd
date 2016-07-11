@@ -1,4 +1,5 @@
 from libcpp cimport bool
+from libcpp.string cimport string
 
 cdef extern from "<memory>" namespace "std" nogil:
     ctypedef void* nullptr_t;
@@ -73,4 +74,6 @@ cdef extern from "macau.h":
         VectorXd getStds()
         MatrixXd getTestData()
         void run()
+        void setSaveModel(bool save)
+        void setSavePrefix(string pref)
 

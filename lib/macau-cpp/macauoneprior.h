@@ -41,5 +41,6 @@ class MacauOnePrior : public ILatentPrior {
     void sample_mu_lambda(const Eigen::MatrixXd &U);
     void sample_lambda_beta();
     void setLambdaBeta(double lb) { lambda_beta = Eigen::VectorXd::Constant(num_latent, lb); };
+    void saveModel(std::string prefix) override;
 };
 

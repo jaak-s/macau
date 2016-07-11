@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <algorithm>
+#include <fstream>
 
 inline double tick() {
     return std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); 
@@ -134,4 +135,10 @@ inline void row_mean_var(Eigen::VectorXd & mean, Eigen::VectorXd & var, const Ei
     }
   }
   var /= N;
+}
+
+inline void writeToCSVfile(std::string filename, Eigen::MatrixXd matrix) {
+  const static Eigen::IOFormat csvFormat(6, Eigen::DontAlignCols, ",", "\n");
+  std::ofstream file(filename.c_str());
+  file << matrix.format(csvFormat);
 }

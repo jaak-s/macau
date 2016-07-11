@@ -103,6 +103,9 @@ void Macau::run() {
     double samples_per_sec = (i + 1) * (num_rows + num_cols) / elapsed;
     double elapsedi = endi - starti;
 
+    if (save_model && i >= burnin) {
+      saveModel(i - burnin + 1);
+    }
     if (verbose) {
       printStatus(i, eval.first, eval.second, elapsedi, samples_per_sec);
     }
@@ -147,4 +150,13 @@ Eigen::MatrixXd Macau::getTestData() {
     }
   }
   return coords;
+}
+
+void Macau::saveModel(int isample) {
+  string fprefix = save_prefix + "-sample" + std::to_string(isample) + "-";
+  // saving latent matrices
+  for (unsigned int i = 0; i < samples.size(); i++) {
+    writeToCSVfile(fprefix + "U" + std::to_string(i+1) + "-latents.csv", *samples[i]);
+    priors[i]->saveModel(fprefix + "U" + std::to_string(i+1));
+  }
 }

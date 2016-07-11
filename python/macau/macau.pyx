@@ -180,13 +180,15 @@ def bpmf(Y,
          num_latent = 10,
          precision  = 1.0,
          burnin     = 50,
-         nsamples   = 400):
+         nsamples   = 400,
+         **keywords):
     return macau(Y,
                  Ytest = Ytest,
                  num_latent = num_latent,
                  precision  = precision,
                  burnin     = burnin,
-                 nsamples   = nsamples)
+                 nsamples   = nsamples,
+                 **keywords)
 
 def remove_nan(Y):
     if not np.any(np.isnan(Y.data)):
@@ -220,6 +222,7 @@ def macau(Y,
           nsamples   = 400,
           univariate = False,
           tol        = 1e-6,
+          save_prefix= None,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
 
@@ -262,6 +265,14 @@ def macau(Y,
         tcols = Ytest.col.astype(np.int32, copy=False)
         tvals = Ytest.data.astype(np.double, copy=False)
         macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
+
+    if save_prefix is None:
+        macau.setSaveModel(0)
+    else:
+        if type(save_prefix) != str:
+            raise ValueError("Parameter 'save_prefix' has to be a string (str) or None.")
+        macau.setSaveModel(1)
+        macau.setSavePrefix(save_prefix)
 
     macau.run()
     sig_off()

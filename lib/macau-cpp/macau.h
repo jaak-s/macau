@@ -29,6 +29,9 @@ class Macau {
   std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
   bool verbose = true;
 
+  bool save_model = false;
+  std::string save_prefix = "model";
+
   public:
     Macau(int D) : num_latent{D} {}
     Macau() : Macau(10) {}
@@ -45,6 +48,9 @@ class Macau {
     Eigen::VectorXd getPredictions() { return predictions; };
     Eigen::VectorXd getStds();
     Eigen::MatrixXd getTestData();
+    void saveModel(int isample);
+    void setSaveModel(bool save) { save_model = save; };
+    void setSavePrefix(std::string pref) { save_prefix = pref; };
     ~Macau();
 };
 

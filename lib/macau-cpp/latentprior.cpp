@@ -139,6 +139,16 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
   }
 }
 
+void BPMFPrior::saveModel(std::string prefix) {
+  writeToCSVfile(prefix + "-latentmean.csv", mu);
+}
+
+template<class FType>
+void MacauPrior<FType>::saveModel(std::string prefix) {
+  writeToCSVfile(prefix + "-latentmean.csv", mu);
+  writeToCSVfile(prefix + "-link.csv", beta);
+}
+
 std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu) {
   const int D = beta.rows();
   MatrixXd BB(D, D);
