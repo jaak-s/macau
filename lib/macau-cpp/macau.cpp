@@ -75,6 +75,9 @@ void Macau::run() {
   if (verbose) {
     std::cout << "Sampling" << endl;
   }
+  if (save_model) {
+    saveGlobalParams();
+  }
 
   const int num_rows = Y.rows();
   const int num_cols = Y.cols();
@@ -159,4 +162,10 @@ void Macau::saveModel(int isample) {
     writeToCSVfile(fprefix + "U" + std::to_string(i+1) + "-latents.csv", *samples[i]);
     priors[i]->saveModel(fprefix + "U" + std::to_string(i+1));
   }
+}
+
+void Macau::saveGlobalParams() {
+  VectorXd means(1);
+  means << mean_rating;
+  writeToCSVfile(save_prefix + "-meanvalue.csv", means);
 }
