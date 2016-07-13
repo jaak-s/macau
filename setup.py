@@ -27,10 +27,8 @@ import subprocess
 
 # checking cython version
 def vercmp(version1, version2):
-    import re
-    def normalize(v):
-        return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
-    return cmp(normalize(version1), normalize(version2))
+    from distutils.version import LooseVersion
+    return cmp(LooseVersion(version1), LooseVersion(version2))
 
 if vercmp(Cython.__version__, "0.23") < 0:
     print("Cython 0.23 or higher is required for installating from source.")
