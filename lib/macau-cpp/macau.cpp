@@ -29,7 +29,7 @@ void Macau::addPrior(unique_ptr<ILatentPrior> & prior) {
 }
 
 void Macau::setPrecision(double p) {
-  alpha = p;
+  noise.setPrecision(p);
 }
 
 void Macau::setSamples(int b, int n) {
@@ -92,8 +92,9 @@ void Macau::run() {
     auto starti = tick();
 
     // sample latent vectors
-    priors[0]->sample_latents(*samples[0], Yt, mean_rating, *samples[1], alpha, num_latent);
-    priors[1]->sample_latents(*samples[1], Y,  mean_rating, *samples[0], alpha, num_latent);
+    INoiseModel* no = static_cast<INoiseModel*>(&noise);
+    no->sample_latents(priors[0], *samples[0], Yt, mean_rating, *samples[1], num_latent);
+    no->sample_latents(priors[1], *samples[1], Y,  mean_rating, *samples[0], num_latent);
 
     // Sample hyperparams
     priors[0]->update_prior(*samples[0]);
@@ -142,7 +143,7 @@ Eigen::VectorXd Macau::getStds() {
 // assumes matrix (not tensor)
 Eigen::MatrixXd Macau::getTestData() {
   MatrixXd coords(Ytest.nonZeros(), 3);
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(dynamic, 2)
   for (int k = 0; k < Ytest.outerSize(); ++k) {
     int idx = Ytest.outerIndexPtr()[k];
     for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {

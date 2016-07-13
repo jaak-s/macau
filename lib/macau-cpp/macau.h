@@ -12,7 +12,8 @@ class Macau {
   public:
   int num_latent;
 
-  double alpha = 2.0; 
+  //double alpha = 2.0; 
+  FixedGaussianNoise noise;
   int nsamples = 100;
   int burnin   = 50;
 

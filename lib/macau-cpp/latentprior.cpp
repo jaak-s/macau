@@ -8,12 +8,24 @@
 #include "macau.h"
 #include "chol.h"
 #include "linop.h"
+#include "noisemodels.h"
 extern "C" {
   #include <sparse.h>
 }
 
 using namespace std; 
 using namespace Eigen;
+
+void ILatentPrior::sample_latents(FixedGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                    double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+  this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
+}
+
+void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                    double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+  this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
+}
+
 
 /** BPMFPrior */
 void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
