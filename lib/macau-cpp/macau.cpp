@@ -29,7 +29,11 @@ void Macau::addPrior(unique_ptr<ILatentPrior> & prior) {
 }
 
 void Macau::setPrecision(double p) {
-  noise.setPrecision(p);
+  noise.reset(new FixedGaussianNoise(p));
+}
+
+void Macau::setAdaptivePrecision(double sn_init, double sn_max) {
+  noise.reset(new AdaptiveGaussianNoise(sn_init, sn_max));
 }
 
 void Macau::setSamples(int b, int n) {
@@ -63,6 +67,7 @@ void Macau::init() {
   V->setZero();
   samples.push_back( std::move(std::unique_ptr<MatrixXd>(U)) );
   samples.push_back( std::move(std::unique_ptr<MatrixXd>(V)) );
+  noise->init(Y, mean_rating);
 }
 
 Macau::~Macau() {
@@ -73,6 +78,7 @@ inline double sqr(double x) { return x*x; }
 void Macau::run() {
   init();
   if (verbose) {
+    std::cout << noise->getInitStatus() << endl;
     std::cout << "Sampling" << endl;
   }
   if (save_model) {
@@ -92,13 +98,14 @@ void Macau::run() {
     auto starti = tick();
 
     // sample latent vectors
-    INoiseModel* no = static_cast<INoiseModel*>(&noise);
-    no->sample_latents(priors[0], *samples[0], Yt, mean_rating, *samples[1], num_latent);
-    no->sample_latents(priors[1], *samples[1], Y,  mean_rating, *samples[0], num_latent);
+    noise->sample_latents(priors[0], *samples[0], Yt, mean_rating, *samples[1], num_latent);
+    noise->sample_latents(priors[1], *samples[1], Y,  mean_rating, *samples[0], num_latent);
 
     // Sample hyperparams
     priors[0]->update_prior(*samples[0]);
     priors[1]->update_prior(*samples[1]);
+
+    noise->update(Y, mean_rating, samples);
 
     auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
 
@@ -120,7 +127,7 @@ void Macau::run() {
 void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec) {
   double norm0 = priors[0]->getLinkNorm();
   double norm1 = priors[1]->getLinkNorm();
-  printf("Iter %3d: RMSE: %.4f (1samp: %.4f)  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e]  [took %0.1fs]\n", i, rmse_avg, rmse, samples[0]->norm(), samples[1]->norm(), norm0, norm1, elapsedi);
+  printf("Iter %3d: RMSE: %.4f (1samp: %.4f)  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e] %s [took %0.1fs]\n", i, rmse_avg, rmse, samples[0]->norm(), samples[1]->norm(), norm0, norm1, noise->getStatus().c_str(), elapsedi);
   // if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
   // if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
 }

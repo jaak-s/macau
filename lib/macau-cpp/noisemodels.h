@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <memory>
+#include <iomanip>
 
 #include "latentprior.h"
 
@@ -15,7 +16,9 @@ class INoiseModel {
                                 Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                                 double mean_value, const Eigen::MatrixXd &samples, const int num_latent) = 0;
     virtual void init(const Eigen::SparseMatrix<double> &train, double mean_value) = 0;
-    virtual void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > samples) = 0;
+    virtual void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > &samples) = 0;
+    virtual std::string getInitStatus() = 0;
+    virtual std::string getStatus() = 0;
     virtual ~INoiseModel() {};
 };
 
@@ -35,7 +38,10 @@ class FixedGaussianNoise : public INoiseModelDisp<FixedGaussianNoise> {
     FixedGaussianNoise() : FixedGaussianNoise(1.0) {};
 
     void init(const Eigen::SparseMatrix<double> &train, double mean_value) override { }
-    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > samples) override {}
+    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override {}
+    std::string getInitStatus() override { return std::string("Noise precision: ") + std::to_string(alpha) + " (fixed)"; }
+    std::string getStatus() override { return std::string(""); }
+
     void setPrecision(double a) { alpha = a; }
 };
 
@@ -48,14 +54,19 @@ class AdaptiveGaussianNoise : public INoiseModelDisp<AdaptiveGaussianNoise> {
     double sn_init;
     double var_total = NAN;
 
-    AdaptiveGaussianNoise(double smax, double sinit) {
+    AdaptiveGaussianNoise(double sinit, double smax) {
       sn_max  = smax;
       sn_init = sinit;
     }
-    AdaptiveGaussianNoise() : AdaptiveGaussianNoise( 10.0, 1.0) {}
+    AdaptiveGaussianNoise() : AdaptiveGaussianNoise(1.0, 10.0) {}
 
     void init(const Eigen::SparseMatrix<double> &train, double mean_value) override;
-    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > samples) override;
+    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
     void setSNInit(double a) { sn_init = a; }
     void setSNMax(double a)  { sn_max  = a; }
+    std::string getInitStatus() override { return std::string("Noise precision: adaptive (with max precision of ") + std::to_string(alpha_max) + ")"; }
+
+    std::string getStatus() override {
+      return std::string("Prec:") + to_string_with_precision(alpha, 2);
+    }
 };

@@ -13,7 +13,7 @@ class Macau {
   int num_latent;
 
   //double alpha = 2.0; 
-  FixedGaussianNoise noise;
+  std::unique_ptr<INoiseModel> noise;
   int nsamples = 100;
   int burnin   = 50;
 
@@ -38,6 +38,7 @@ class Macau {
     Macau() : Macau(10) {}
     void addPrior(std::unique_ptr<ILatentPrior> & prior);
     void setPrecision(double p);
+    void setAdaptivePrecision(double sn_init, double sn_max);
     void setSamples(int burnin, int nsamples);
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols);
     void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols);
