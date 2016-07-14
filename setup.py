@@ -288,7 +288,7 @@ def main():
     setup(
         name = 'macau',
         version = __version__,
-        requires = ['numpy', 'scipy', 'cython(>=0.23)', 'cysignals', 'pandas'],
+        requires = ['numpy', 'scipy', 'cython(>=0.23)', 'pandas'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},

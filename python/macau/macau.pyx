@@ -6,9 +6,6 @@ import timeit
 import numbers
 import pandas as pd
 
-## using cysignals to catch CTRL-C interrupt
-include "cysignals/signals.pxi"
-
 class MacauResult(object):
   def __init__(self):
     pass
@@ -248,7 +245,6 @@ def macau(Y,
         prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
         prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
 
-    sig_on()
     cdef Macau *macau = new Macau(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
@@ -275,7 +271,6 @@ def macau(Y,
         macau.setSavePrefix(save_prefix)
 
     macau.run()
-    sig_off()
     cdef VectorXd yhat_raw     = macau.getPredictions()
     cdef VectorXd yhat_sd_raw  = macau.getStds()
     cdef MatrixXd testdata_raw = macau.getTestData()
