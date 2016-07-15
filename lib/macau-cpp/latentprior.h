@@ -6,12 +6,21 @@
 #include <memory>
 #include "mvnormal.h"
 #include "linop.h"
+#include "noisemodels.h"
+
+ // forward declarations
+class FixedGaussianNoise;
+class AdaptiveGaussianNoise;
 
 /** interface */
 class ILatentPrior {
   public:
     void virtual sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
-                        const Eigen::MatrixXd &samples, double alpha, const int num_latent) {};
+                        const Eigen::MatrixXd &samples, double alpha, const int num_latent) = 0;
+    void virtual sample_latents(FixedGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
+    void virtual sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
     void virtual update_prior(const Eigen::MatrixXd &U) {};
     virtual double getLinkNorm() { return NAN; };
     virtual double getLinkLambda() { return NAN; };
