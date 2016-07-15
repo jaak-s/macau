@@ -125,6 +125,32 @@ An example:</p>
 </div>
 <p>When using it we recommend using larger values for <code class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span></code> and <code class="code python docutils literal"><span class="name"><span class="pre">nsamples</span></span></code>, because the univariate sampler has slower mixing.</p>
 </div>
+<div class="section" id="adaptive-noise">
+<h3>Adaptive noise<a class="headerlink" href="#adaptive-noise" title="Permalink to this headline">¶</a></h3>
+<p>In the previous examples we fixed the observation noise by specifying <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></code>.
+Instead we can also allow the model to automatically determine the precision of the noise by setting <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string"><span class="pre">&quot;adaptive&quot;</span></span></code>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<span class="kn">import</span> <span class="nn">scipy.io</span>
+
+<span class="c">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+
+<span class="c">## running factorization (Macau)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
+                     <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+                     <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
+                     <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+<span class="hll">                     <span class="n">precision</span>  <span class="o">=</span> <span class="s">&quot;adaptive&quot;</span><span class="p">,</span>
+</span>                     <span class="n">univariate</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">1600</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the case of adaptive noise the model updates (samples) the precision parameter in every iteration, which is then also shown in the output.
+Additionally, there is a parameter <code class="code python docutils literal"><span class="name"><span class="pre">sn_max</span></span></code> that sets the maximum allowed signal-to-noise ratio.
+This means that if the updated precision would imply a higher signal-to-noise ratio than <code class="code python docutils literal"><span class="name"><span class="pre">sn_max</span></span></code>, then the precision value is set to <code class="code python docutils literal"><span class="punctuation"><span class="pre">(</span></span><span class="name"><span class="pre">sn_max</span></span> <span class="operator"><span class="pre">+</span></span> <span class="literal number float"><span class="pre">1.0</span></span><span class="punctuation"><span class="pre">)</span></span> <span class="operator"><span class="pre">/</span></span> <span class="name"><span class="pre">Yvar</span></span></code> where Yvar is the variance of the training dataset <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></code>.</p>
+</div>
 </div>
 <div class="section" id="matrix-factorization-without-side-information">
 <h2>Matrix Factorization without Side Information<a class="headerlink" href="#matrix-factorization-without-side-information" title="Permalink to this headline">¶</a></h2>
@@ -154,6 +180,7 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
 <li><a class="reference internal" href="#">Examples</a><ul>
 <li><a class="reference internal" href="#matrix-factorization-with-side-information">Matrix Factorization with Side Information</a><ul>
 <li><a class="reference internal" href="#univariate-sampler">Univariate sampler</a></li>
+<li><a class="reference internal" href="#adaptive-noise">Adaptive noise</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#matrix-factorization-without-side-information">Matrix Factorization without Side Information</a></li>

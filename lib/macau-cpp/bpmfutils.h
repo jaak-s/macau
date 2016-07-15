@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 
 inline double tick() {
     return std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); 
@@ -141,4 +142,11 @@ inline void writeToCSVfile(std::string filename, Eigen::MatrixXd matrix) {
   const static Eigen::IOFormat csvFormat(6, Eigen::DontAlignCols, ",", "\n");
   std::ofstream file(filename.c_str());
   file << matrix.format(csvFormat);
+}
+
+inline std::string to_string_with_precision(const double a_value, const int n = 6)
+{
+    std::ostringstream out;
+    out << std::setprecision(n) << a_value;
+    return out.str();
 }

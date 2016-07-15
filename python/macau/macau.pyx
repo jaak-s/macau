@@ -219,6 +219,7 @@ def macau(Y,
           nsamples   = 400,
           univariate = False,
           tol        = 1e-6,
+          sn_max     = 20.0,
           save_prefix= None,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
@@ -248,10 +249,17 @@ def macau(Y,
     cdef Macau *macau = new Macau(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
-    macau.setPrecision(np.float64(precision))
     macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
+
+    if isinstance(precision, str):
+      if precision == "adaptive" or precision == "sample":
+        macau.setAdaptivePrecision(np.float64(1.0), np.float64(sn_max))
+      else:
+        raise ValueError("Parameter 'precision' has to be either a number of \"adaptive\" for adaptive precision.")
+    else:
+      macau.setPrecision(np.float64(precision))
 
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals

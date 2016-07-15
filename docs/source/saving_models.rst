@@ -66,9 +66,12 @@ These files can be loaded with numpy and used to make predictions.
 Note that in Macau the final prediction is the average of the predictions from all samples.
 This can be accomplished by looping over all of the samples and averaging the predictions.
 
-Similarily, the :python:`link` matrices can be loaded. Here we show an example how to make a new prediction for a compound that was not in the dataset.
+Using the saved model to predict new rows (compounds)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Here we show an example how to make a new prediction for a compound (row) that was not in the dataset, by using its side information and saved link matrices.
 
 .. code-block:: python
+   :emphasize-lines: 11
 
    import numpy as np
    import scipy.io
