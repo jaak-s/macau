@@ -1,6 +1,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <memory>
+#include <cmath>
 
 #include "noisemodels.h"
 
@@ -27,7 +28,7 @@ void AdaptiveGaussianNoise::init(const Eigen::SparseMatrix<double> &train, doubl
   }
 
   var_total = se / train.nonZeros();
-  if (var_total <= 0.0 || isnan(var_total)) {
+  if (var_total <= 0.0 || std::isnan(var_total)) {
     // if var cannot be computed using 1.0
     var_total = 1.0;
   }
