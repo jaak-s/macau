@@ -5,6 +5,7 @@ import scipy as sp
 import timeit
 import numbers
 import pandas as pd
+import signal
 
 class MacauResult(object):
   def __init__(self):
@@ -279,6 +280,9 @@ def macau(Y,
         macau.setSavePrefix(save_prefix)
 
     macau.run()
+    ## restoring Python default signal handler
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+
     cdef VectorXd yhat_raw     = macau.getPredictions()
     cdef VectorXd yhat_sd_raw  = macau.getStds()
     cdef MatrixXd testdata_raw = macau.getTestData()
