@@ -76,6 +76,7 @@ void Macau::init() {
   samples.push_back( std::move(std::unique_ptr<MatrixXd>(U)) );
   samples.push_back( std::move(std::unique_ptr<MatrixXd>(V)) );
   noise->init(Y, mean_rating);
+  keepRunning = true;
 }
 
 Macau::~Macau() {
