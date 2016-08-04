@@ -15,6 +15,7 @@
 #include <Eigen/Sparse>
 
 #include <omp.h>
+#include <signal.h>
 
 #include "macau.h"
 #include "mvnormal.h"
@@ -23,6 +24,13 @@
 
 using namespace std; 
 using namespace Eigen;
+
+static volatile bool keepRunning = true;
+
+void intHandler(int dummy) {
+  keepRunning = false;
+  printf("[Received Ctrl-C. Stopping after finishing the current iteration.]\n");
+}
 
 void Macau::addPrior(unique_ptr<ILatentPrior> & prior) {
   priors.push_back( std::move(prior) );
@@ -84,6 +92,7 @@ void Macau::run() {
   if (save_model) {
     saveGlobalParams();
   }
+  signal(SIGINT, intHandler);
 
   const int num_rows = Y.rows();
   const int num_cols = Y.cols();
@@ -92,6 +101,10 @@ void Macau::run() {
 
   auto start = tick();
   for (int i = 0; i < burnin + nsamples; i++) {
+    if (keepRunning == false) {
+      keepRunning = true;
+      break;
+    }
     if (verbose && i == burnin) {
       printf(" ====== Burn-in complete, averaging samples ====== \n");
     }

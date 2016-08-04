@@ -13,7 +13,6 @@ To install Macau it possible to use pre-compiled binaries or compile it from sou
 sudo apt-get install python-pip python-numpy python-scipy python-pandas
 sudo apt-get install libopenblas-dev autoconf gfortran
 pip install cython --user --upgrade
-pip install cysignals --user
 
 # checkout and install Macau
 git clone https://github.com/jaak-s/macau.git
@@ -28,7 +27,6 @@ pip install numpy
 pip install scipy
 pip install pandas
 pip install cython
-pip install cysignals
 # install brew (http://brew.sh/)
 brew install homebrew/science/openblas
 brew install gcc
