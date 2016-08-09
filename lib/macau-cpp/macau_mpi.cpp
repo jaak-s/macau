@@ -314,8 +314,10 @@ void run_macau_mpi(
 
       if (world_rank == 0) {
          // sample latent vectors
-         macau->priors[0]->sample_latents(*macau->samples[0], macau->Yt, macau->mean_rating, *macau->samples[1], macau->alpha, macau->num_latent);
-         macau->priors[1]->sample_latents(*macau->samples[1], macau->Y,  macau->mean_rating, *macau->samples[0], macau->alpha, macau->num_latent);
+         macau->noise->sample_latents(macau->priors[0], *macau->samples[0], macau->Yt, macau->mean_rating, *macau->samples[1], macau->num_latent);
+         macau->noise->sample_latents(macau->priors[1], *macau->samples[1], macau->Y,  macau->mean_rating, *macau->samples[0], macau->num_latent);
+         //macau->priors[0]->sample_latents(*macau->samples[0], macau->Yt, macau->mean_rating, *macau->samples[1], macau->alpha, macau->num_latent);
+         //macau->priors[1]->sample_latents(*macau->samples[1], macau->Y,  macau->mean_rating, *macau->samples[0], macau->alpha, macau->num_latent);
       }
 
       // Sample hyperparams
