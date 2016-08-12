@@ -24,15 +24,6 @@ import shutil
 # checking out libfastsparse
 import subprocess
 
-
-# checking cython version
-def vercmp(version1, version2):
-    from distutils.version import LooseVersion
-    return cmp(LooseVersion(version1), LooseVersion(version2))
-
-if vercmp(Cython.__version__, "0.23") < 0:
-    print("Cython 0.23 or higher is required for installating from source.")
-
 ## how to test -fopenmp: https://github.com/hickford/primesieve-python/blob/master/setup.py
 def is_openblas_installed(libraries):
     """check if the C module can be build by trying to compile a small 
@@ -288,7 +279,7 @@ def main():
     setup(
         name = 'macau',
         version = __version__,
-        requires = ['numpy', 'scipy', 'cython(>=0.23)', 'pandas'],
+        requires = ['numpy', 'scipy', 'cython', 'pandas'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},

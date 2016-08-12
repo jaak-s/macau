@@ -10,9 +10,24 @@ To install Macau it possible to use pre-compiled binaries or compile it from sou
 ## Source installation on Ubuntu
 ```bash
 # install dependencies:
-sudo apt-get install python-pip python-numpy python-scipy python-pandas
+sudo apt-get install python-pip python-numpy python-scipy python-pandas cython
 sudo apt-get install libopenblas-dev autoconf gfortran
-pip install cython --user --upgrade
+
+# checkout and install Macau
+git clone https://github.com/jaak-s/macau.git
+cd macau
+python setup.py install --user
+```
+
+## Source installation on any Linux
+Make sure that `pip` is available and OpenBLAS or some other BLAS is installed.
+Then install following packages using pip: `numpy scipy pandas cython`, e.g. by
+```
+# skip any of them if already available
+pip install numpy --user
+pip install scipy --user
+pip install pandas --user
+pip install cython --user
 
 # checkout and install Macau
 git clone https://github.com/jaak-s/macau.git
