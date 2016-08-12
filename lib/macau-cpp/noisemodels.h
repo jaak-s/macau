@@ -70,3 +70,14 @@ class AdaptiveGaussianNoise : public INoiseModelDisp<AdaptiveGaussianNoise> {
       return std::string("Prec:") + to_string_with_precision(alpha, 2);
     }
 };
+
+/** Probit noise model (binary). Fixed for the whole run */
+class ProbitNoise : public INoiseModelDisp<ProbitNoise> {
+  public:
+    ProbitNoise() { }
+
+    void init(const Eigen::SparseMatrix<double> &train, double mean_value) override { }
+    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override {}
+    std::string getInitStatus() override { return std::string("Probit noise model"); }
+    std::string getStatus() override { return std::string(""); }
+};

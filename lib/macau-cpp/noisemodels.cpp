@@ -65,3 +65,4 @@ void AdaptiveGaussianNoise::update(const Eigen::SparseMatrix<double> &train, dou
 
 template class INoiseModelDisp<FixedGaussianNoise>;
 template class INoiseModelDisp<AdaptiveGaussianNoise>;
+template class INoiseModelDisp<ProbitNoise>;

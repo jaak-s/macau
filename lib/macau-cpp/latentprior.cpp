@@ -26,7 +26,6 @@ void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd 
   this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
 }
 
-
 /** BPMFPrior */
 void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
@@ -58,6 +57,11 @@ void BPMFPrior::init(const int num_latent) {
   mu0.setZero();
   b0 = 2;
   df = num_latent;
+}
+
+void BPMFPrior::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                               double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+  // TODO
 }
 
 /** MacauPrior */
@@ -149,6 +153,12 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
     // BlockCG
     solve_blockcg(beta, *F, lambda_beta, Ft_y, tol, 32, 8);
   }
+}
+
+template<class FType>
+void MacauPrior<FType>::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                                       double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+  // TODO
 }
 
 void BPMFPrior::saveModel(std::string prefix) {

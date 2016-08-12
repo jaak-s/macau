@@ -165,6 +165,12 @@ void MacauOnePrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
 }
 
 template<class FType>
+void MacauOnePrior<FType>::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                                          double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+  // TODO
+}
+
+template<class FType>
 void MacauOnePrior<FType>::sample_lambda_beta() {
   double lambda_beta_a = lambda_beta_a0 + beta.cols() / 2.0;
   VectorXd lambda_beta_b = VectorXd::Constant(beta.rows(), lambda_beta_b0);
