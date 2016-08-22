@@ -1,1 +1,2 @@
 void blasx();
+void lapackx();

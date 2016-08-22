@@ -15,6 +15,7 @@
 #include <Eigen/Sparse>
 
 #include <omp.h>
+#include <signal.h>
 
 #include "macau.h"
 #include "mvnormal.h"
@@ -24,12 +25,23 @@
 using namespace std; 
 using namespace Eigen;
 
+static volatile bool keepRunning = true;
+
+void intHandler(int dummy) {
+  keepRunning = false;
+  printf("[Received Ctrl-C. Stopping after finishing the current iteration.]\n");
+}
+
 void Macau::addPrior(unique_ptr<ILatentPrior> & prior) {
   priors.push_back( std::move(prior) );
 }
 
 void Macau::setPrecision(double p) {
-  alpha = p;
+  noise.reset(new FixedGaussianNoise(p));
+}
+
+void Macau::setAdaptivePrecision(double sn_init, double sn_max) {
+  noise.reset(new AdaptiveGaussianNoise(sn_init, sn_max));
 }
 
 void Macau::setSamples(int b, int n) {
@@ -63,6 +75,8 @@ void Macau::init() {
   V->setZero();
   samples.push_back( std::move(std::unique_ptr<MatrixXd>(U)) );
   samples.push_back( std::move(std::unique_ptr<MatrixXd>(V)) );
+  noise->init(Y, mean_rating);
+  keepRunning = true;
 }
 
 Macau::~Macau() {
@@ -73,8 +87,13 @@ inline double sqr(double x) { return x*x; }
 void Macau::run() {
   init();
   if (verbose) {
+    std::cout << noise->getInitStatus() << endl;
     std::cout << "Sampling" << endl;
   }
+  if (save_model) {
+    saveGlobalParams();
+  }
+  signal(SIGINT, intHandler);
 
   const int num_rows = Y.rows();
   const int num_cols = Y.cols();
@@ -83,18 +102,24 @@ void Macau::run() {
 
   auto start = tick();
   for (int i = 0; i < burnin + nsamples; i++) {
+    if (keepRunning == false) {
+      keepRunning = true;
+      break;
+    }
     if (verbose && i == burnin) {
       printf(" ====== Burn-in complete, averaging samples ====== \n");
     }
     auto starti = tick();
 
     // sample latent vectors
-    priors[0]->sample_latents(*samples[0], Yt, mean_rating, *samples[1], alpha, num_latent);
-    priors[1]->sample_latents(*samples[1], Y,  mean_rating, *samples[0], alpha, num_latent);
+    noise->sample_latents(priors[0], *samples[0], Yt, mean_rating, *samples[1], num_latent);
+    noise->sample_latents(priors[1], *samples[1], Y,  mean_rating, *samples[0], num_latent);
 
     // Sample hyperparams
     priors[0]->update_prior(*samples[0]);
     priors[1]->update_prior(*samples[1]);
+
+    noise->update(Y, mean_rating, samples);
 
     auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
 
@@ -103,6 +128,9 @@ void Macau::run() {
     double samples_per_sec = (i + 1) * (num_rows + num_cols) / elapsed;
     double elapsedi = endi - starti;
 
+    if (save_model && i >= burnin) {
+      saveModel(i - burnin + 1);
+    }
     if (verbose) {
       printStatus(i, eval.first, eval.second, elapsedi, samples_per_sec);
     }
@@ -111,45 +139,11 @@ void Macau::run() {
 }
 
 void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec) {
-  printf("Iter %d: RMSE: %4.4f\tavg RMSE: %4.4f  FU(%1.2e) FV(%1.2e) [took %0.1fs, Samples/sec: %6.1f]\n", i, rmse, rmse_avg, samples[0]->norm(), samples[1]->norm(), elapsedi, samples_per_sec);
   double norm0 = priors[0]->getLinkNorm();
   double norm1 = priors[1]->getLinkNorm();
-  if (!std::isnan(norm0) || !std::isnan(norm1)) {
-    printf("          [Side info] ");
-    if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
-    if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
-    printf("\n");
-  }
-}
-
-std::pair<double,double> eval_rmse(SparseMatrix<double> & P, const int n, VectorXd & predictions, Eigen::VectorXd & predictions_var, const MatrixXd &sample_m, const MatrixXd &sample_u, double mean_rating)
-{
-  double se = 0.0, se_avg = 0.0;
-#pragma omp parallel for schedule(dynamic,8) reduction(+:se, se_avg)
-  for (int k = 0; k < P.outerSize(); ++k) {
-    int idx = P.outerIndexPtr()[k];
-    for (SparseMatrix<double>::InnerIterator it(P,k); it; ++it) {
-      const double pred = sample_m.col(it.col()).dot(sample_u.col(it.row())) + mean_rating;
-      se += sqr(it.value() - pred);
-
-      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
-      double pred_avg;
-      if (n == 0) {
-        pred_avg = pred;
-      } else {
-        double delta = pred - predictions[idx];
-        pred_avg = (predictions[idx] + delta / (n + 1));
-        predictions_var[idx] += delta * (pred - pred_avg);
-      }
-      se_avg += sqr(it.value() - pred_avg);
-      predictions[idx++] = pred_avg;
-    }
-  }
-
-  const unsigned N = P.nonZeros();
-  const double rmse = sqrt( se / N );
-  const double rmse_avg = sqrt( se_avg / N );
-  return std::make_pair(rmse, rmse_avg);
+  printf("Iter %3d: RMSE: %.4f (1samp: %.4f)  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e] %s [took %0.1fs]\n", i, rmse_avg, rmse, samples[0]->norm(), samples[1]->norm(), norm0, norm1, noise->getStatus().c_str(), elapsedi);
+  // if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
+  // if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
 }
 
 Eigen::VectorXd Macau::getStds() {
@@ -170,7 +164,7 @@ Eigen::VectorXd Macau::getStds() {
 // assumes matrix (not tensor)
 Eigen::MatrixXd Macau::getTestData() {
   MatrixXd coords(Ytest.nonZeros(), 3);
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(dynamic, 2)
   for (int k = 0; k < Ytest.outerSize(); ++k) {
     int idx = Ytest.outerIndexPtr()[k];
     for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
@@ -181,4 +175,19 @@ Eigen::MatrixXd Macau::getTestData() {
     }
   }
   return coords;
+}
+
+void Macau::saveModel(int isample) {
+  string fprefix = save_prefix + "-sample" + std::to_string(isample) + "-";
+  // saving latent matrices
+  for (unsigned int i = 0; i < samples.size(); i++) {
+    writeToCSVfile(fprefix + "U" + std::to_string(i+1) + "-latents.csv", *samples[i]);
+    priors[i]->saveModel(fprefix + "U" + std::to_string(i+1));
+  }
+}
+
+void Macau::saveGlobalParams() {
+  VectorXd means(1);
+  means << mean_rating;
+  writeToCSVfile(save_prefix + "-meanvalue.csv", means);
 }

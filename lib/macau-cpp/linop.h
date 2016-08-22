@@ -84,11 +84,11 @@ void AtA_mul_B_1thread(Eigen::VectorXd & out, SparseFeat & A,       double reg, 
 void AtA_mul_B_1thread(Eigen::VectorXd & out, SparseDoubleFeat & A, double reg, Eigen::VectorXd & b, Eigen::VectorXd & tmp);
 
 
-void At_mul_B_blas(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
-void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA);
-void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt);
-void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
-void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
+void At_mul_B_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+void At_mul_A_blas(Eigen::MatrixXd & A, double* AtA);
+void A_mul_At_blas(Eigen::MatrixXd & A, double* AAt);
+void A_mul_B_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+void A_mul_Bt_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 
 //template<int N>
 //inline void A_mul_B_omp(double alpha, Eigen::MatrixXd & out, double beta, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
@@ -270,8 +270,7 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   Eigen::MatrixXd A;
   Eigen::MatrixXd Psi;
 
-
-  A_mul_At_blas(R, RtR->data());
+  A_mul_At_combo(*RtR, R);
   makeSymmetric(*RtR);
 
   const int nblocks = (int)ceil(nfeat / 64.0);

@@ -6,15 +6,25 @@
 #include <memory>
 #include "mvnormal.h"
 #include "linop.h"
+#include "noisemodels.h"
+
+ // forward declarations
+class FixedGaussianNoise;
+class AdaptiveGaussianNoise;
 
 /** interface */
 class ILatentPrior {
   public:
     void virtual sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
-                        const Eigen::MatrixXd &samples, double alpha, const int num_latent) {};
+                        const Eigen::MatrixXd &samples, double alpha, const int num_latent) = 0;
+    void virtual sample_latents(FixedGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
+    void virtual sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
     void virtual update_prior(const Eigen::MatrixXd &U) {};
     virtual double getLinkNorm() { return NAN; };
     virtual double getLinkLambda() { return NAN; };
+    virtual void saveModel(std::string prefix) {};
     virtual ~ILatentPrior() {};
 };
 
@@ -36,7 +46,8 @@ class BPMFPrior : public ILatentPrior {
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
-    void update_prior(const Eigen::MatrixXd &U);
+    void update_prior(const Eigen::MatrixXd &U) override;
+    void saveModel(std::string prefix) override;
 };
 
 /** Prior without side information (pure BPMF) */
@@ -70,12 +81,13 @@ class MacauPrior : public ILatentPrior {
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent);
-    void update_prior(const Eigen::MatrixXd &U);
+    void update_prior(const Eigen::MatrixXd &U) override;
     double getLinkNorm();
     double getLinkLambda() { return lambda_beta; };
     void sample_beta(const Eigen::MatrixXd &U);
     void setLambdaBeta(double lb) { lambda_beta = lb; };
     void setTol(double t) { tol = t; };
+    void saveModel(std::string prefix) override;
 };
 
 std::pair<double,double> posterior_lambda_beta(Eigen::MatrixXd & beta, Eigen::MatrixXd & Lambda_u, double nu, double mu);

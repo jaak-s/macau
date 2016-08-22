@@ -5,9 +5,7 @@ import scipy as sp
 import timeit
 import numbers
 import pandas as pd
-
-## using cysignals to catch CTRL-C interrupt
-include "cysignals/signals.pxi"
+import signal
 
 class MacauResult(object):
   def __init__(self):
@@ -148,6 +146,28 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lamb
     sdf_prior.setTol(tol)
     return sdf_prior
 
+cdef ILatentPrior* make_one_prior(side, int num_latent, double lambda_beta) except NULL:
+    if (side is None) or side == ():
+        return new BPMFPrior(num_latent)
+    if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+        raise ValueError("Unsupported side information type: '%s'" % type(side).__name__)
+
+    ## binary CSR
+    cdef unique_ptr[SparseFeat] sf_ptr
+    cdef MacauOnePrior[SparseFeat]* sf_prior
+    if (side.data == 1).all():
+        sf_ptr   = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
+        sf_prior = new MacauOnePrior[SparseFeat](num_latent, sf_ptr)
+        sf_prior.setLambdaBeta(lambda_beta)
+        return sf_prior
+
+    ## double CSR
+    cdef unique_ptr[SparseDoubleFeat] sdf_ptr
+    sdf_ptr = unique_ptr[SparseDoubleFeat]( sparse2SparseDoubleFeat(side) )
+    cdef MacauOnePrior[SparseDoubleFeat]* sdf_prior = new MacauOnePrior[SparseDoubleFeat](num_latent, sdf_ptr)
+    sdf_prior.setLambdaBeta(lambda_beta)
+    return sdf_prior
+
 ## API functions:
 ## 1) F'F
 ## 2) F*X (X is a matrix)
@@ -158,13 +178,15 @@ def bpmf(Y,
          num_latent = 10,
          precision  = 1.0,
          burnin     = 50,
-         nsamples   = 400):
+         nsamples   = 400,
+         **keywords):
     return macau(Y,
                  Ytest = Ytest,
                  num_latent = num_latent,
                  precision  = precision,
                  burnin     = burnin,
-                 nsamples   = nsamples)
+                 nsamples   = nsamples,
+                 **keywords)
 
 def remove_nan(Y):
     if not np.any(np.isnan(Y.data)):
@@ -196,7 +218,10 @@ def macau(Y,
           precision  = 1.0,
           burnin     = 50,
           nsamples   = 400,
+          univariate = False,
           tol        = 1e-6,
+          sn_max     = 20.0,
+          save_prefix= None,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
 
@@ -213,17 +238,29 @@ def macau(Y,
         raise ValueError("If specified 'side' must contain 2 elements.")
 
     cdef int D = np.int32(num_latent)
-    cdef unique_ptr[ILatentPrior] prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
-    cdef unique_ptr[ILatentPrior] prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
+    cdef unique_ptr[ILatentPrior] prior_u
+    cdef unique_ptr[ILatentPrior] prior_v
+    if univariate:
+        prior_u = unique_ptr[ILatentPrior](make_one_prior(side[0], D, lambda_beta))
+        prior_v = unique_ptr[ILatentPrior](make_one_prior(side[1], D, lambda_beta))
+    else:
+        prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
+        prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
 
-    sig_on()
     cdef Macau *macau = new Macau(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
-    macau.setPrecision(np.float64(precision))
     macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
+
+    if isinstance(precision, str):
+      if precision == "adaptive" or precision == "sample":
+        macau.setAdaptivePrecision(np.float64(1.0), np.float64(sn_max))
+      else:
+        raise ValueError("Parameter 'precision' has to be either a number of \"adaptive\" for adaptive precision.")
+    else:
+      macau.setPrecision(np.float64(precision))
 
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals
@@ -234,8 +271,18 @@ def macau(Y,
         tvals = Ytest.data.astype(np.double, copy=False)
         macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
 
+    if save_prefix is None:
+        macau.setSaveModel(0)
+    else:
+        if type(save_prefix) != str:
+            raise ValueError("Parameter 'save_prefix' has to be a string (str) or None.")
+        macau.setSaveModel(1)
+        macau.setSavePrefix(save_prefix)
+
     macau.run()
-    sig_off()
+    ## restoring Python default signal handler
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+
     cdef VectorXd yhat_raw     = macau.getPredictions()
     cdef VectorXd yhat_sd_raw  = macau.getStds()
     cdef MatrixXd testdata_raw = macau.getTestData()
@@ -310,7 +357,6 @@ def macau_varbayes(Y,
     cdef unique_ptr[ILatentPriorVB] prior_u = unique_ptr[ILatentPriorVB](make_prior_vb(side[0], D, init_uvar * Y.shape[0]))
     cdef unique_ptr[ILatentPriorVB] prior_v = unique_ptr[ILatentPriorVB](make_prior_vb(side[1], D, init_uvar * Y.shape[1]))
 
-    sig_on()
     cdef MacauVB *macau = new MacauVB(D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
@@ -329,7 +375,6 @@ def macau_varbayes(Y,
         macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
 
     macau.run()
-    sig_off()
 
     cdef VectorXd yhat_raw     = macau.getPredictions()
     cdef VectorXd yhat_sd_raw  = macau.getStds()

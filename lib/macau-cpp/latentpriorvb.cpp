@@ -263,7 +263,7 @@ void MacauPriorVB<FType>::update_beta(Eigen::MatrixXd &Umean) {
 }
 
 template<class FType>
-void MacauPriorVB<FType>::update_beta2(Eigen::MatrixXd &Umean) {
+void MacauPriorVB<FType>::update_beta_uni(Eigen::MatrixXd &Umean) {
   // updating beta and beta_var
   const int nfeat = beta.cols();
   const int blocksize = 4;

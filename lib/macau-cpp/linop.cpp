@@ -1,7 +1,6 @@
 #include <Eigen/Dense>
 #include <math.h>
 extern "C" {
-  #include <cblas.h>
   #include <csr.h>
 }
 #include <iostream>
@@ -13,6 +12,16 @@ extern "C" {
 
 using namespace Eigen;
 using namespace std;
+
+extern "C" void dsyrk_(char *uplo, char *trans, int *m, int *n, double *alpha, double a[],
+            int *lda, double *beta, double c[], int *ldc);
+extern "C" void dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha,
+            double a[], int *lda, double b[], int *ldb, double *beta, double c[],
+            int *ldc);
+/*
+extern "C" void dsymm_(char *side, char *uplo, int *m, int *n, double *alpha, double a[],
+            int *lda, double b[], int *ldb, double *beta, double c[], int *ldc);
+*/
 
 // out = bcsr * b (for vectors)
 void A_mul_B(Eigen::VectorXd & out, BinaryCSR & csr, Eigen::VectorXd & b) {
@@ -105,43 +114,77 @@ void At_mul_A(Eigen::MatrixXd & out, SparseDoubleFeat & A) {
   }
 }
 
-void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA) {
-  cblas_dsyrk(CblasColMajor, CblasLower, CblasTrans, A.cols(), A.rows(), 1.0, A.data(), A.rows(), 0.0, AtA, A.cols());
+void At_mul_A_blas(Eigen::MatrixXd & A, double* AtA) {
+  char lower  = 'L';
+  char trans  = 'T';
+  int  m      = A.cols();
+  int  n      = A.rows();
+  double one  = 1.0;
+  double zero = 0.0;
+  dsyrk_(&lower, &trans, &m, &n, &one, A.data(),
+         &n, &zero, AtA, &m);
 }
 
-void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt) {
-  cblas_dsyrk(CblasColMajor, CblasLower, CblasNoTrans, A.rows(), A.cols(), 1.0, A.data(), A.rows(), 0.0, AAt, A.rows());
+void A_mul_At_blas(Eigen::MatrixXd & A, double* AAt) {
+  char lower  = 'L';
+  char trans  = 'N';
+  int  m      = A.cols();
+  int  n      = A.rows();
+  double one  = 1.0;
+  double zero = 0.0;
+  dsyrk_(&lower, &trans, &n, &m, &one, A.data(),
+         &n, &zero, AAt, &n);
 }
 
-void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
+void A_mul_B_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
   if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
   if (Y.cols() != B.cols()) {throw std::runtime_error("B.cols() must equal Y.cols()");}
   if (A.cols() != B.rows()) {throw std::runtime_error("B.rows() must equal A.cols()");}
-  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, A.rows(), B.cols(), A.cols(), 1, A.data(), A.rows(), B.data(), B.rows(), 0, Y.data(), Y.rows());
+  int m = A.rows();
+  int n = B.cols();
+  int k = A.cols();
+  char transA = 'N';
+  char transB = 'N';
+  double alpha = 1.0;
+  double beta  = 0.0;
+  dgemm_(&transA, &transB, &m, &n, &k, &alpha, A.data(), &m, B.data(), &k, &beta, Y.data(), &m);
 }
 
-void At_mul_B_blas(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
-  if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
+void At_mul_B_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
+  if (Y.rows() != A.cols()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
   if (Y.cols() != B.cols()) {throw std::runtime_error("B.cols() must equal Y.cols()");}
-  if (A.cols() != B.rows()) {throw std::runtime_error("B.rows() must equal A.cols()");}
-  cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, A.rows(), B.cols(), A.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
+  if (A.rows() != B.rows()) {throw std::runtime_error("B.rows() must equal A.cols()");}
+  int m = A.cols();
+  int n = B.cols();
+  int k = A.rows();
+  char transA = 'T';
+  char transB = 'N';
+  double alpha = 1.0;
+  double beta  = 0.0;
+  dgemm_(&transA, &transB, &m, &n, &k, &alpha, A.data(), &k, B.data(), &k, &beta, Y.data(), &m);
 }
 
-void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B) {
+void A_mul_Bt_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
   if (Y.rows() != A.rows()) {throw std::runtime_error("A.rows() must equal Y.rows()");}
   if (Y.cols() != B.rows()) {throw std::runtime_error("B.rows() must equal Y.cols()");}
   if (A.cols() != B.cols()) {throw std::runtime_error("B.cols() must equal A.cols()");}
-  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, A.rows(), B.rows(), A.cols(), 1.0, A.data(), A.rows(), B.data(), B.rows(), 0.0, Y.data(), Y.rows());
+  int m = A.rows();
+  int n = B.rows();
+  int k = A.cols();
+  char transA = 'N';
+  char transB = 'T';
+  double alpha = 1.0;
+  double beta  = 0.0;
+  dgemm_(&transA, &transB, &m, &n, &k, &alpha, A.data(), &m, B.data(), &n, &beta, Y.data(), &m);
 }
-
+/*
 void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
   cblas_dsymm(CblasColMajor, CblasLeft, CblasLower, Y.rows(), Y.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
 }
 
 void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B) {
   cblas_dsymm(CblasColMajor, CblasRight, CblasLower, Y.rows(), Y.cols(), alpha, A.data(), A.rows(), B.data(), B.rows(), beta, Y.data(), Y.rows());
-}
-
+}*/
 
 template<> void AtA_mul_B(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & tmp) {
   // solution update:
