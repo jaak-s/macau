@@ -351,7 +351,7 @@ void MacauPriorVB<FType>::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &
   // += 0.5 * sum_i sum_f Var[beta_df] * x_if * x_if)
   lambda_b += 0.5 * beta_var * F_colsq;
 
-  update_beta(Umean);
+  update_beta_uni(Umean);
   // debug:
   //std::cout << "beta     = [ " << beta << " ]\n";
   //std::cout << "beta_var = [ " << beta_var << " ]\n";
