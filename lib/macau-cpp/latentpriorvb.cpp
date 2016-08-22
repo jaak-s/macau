@@ -39,6 +39,7 @@ void BPMFPriorVB::update_latents(
 {
   const int N = Umean.cols();
   const int D = Umean.rows();
+  num_elements = N;
 
   // compute E[lambda] .* E[mu]
   const VectorXd Elambda     = getElambda(N);
@@ -115,6 +116,13 @@ void BPMFPriorVB::update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) {
   // += 0.5 * sum_i (Var[uid])
   lambda_b += 0.5 * Uvar.rowwise().sum();
   lambda_b += 0.5 * mu_var * N;
+}
+
+void BPMFPriorVB::saveModel(std::string prefix) {
+  writeToCSVfile(prefix + "-mu-mean.csv", mu_mean);
+  writeToCSVfile(prefix + "-mu-var.csv",  mu_var);
+  writeToCSVfile(prefix + "-lambda_a.csv", getElambda(num_elements) );
+  writeToCSVfile(prefix + "-lambda_b.csv", lambda_b );
 }
 
 

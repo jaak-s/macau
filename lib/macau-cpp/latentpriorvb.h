@@ -20,6 +20,7 @@ class ILatentPriorVB {
     virtual void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) = 0;
     virtual double getLinkNorm() { return NAN; };
     virtual double getLinkLambdaNorm() { return NAN; };
+    virtual void saveModel(std::string prefix) {};
     virtual ~ILatentPriorVB() {};
 };
 
@@ -28,6 +29,7 @@ class BPMFPriorVB : public ILatentPriorVB {
   public:
     Eigen::VectorXd mu_mean, mu_var; 
     Eigen::VectorXd lambda_b;
+    int num_elements;
     double lambda_a0, lambda_b0;   // Hyper-prior for lambda-s
     double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
@@ -45,6 +47,7 @@ class BPMFPriorVB : public ILatentPriorVB {
         const Eigen::MatrixXd &Vvar,
         const double alpha) override;
     void update_prior(Eigen::MatrixXd &Umean, Eigen::MatrixXd &Uvar) override;
+    void saveModel(std::string prefix) override;
     Eigen::VectorXd getElambda(int N);
 };
 

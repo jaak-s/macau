@@ -126,6 +126,9 @@ void MacauVB::run() {
       printStatus(i, rmse_test, elapsedi, updates_per_sec);
     }
   }
+  if (save_model) {
+    saveModel();
+  }
 }
 
 void MacauVB::printStatus(int i, double rmse, double elapsedi, double updates_per_sec) {
@@ -190,4 +193,18 @@ Eigen::MatrixXd MacauVB::getTestData() {
     }
   }
   return coords;
+}
+
+void MacauVB::saveModel() {
+  // saving latent matrices
+  for (unsigned int i = 0; i < samples_mean.size(); i++) {
+    writeToCSVfile(save_prefix + "-U" + std::to_string(i+1) + "-latents-mean.csv", *samples_mean[i]);
+    writeToCSVfile(save_prefix + "-U" + std::to_string(i+1) + "-latents-var.csv", *samples_var[i]);
+    priors[i]->saveModel(save_prefix + "-U" + std::to_string(i+1));
+  }
+
+  // saving global mean
+  VectorXd means(1);
+  means << mean_value;
+  writeToCSVfile(save_prefix + "-meanvalue.csv", means);
 }

@@ -337,6 +337,7 @@ def macau_varbayes(Y,
              num_latent  = 10,
              precision   = 1.0, 
              niter       = 100,
+             save_prefix = None,
              verbose     = True):
     Y, Ytest = prepare_Y(Y, Ytest)
 
@@ -373,6 +374,14 @@ def macau_varbayes(Y,
         tcols = Ytest.col.astype(np.int32, copy=False)
         tvals = Ytest.data.astype(np.double, copy=False)
         macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
+
+    if save_prefix is None:
+        macau.setSaveModel(0)
+    else:
+        if type(save_prefix) != str:
+            raise ValueError("Parameter 'save_prefix' has to be a string (str) or None.")
+        macau.setSaveModel(1)
+        macau.setSavePrefix(save_prefix)
 
     macau.run()
 

@@ -103,4 +103,6 @@ cdef extern from "macauvb.h":
         VectorXd getStds()
         MatrixXd getTestData()
         void run()
+        void setSaveModel(bool save)
+        void setSavePrefix(string pref)
 
