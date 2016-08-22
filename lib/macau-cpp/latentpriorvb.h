@@ -28,8 +28,8 @@ class ILatentPriorVB {
 class BPMFPriorVB : public ILatentPriorVB {
   public:
     Eigen::VectorXd mu_mean, mu_var; 
+    Eigen::VectorXd lambda_a;
     Eigen::VectorXd lambda_b;
-    int num_elements;
     double lambda_a0, lambda_b0;   // Hyper-prior for lambda-s
     double b0;                     // Hyper-prior for Normal-Gamma prior for mu_mean (2.0)
 
