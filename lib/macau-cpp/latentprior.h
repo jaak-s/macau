@@ -120,6 +120,14 @@ void sample_latent_blas(Eigen::MatrixXd &s,
                         const Eigen::MatrixXd &Lambda_u,
                         const int num_latent);
 
+void sample_latent_blas_probit(Eigen::MatrixXd &s,
+                        int mm,
+                        const Eigen::SparseMatrix<double> &mat,
+                        double mean_rating,
+                        const Eigen::MatrixXd &samples,
+                        const Eigen::VectorXd &mu_u,
+                        const Eigen::MatrixXd &Lambda_u,
+                        const int num_latent);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
