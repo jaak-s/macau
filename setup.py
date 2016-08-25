@@ -2,15 +2,15 @@ import sys
 import numpy as np
 from glob import glob
 
-from distutils.core import setup
 from distutils.command.build_clib import build_clib
-from distutils.extension import Extension
-from distutils.errors import DistutilsSetupError
+from distutils.errors    import DistutilsSetupError
+from distutils.sysconfig import get_python_inc
+from setuptools          import setup
+from setuptools          import Extension
+
+import Cython
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
-from distutils.sysconfig import get_python_inc
-
-from distutils import log
 
 import os
 from textwrap import dedent
@@ -25,7 +25,7 @@ import shutil
 import subprocess
 
 ## how to test -fopenmp: https://github.com/hickford/primesieve-python/blob/master/setup.py
-def is_openblas_installed():
+def is_openblas_installed(libraries):
     """check if the C module can be build by trying to compile a small 
     program against the libyaml development library"""
 
@@ -36,11 +36,11 @@ def is_openblas_installed():
     import distutils.ccompiler
     from distutils.errors import CompileError, LinkError
 
-    libraries = ['openblas', 'gfortran']
-
     # write a temporary .cpp file to compile
     c_code = dedent("""
-    #include <cblas.h>
+    extern "C" void dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha,
+                double a[], int *lda, double b[], int *ldb, double *beta, double c[],
+                int *ldc);
 
     int main(int argc, char* argv[])
     {
@@ -52,7 +52,11 @@ def is_openblas_installed():
         A[3] = 2.3; A[4] = -.4; A[5] = 19.1;
         A[6] = -.72; A[7] = 0.6; A[8] = 12.3;
 
-        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,n,n,n,1,A, n, A, n, 0 ,C, n);
+        char transA = 'N';
+        char transB = 'T';
+        double alpha = 1.0;
+        double beta  = 0.0;
+        dgemm_(&transA, &transB, &n, &n, &n, &alpha, A, &n, A, &n, &beta, C, &n);
 
         return 0;
     }
@@ -141,6 +145,22 @@ def is_openblas_installed():
     shutil.rmtree(tmp_dir)
     return ret_val
 
+def get_blas_libs():
+    libraries_openblas = ['openblas', 'gfortran', 'pthread']
+    libraries_blas = ['blas', 'lapack', 'pthread']
+
+    if is_openblas_installed(libraries_openblas):
+        print("OpenBLAS found")
+        return libraries_openblas
+
+    if is_openblas_installed(libraries_blas):
+        print("Standard BLAS found.")
+        return libraries_blas
+
+    print("OpenBLAS or standard BLAS not found. Please install.")
+    sys.exit(1)
+
+
 def download_eigen_if_needed():
     url = "http://bitbucket.org/eigen/eigen/get/3.3-beta1.tar.bz2"
     eigen_inner = "eigen-eigen-ce5a455b34c0"
@@ -183,7 +203,6 @@ class build_clibx(build_clib):
                        "'sources' must be present and must be "
                        "a list of source filenames" % lib_name)
 
-            log.info("building '%s' library", lib_name)
             include_dirs = build_info.get('include_dirs')
             extra_compile_args = build_info.get('extra_compile_args')
             extra_link_args = build_info.get('extra_link_args')
@@ -207,11 +226,14 @@ class build_clibx(build_clib):
                                             output_dir = self.build_clib,
                                             debug=self.debug)
 
+blas_libs = get_blas_libs()
 inc = ['lib/macau-cpp', 'lib/eigen3', 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]
+ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
 
 libmacau = ('macau-cpp', dict(
     package='macau',
-    sources = filter(lambda a: a.find("tests.cpp") < 0, glob('lib/macau-cpp/*.cpp')),
+    sources = filter(lambda a: a.find("tests.cpp") < 0 and a.find("macau_mpi.cpp") < 0,
+                               glob('lib/macau-cpp/*.cpp')),
     include_dirs = inc,
     extra_compile_args = ['-fopenmp', '-O3', '-fstrict-aliasing', '-std=c++11'],
     #extra_link_args = ['-fopenmp'],
@@ -219,39 +241,59 @@ libmacau = ('macau-cpp', dict(
     ))
 
 ext_modules=[
-    Extension("macau", 
-              sources = ["python/macau/macau.pyx", "python/macau/myblas.cpp"],
+    Extension("macau.macau",
+              sources = ["python/macau/macau.pyx",
+                         "python/macau/myblas.cpp"],
               include_dirs = inc,
-              libraries = ["openblas", "pthread"],
-              library_dirs = ["/usr/local/opt/gcc/lib/gcc/5", "/usr/local/opt/openblas/lib"],
-              runtime_library_dirs = ["/usr/local/opt/gcc/lib/gcc/5", "/usr/local/opt/openblas/lib"],
+              libraries = blas_libs,
+              library_dirs = ldirs,
+              runtime_library_dirs = ldirs,
               extra_compile_args = ['-std=c++11', '-fopenmp'],
               extra_link_args = ['-fopenmp'],
               language = "c++")
 ]
 
+CLASSIFIERS = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Topic :: Machine Learning",
+    "Topic :: Matrix Factorization",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS"
+]
+
 def main():
-    if not is_openblas_installed():
-        print("OpenBLAS not found. Please install.")
-        sys.exit(1)
-    else:
-        print("OpenBLAS found.")
     download_eigen_if_needed()
     checkout_libfastsparse()
 
+    ## reading __version__:
+    exec(open('python/macau/version.py').read())
+
     setup(
         name = 'macau',
-        version = "0.2",
-        requires = ['numpy', 'scipy', 'cython(>=0.21)', 'cysignals', 'pandas'],
+        version = __version__,
+        requires = ['numpy', 'scipy', 'cython', 'pandas'],
         libraries = [libmacau],
         packages = ["macau"],
         package_dir = {'' : 'python'},
-        author = "Jaak Simm",
-        url = "http://google.com",
+        url = "http://github.com/jaak-s/macau",
         license = "MIT",
+        description = 'Bayesian Factorization Methods',
+        long_description = 'Highly optimized and parallelized methods for Bayesian Factorization, including BPMF and Macau. The package uses optimized OpenMP/C++ code with a Cython wrapper to factorize large scale matrices. Macau method provides also the ability to incorporate high-dimensional side information to the factorization.',
+        author = "Jaak Simm",
         author_email = "jaak.simm@gmail.com",
         cmdclass = {'build_clib': build_clibx, 'build_ext': build_ext},
-        ext_modules = cythonize(ext_modules, include_path=sys.path)
+        ext_modules = cythonize(ext_modules, include_path=sys.path),
+        classifiers = CLASSIFIERS,
+        keywords = "bayesian factorization machine-learning high-dimensional side-information",
+        install_requires=['numpy', 'scipy', 'pandas']
     )
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@
 #include "chol.h"
 #include "mvnormal.h"
 #include "latentprior.h"
+#include "bpmfutils.h"
 #include <cmath>
 
 TEST_CASE( "SparseFeat/At_mul_A_bcsr", "[At_mul_A] for BinaryCSR" ) {
@@ -300,4 +301,249 @@ TEST_CASE( "linop/A_mul_B_add", "Fast parallel A_mul_B with adding") {
   A_mul_B_omp(1.0, C, 1.0, A, B);
   Ctr += A * B;
   REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/At_mul_Bt/SparseFeat", "At_mul_Bt of single col for SparseFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::MatrixXd B(2, 6);
+  Eigen::VectorXd Y(2), Y_true(2);
+  B << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  Y_true << -4.16, 0.41;
+
+  At_mul_Bt(Y, sf, 1, B);
+  REQUIRE( Y(0) == Approx(Y_true(0)) );
+  REQUIRE( Y(1) == Approx(Y_true(1)) );
+}
+
+TEST_CASE( "linop/At_mul_Bt/SparseDoubleFeat", "At_mul_Bt of single col for SparseDoubleFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  double vals[9] = { 0.6 , -0.76,  1.48,  1.19,  2.44,  1.95, -0.82,  0.06,  2.54 };
+  SparseDoubleFeat sf(6, 4, 9, rows, cols, vals);
+
+  Eigen::MatrixXd B(2, 6);
+  Eigen::VectorXd Y(2), Y_true(2);
+  B << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  Y_true << 0.9942,  1.8285;
+
+  At_mul_Bt(Y, sf, 1, B);
+  REQUIRE( Y(0) == Approx(Y_true(0)) );
+  REQUIRE( Y(1) == Approx(Y_true(1)) );
+}
+
+TEST_CASE( "linop/add_Acol_mul_bt/SparseFeat", "add_Acol_mul_bt for SparseFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat sf(6, 4, 9, rows, cols);
+  Eigen::MatrixXd Z(2, 6), Z_added(2, 6);
+  Eigen::VectorXd b(2);
+  Z << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  b << -4.16, 0.41;
+  Z_added << -4.39, -7.05, -5.2 , -0.52, -1.45, -1.42,
+              0.25, -0.21,  1.6 ,  1.12,  0.11,  0.61;
+
+  add_Acol_mul_bt(Z, sf, 1, b);
+  REQUIRE( (Z - Z_added).norm() == Approx(0.0) );
+}
+
+// computes Z += A[:,col] * b', where a and b are vectors
+TEST_CASE( "linop/add_Acol_mul_bt/SparseDoubleFeat", "add_Acol_mul_bt for SparseDoubleFeat") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  double vals[9] = { 0.6 , -0.76,  1.48,  1.19,  2.44,  1.95, -0.82,  0.06,  2.54 };
+  SparseDoubleFeat sf(6, 4, 9, rows, cols, vals);
+
+  Eigen::MatrixXd Z(2, 6), Z_added(2, 6);
+  Eigen::VectorXd b(2);
+  Z << -0.23, -2.89, -1.04, -0.52, -1.45, -1.42,
+       -0.16, -0.62,  1.19,  1.12,  0.11,  0.61;
+  b << -4.16, 0.41;
+  Z_added << -2.726 ,  0.5212, -5.9904, -0.52  , -1.45  , -1.42,
+              0.086 , -0.9562,  1.6779,  1.12  ,  0.11  ,  0.61;
+
+  add_Acol_mul_bt(Z, sf, 1, b);
+  REQUIRE( (Z - Z_added).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/At_mul_A_blas", "A'A with BLAS is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd AtA(2, 2);
+  Eigen::MatrixXd AtAtr(2, 2);
+  A <<  1.7, -3.1,
+        0.7,  2.9,
+       -1.3,  1.5;
+  AtAtr = A.transpose() * A;
+  At_mul_A_blas(A, AtA.data());
+  makeSymmetric(AtA);
+  REQUIRE( (AtA - AtAtr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/A_mul_At_blas", "AA' with BLAS is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd AA(3, 3);
+  Eigen::MatrixXd AAtr(3, 3);
+  A <<  1.7, -3.1,
+        0.7,  2.9,
+       -1.3,  1.5;
+  AAtr = A * A.transpose();
+  A_mul_At_blas(A, AA.data());
+  makeSymmetric(AA);
+  REQUIRE( (AA - AAtr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/A_mul_B_blas", "A_mul_B_blas is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd B(2, 5);
+  Eigen::MatrixXd C(3, 5);
+  Eigen::MatrixXd Ctr(3, 5);
+  A << 3.0, -2.00,
+       1.0,  0.91,
+       1.9, -1.82;
+  B << 0.52, 0.19, 0.25, -0.73, -2.81,
+      -0.15, 0.31,-0.40,  0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  A_mul_B_blas(C, A, B);
+  Ctr = A * B;
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/At_mul_B_blas", "At_mul_B_blas is correct") {
+  Eigen::MatrixXd A(2, 3);
+  Eigen::MatrixXd B(2, 5);
+  Eigen::MatrixXd C(3, 5);
+  Eigen::MatrixXd Ctr(3, 5);
+  A << 3.0, -2.00,  1.0,
+       0.91, 1.90, -1.82;
+  B << 0.52, 0.19, 0.25, -0.73, -2.81,
+      -0.15, 0.31,-0.40,  0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  Ctr = C;
+  At_mul_B_blas(C, A, B);
+  Ctr = A.transpose() * B;
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "linop/A_mul_Bt_blas", "A_mul_Bt_blas is correct") {
+  Eigen::MatrixXd A(3, 2);
+  Eigen::MatrixXd B(5, 2);
+  Eigen::MatrixXd C(3, 5);
+  Eigen::MatrixXd Ctr(3, 5);
+  A << 3.0, -2.00,
+       1.0,  0.91,
+       1.9, -1.82;
+  B << 0.52,  0.19,
+       0.25, -0.73,
+      -2.81, -0.15,
+       0.31, -0.40,
+       0.91, -0.08;
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  A_mul_Bt_blas(C, A, B);
+  Ctr = A * B.transpose();
+  REQUIRE( (C - Ctr).norm() == Approx(0.0) );
+}
+
+TEST_CASE( "bpmfutils/split_work_mpi", "Test if work splitting is correct") {
+   int work3[3], work5[5];
+   split_work_mpi(96, 3, work3);
+   REQUIRE( work3[0] == 32 );
+   REQUIRE( work3[1] == 32 );
+   REQUIRE( work3[2] == 32 );
+
+   split_work_mpi(97, 3, work3);
+   REQUIRE( work3[0] == 33 );
+   REQUIRE( work3[1] == 32 );
+   REQUIRE( work3[2] == 32 );
+
+   split_work_mpi(95, 3, work3);
+   REQUIRE( work3[0] == 32 );
+   REQUIRE( work3[1] == 32 );
+   REQUIRE( work3[2] == 31 );
+
+   split_work_mpi(80, 3, work3);
+   REQUIRE( work3[0] == 28 );
+   REQUIRE( work3[1] == 26 );
+   REQUIRE( work3[2] == 26 );
+
+   split_work_mpi(11, 5, work5);
+   REQUIRE( work5[0] == 3 );
+   REQUIRE( work5[1] == 2 );
+   REQUIRE( work5[2] == 2 );
+   REQUIRE( work5[3] == 2 );
+   REQUIRE( work5[4] == 2 );
+}
+
+TEST_CASE( "bpmfutils/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") {
+  int rows[3] = {0, 1, 2};
+  int cols[3] = {2, 1, 0};
+  double vals[3] = {1.0, 0.0, 2.0};
+  Eigen::SparseMatrix<double> Y;
+  Y.resize(3, 3);
+
+  sparseFromIJV(Y, rows, cols, vals, 3);
+  REQUIRE( Y.nonZeros() == 3 );
+}
+
+TEST_CASE( "bpmfutils/eval_rmse", "Test if prediction variance is correctly calculated") {
+  int rows[1] = {0};
+  int cols[1] = {0};
+  double vals[1] = {4.5};
+  Eigen::SparseMatrix<double> Y;
+  Y.resize(1, 1);
+  sparseFromIJV(Y, rows, cols, vals, 1);
+  double mean_value = 2.0;
+
+  Eigen::VectorXd pred     = Eigen::VectorXd::Zero(1);
+  Eigen::VectorXd pred_var = Eigen::VectorXd::Zero(1);
+  Eigen::MatrixXd U(2, 1), V(2, 1);
+
+  // first iteration
+  U << 1.0, 0.0;
+  V << 1.0, 0.0;
+  auto rmse0 = eval_rmse(Y, 0, pred, pred_var, U, V, mean_value);
+  REQUIRE(pred(0)      == Approx(3.0));
+  REQUIRE(pred_var(0)  == Approx(0.0));
+  REQUIRE(rmse0.first  == Approx(1.5));
+  REQUIRE(rmse0.second == Approx(1.5));
+
+  //// second iteration
+  U << 2.0, 0.0;
+  V << 1.0, 0.0;
+  auto rmse1 = eval_rmse(Y, 1, pred, pred_var, U, V, mean_value);
+  REQUIRE(pred(0)      == Approx((3.0 + 4.0) / 2));
+  REQUIRE(pred_var(0)  == Approx(0.5));
+  REQUIRE(rmse1.first  == 0.5);
+  REQUIRE(rmse1.second == 1.0);
+
+  //// third iteration
+  U << 2.0, 0.0;
+  V << 3.0, 0.0;
+  auto rmse2 = eval_rmse(Y, 2, pred, pred_var, U, V, mean_value);
+  REQUIRE(pred(0)      == Approx((3.0 + 4.0 + 8.0) / 3));
+  REQUIRE(pred_var(0)  == Approx(14.0)); // accumulated variance
+  REQUIRE(rmse2.first  == 3.5);
+  REQUIRE(rmse2.second == 0.5);
+}
+
+TEST_CASE( "bpmfutils/row_mean_var", "Test if row_mean_var is correct") {
+  Eigen::VectorXd mean(3), var(3), mean_tr(3), var_tr(3);
+  Eigen::MatrixXd C(3, 5);
+  C << 0.21, 0.70, 0.53, -0.18, -2.14,
+      -0.35,-0.82,-0.27,  0.15, -0.10,
+      +2.34,-0.81,-0.47,  0.31, -0.14;
+  row_mean_var(mean, var, C);
+  mean_tr = C.rowwise().mean();
+  var_tr  = (C.colwise() - mean).cwiseAbs2().rowwise().mean();
+  REQUIRE( (mean - mean_tr).norm() == Approx(0.0) );
+  REQUIRE( (var  - var_tr).norm()  == Approx(0.0) );
 }

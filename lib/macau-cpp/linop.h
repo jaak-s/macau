@@ -56,8 +56,13 @@ void  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B,
 template<typename T>
 int  solve_blockcg(Eigen::MatrixXd & X, T & t, double reg, Eigen::MatrixXd & B, double tol);
 
-template<typename T>
-void At_mul_A(Eigen::MatrixXd & out, T & A);
+void At_mul_A(Eigen::MatrixXd & out, SparseFeat & A);
+void At_mul_A(Eigen::MatrixXd & out, SparseDoubleFeat & A);
+void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A);
+
+Eigen::VectorXd col_square_sum(SparseFeat & A);
+Eigen::VectorXd col_square_sum(SparseDoubleFeat & A);
+
 template<typename T>
 void compute_uhat(Eigen::MatrixXd & uhat, T & feat, Eigen::MatrixXd & beta);
 template<typename T>
@@ -76,11 +81,11 @@ template<int N>
 void A_mul_Bx(Eigen::MatrixXd & out, CSR & A, Eigen::MatrixXd & B);
 
 
-void At_mul_B_blas(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
-void At_mul_A_blas(const Eigen::MatrixXd & A, double* AtA);
-void A_mul_At_blas(const Eigen::MatrixXd & A, double* AAt);
-void A_mul_B_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
-void A_mul_Bt_blas(Eigen::MatrixXd & Y, const Eigen::MatrixXd & A, const Eigen::MatrixXd & B);
+void At_mul_B_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+void At_mul_A_blas(Eigen::MatrixXd & A, double* AtA);
+void A_mul_At_blas(Eigen::MatrixXd & A, double* AAt);
+void A_mul_B_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+void A_mul_Bt_blas(Eigen::MatrixXd & Y, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 
 //template<int N>
 //inline void A_mul_B_omp(double alpha, Eigen::MatrixXd & out, double beta, Eigen::Matrix<double, N, N> & A, Eigen::MatrixXd & B);
@@ -110,6 +115,66 @@ void makeSymmetric(Eigen::MatrixXd & A);
 void Asym_mul_B_left(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 void Asym_mul_B_right(double beta, Eigen::MatrixXd & Y, double alpha, Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 
+// Y = X[:,col]' * B'
+inline void At_mul_Bt(Eigen::VectorXd & Y, SparseFeat & X, const int col, Eigen::MatrixXd & B) {
+  const int* cols = X.Mt.cols;
+  const int end   = X.Mt.row_ptr[col + 1];
+  const int D     = Y.size();
+  Y.setZero();
+  for (int i = X.Mt.row_ptr[col]; i < end; i++) {
+    int c = cols[i];
+    for (int d = 0; d < D; d++) {
+      Y(d) += B(d, c);
+    }
+  }
+}
+
+// Y = X[:,col]' * B'
+inline void At_mul_Bt(Eigen::VectorXd & Y, SparseDoubleFeat & X, const int col, Eigen::MatrixXd & B) {
+  const int* cols    = X.Mt.cols;
+  const double* vals = X.Mt.vals;
+  const int end      = X.Mt.row_ptr[col + 1];
+  const int D        = Y.size();
+  Y.setZero();
+  for (int i = X.Mt.row_ptr[col]; i < end; i++) {
+    int c    = cols[i];
+    double v = vals[i];
+    for (int d = 0; d < D; d++) {
+      Y(d) += v * B(d, c);
+    }
+  }
+}
+
+// computes Z += A[:,col] * b', where a and b are vectors
+inline void add_Acol_mul_bt(Eigen::MatrixXd & Z, SparseFeat & A, const int col, Eigen::VectorXd & b) {
+  const int* cols = A.Mt.cols;
+  int i           = A.Mt.row_ptr[col];
+  const int end   = A.Mt.row_ptr[col + 1];
+  const int D     = b.size();
+  for (; i < end; i++) {
+    int c = cols[i];
+    for (int d = 0; d < D; d++) {
+      Z(d, c) += b(d);
+    }
+  }
+}
+
+// computes Z += A[:,col] * b', where a and b are vectors
+inline void add_Acol_mul_bt(Eigen::MatrixXd & Z, SparseDoubleFeat & A, const int col, Eigen::VectorXd & b) {
+  const int*    cols = A.Mt.cols;
+  const double* vals = A.Mt.vals;
+  const int D        = b.size();
+  int i              = A.Mt.row_ptr[col];
+  const int end      = A.Mt.row_ptr[col + 1];
+  for (; i < end; i++) {
+    int c    = cols[i];
+    double v = vals[i];
+    for (int d = 0; d < D; d++) {
+      Z(d, c) += v * b(d);
+    }
+  }
+}
+
 ///////////////////////////////////
 //     Template functions
 ///////////////////////////////////
@@ -133,70 +198,6 @@ template<> inline void compute_uhat(Eigen::MatrixXd & uhat, SparseDoubleFeat & f
 /** computes uhat = denseFeat * beta, where beta and uhat are row ordered */
 template<> inline void compute_uhat(Eigen::MatrixXd & uhat, Eigen::MatrixXd & denseFeat, Eigen::MatrixXd & beta) {
   A_mul_Bt_blas(uhat, beta, denseFeat);
-}
-
-template<>
-inline void At_mul_A(Eigen::MatrixXd & out, SparseFeat & A) {
-  if (out.cols() != A.cols()) {
-    throw std::runtime_error("At_mul_A(SparseFeat): out.cols() must equal A.cols()");
-  }
-  if (out.cols() != out.rows()) {
-    throw std::runtime_error("At_mul_A(SparseFeat): out must be square matrix.)");
-  }
-
-  out.setZero();
-  const int nfeat = A.M.ncol;
-
-#pragma omp parallel for schedule(dynamic, 8)
-  for (int f1 = 0; f1 < nfeat; f1++) {
-    int end = A.Mt.row_ptr[f1 + 1];
-    out(f1, f1) = end - A.Mt.row_ptr[f1];
-    // looping over all non-zero rows of f1
-    for (int i = A.Mt.row_ptr[f1]; i < end; i++) {
-      int Mrow = A.Mt.cols[i]; /* row in M */
-      int end2 = A.M.row_ptr[Mrow + 1];
-      for (int j = A.M.row_ptr[Mrow]; j < end2; j++) {
-        int f2 = A.M.cols[j];
-        if (f1 < f2) {
-          out(f2, f1) += 1;
-        }
-      }
-    }
-  }
-}
-
-template<>
-inline void At_mul_A(Eigen::MatrixXd & out, SparseDoubleFeat & A) {
-  if (out.cols() != A.cols()) {
-    throw std::runtime_error("At_mul_A(SparseDoubleFeat): out.cols() must equal A.cols()");
-  }
-  if (out.cols() != out.rows()) {
-    throw std::runtime_error("At_mul_A(SparseDoubleFeat): out must be square matrix.)");
-  }
-  out.setZero();
-  const int nfeat = A.M.ncol;
-
-#pragma omp parallel for schedule(dynamic, 8)
-  for (int f1 = 0; f1 < nfeat; f1++) {
-    // looping over all non-zero rows of f1
-    for (int i = A.Mt.row_ptr[f1], end = A.Mt.row_ptr[f1 + 1]; i < end; i++) {
-      int Mrow     = A.Mt.cols[i]; /* row in M */
-      double val1  = A.Mt.vals[i]; /* value for Mrow */
-
-      for (int j = A.M.row_ptr[Mrow], end2 = A.M.row_ptr[Mrow + 1]; j < end2; j++) {
-        int f2 = A.M.cols[j];
-        if (f1 <= f2) {
-          out(f2, f1) += A.M.vals[j] * val1;
-        }
-      }
-    }
-  }
-}
-
-template <>
-inline void At_mul_A(Eigen::MatrixXd & out, Eigen::MatrixXd & A) {
-  // TODO: use blas
-  out.triangularView<Eigen::Lower>() = A.transpose() * A;
 }
 
 /** good values for solve_blockcg are blocksize=32 an excess=8 */
@@ -266,8 +267,7 @@ inline int solve_blockcg(Eigen::MatrixXd & X, T & K, double reg, Eigen::MatrixXd
   Eigen::MatrixXd A;
   Eigen::MatrixXd Psi;
 
-
-  A_mul_At_blas(R, RtR->data());
+  A_mul_At_combo(*RtR, R);
   makeSymmetric(*RtR);
 
   const int nblocks = (int)ceil(nfeat / 64.0);
@@ -459,9 +459,9 @@ template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
   assert(N == out.rows());
   assert(N == B.rows());
-  assert(A.M.cols() == B.cols());
-  assert(A.M.cols() == out.cols());
-  assert(A.M.rows() == inner.cols());
+  assert(A.cols() == B.cols());
+  assert(A.cols() == out.cols());
+  assert(A.rows() == inner.cols());
 
   A_mul_Bx<N>(inner, A.M,  B);
 
@@ -492,9 +492,9 @@ template<int N>
 void AtA_mul_Bx(Eigen::MatrixXd & out, SparseDoubleFeat & A, double reg, Eigen::MatrixXd & B, Eigen::MatrixXd & inner) {
   assert(N == out.rows());
   assert(N == B.rows());
-  assert(A.M.cols() == B.cols());
-  assert(A.M.cols() == out.cols());
-  assert(A.M.rows() == inner.cols());
+  assert(A.cols() == B.cols());
+  assert(A.cols() == out.cols());
+  assert(A.rows() == inner.cols());
 
   A_mul_Bx<N>(inner, A.M,  B);
 

@@ -1,30 +1,47 @@
 # Macau-cpp - Bayesian Factorization with Side Information
-Highly optimized and parallelized implementation of Bayesian Factorization called Macau.
+Highly optimized and parallelized methods for Bayesian Factorization, including BPMF and Macau. The package uses optimized OpenMP/C++ code with a Cython wrapper to factorize large scale matrices. Macau method provides also the ability to incorporate high-dimensional side information to the factorization.
 
 # Examples
 For examples see [documentation](http://macau.readthedocs.io/en/latest/source/examples.html).
 
-# Installation on Ubuntu
+# Installation
+To install Macau it possible to use pre-compiled binaries or compile it from source.
+
+## Source installation on Ubuntu
 ```bash
 # install dependencies:
 sudo apt-get install python-pip python-numpy python-scipy python-pandas cython
 sudo apt-get install libopenblas-dev autoconf gfortran
-sudo pip install cysignals
 
 # checkout and install Macau
 git clone https://github.com/jaak-s/macau.git
 cd macau
-sudo python setup.py install
+python setup.py install --user
 ```
 
-# Installation on Mac
+## Source installation on any Linux
+Make sure that `pip` is available and OpenBLAS or some other BLAS is installed.
+Then install following packages using pip: `numpy scipy pandas cython`, e.g. by
+```
+# skip any of them if already available
+pip install numpy --user
+pip install scipy --user
+pip install pandas --user
+pip install cython --user
+
+# checkout and install Macau
+git clone https://github.com/jaak-s/macau.git
+cd macau
+python setup.py install --user
+```
+
+## Source installation on Mac
 ```bash
 # install dependencies
 pip install numpy
 pip install scipy
 pip install pandas
 pip install cython
-pip install cysignals
 # install brew (http://brew.sh/)
 brew install homebrew/science/openblas
 brew install gcc
@@ -35,9 +52,11 @@ cd macau
 CC=g++-5 CXX=g++-5 python setup.py install
 ```
 
+## Binary installion on Ubuntu
+There is a plan to support Python wheel packages. Currently, we do not have one built yet.
+
 # Contributors
-In alphabetical order:
-- Tom Vander Aa
-- Tom Haber
-- Jaak Simm 
+- Jaak Simm (Macau C++ version, Cython wrapper, Macau MPI version)
+- Tom Vander Aa (OpenMP optimized BPMF)
+- Tom Haber (Original BPMF code)
 

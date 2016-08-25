@@ -1,4 +1,5 @@
 from libcpp cimport bool
+from libcpp.string cimport string
 
 cdef extern from "<memory>" namespace "std" nogil:
     ctypedef void* nullptr_t;
@@ -48,7 +49,15 @@ cdef extern from "latentprior.h":
         BPMFPrior(int num_latent)
     cdef cppclass MacauPrior[FType](ILatentPrior):
         MacauPrior()
-        MacauPrior(int nlatent, FType* Fmat, bool comp_FtF)
+        MacauPrior(int nlatent, unique_ptr[FType] & Fmat, bool comp_FtF)
+        void setLambdaBeta(double lb)
+        void setTol(double t)
+
+cdef extern from "macauoneprior.h":
+    cdef cppclass MacauOnePrior[FType](ILatentPrior):
+        MacauOnePrior()
+        MacauOnePrior(int nlatent, unique_ptr[FType] & Fmat)
+        void setLambdaBeta(double lb)
 
 cdef extern from "macau.h":
     cdef cppclass Macau:
@@ -56,6 +65,7 @@ cdef extern from "macau.h":
         Macau(int num_latent)
         void addPrior(unique_ptr[ILatentPrior] & prior)
         void setPrecision(double p)
+        void setAdaptivePrecision(double sn_init, double sn_max)
         void setSamples(int burnin, int nsamples)
         void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols)
         void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols)
@@ -65,4 +75,6 @@ cdef extern from "macau.h":
         VectorXd getStds()
         MatrixXd getTestData()
         void run()
+        void setSaveModel(bool save)
+        void setSavePrefix(string pref)
 

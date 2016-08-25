@@ -7,14 +7,16 @@
 #include <iostream>
 #include <random>                                                                                
 #include <Eigen/Dense>
+#include <omp.h>
+#include <chrono>
 
 #include "mvnormal.h"
 
 using namespace std;
 using namespace Eigen;
+using namespace std::chrono;
 
-std::mt19937 *bmrng;
-#pragma omp threadprivate(bmrng)
+std::mt19937 **bmrngs;
 
 /*
   We need a functor that can pretend it's const,
@@ -22,7 +24,13 @@ std::mt19937 *bmrng;
   it needs mutable state.
 */
 
+#ifdef __INTEL_COMPILER
+std::random_device srd;
+#pragma omp threadprivate(srd)
+#else
+// use thread_local for gcc 
 thread_local static std::random_device srd;
+#endif
 
 #ifndef __clang__
 thread_local 
@@ -49,16 +57,32 @@ nrandn(int n) -> decltype( VectorXd::NullaryExpr(n, std::cref(randn)) )
 }
 
 void init_bmrng(int seed) {
+   int nthreads = -1;
 #pragma omp parallel 
-  {
-    bmrng = new std::mt19937(seed + omp_get_thread_num() * 1999);
-  }
+   {
+#pragma omp single
+      {
+         nthreads = omp_get_num_threads();
+      }
+   }
+   bmrngs = new std::mt19937*[nthreads];
+   for (int i = 0; i < nthreads; i++) {
+      bmrngs[i] = new std::mt19937(seed + i * 1999);
+   }
+}
+
+void init_bmrng() {
+   auto ms = (duration_cast< milliseconds >(
+             system_clock::now().time_since_epoch()
+         )).count();
+   init_bmrng(ms);
 }
 
 void bmrandn(double* x, long n) {
 #pragma omp parallel 
   {
     std::uniform_real_distribution<double> unif(-1.0, 1.0);
+    std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
 #pragma omp for schedule(static)
     for (long i = 0; i < n; i += 2) {
       double x1, x2, w;
@@ -82,11 +106,35 @@ void bmrandn(MatrixXd & X) {
   bmrandn(X.data(), n);
 }
 
+// to be called within OpenMP parallel loop (also from serial code is fine)
+void bmrandn_single(double* x, long n) {
+  std::uniform_real_distribution<double> unif(-1.0, 1.0);
+  std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
+  for (long i = 0; i < n; i += 2) {
+    double x1, x2, w;
+    do {
+      x1 = unif(*bmrng);
+      x2 = unif(*bmrng);
+      w = x1 * x1 + x2 * x2;
+    } while ( w >= 1.0 );
+
+    w = sqrt( (-2.0 * log( w ) ) / w );
+    x[i] = x1 * w;
+    if (i + 1 < n) {
+      x[i+1] = x2 * w;
+    }
+  }
+}
+
+void bmrandn_single(Eigen::VectorXd & x) {
+  bmrandn_single(x.data(), x.size());
+}
+
 /** returns random number according to Gamma distribution
  *  with the given shape (k) and scale (theta). See wiki. */
 double rgamma(double shape, double scale) {
   std::gamma_distribution<double> gamma(shape, scale);
-  return gamma(*bmrng);
+  return gamma(*bmrngs[0]);
 }
 
 /** Normal(0, Lambda^-1) for nn columns */
@@ -237,6 +285,7 @@ std::pair<VectorXd, MatrixXd> OldCondNormalWishart(const MatrixXd &U, const Vect
 // from bpmf.jl -- verified
 std::pair<VectorXd, MatrixXd> CondNormalWishart(const MatrixXd &U, const VectorXd &mu, const double kappa, const MatrixXd &T, const int nu)
 {
+  /// TODO: parallelize (for computing C and C * C')
   int N = U.cols();
 
   VectorXd Um = U.rowwise().mean();

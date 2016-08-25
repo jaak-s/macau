@@ -31,7 +31,7 @@ In this example we use MCMC (Gibbs) sampling to perform factorization of the `co
                         num_latent = 32,
                         precision  = 5.0,
                         burnin     = 50,
-                        nsamples   = 200)
+                        nsamples   = 500)
 
 Input matrix for :python:`Y` is a sparse scipy matrix (either coo_matrix, csr_matrix or csc_matrix).
 
@@ -63,7 +63,62 @@ When the run has completed you can check the :python:`result` object and its :py
    1        0   2354  5.0947  5.379610    0.857858
    ...
 
+Univariate sampler
+~~~~~~~~~~~~~~~~~~
+Macau also includes an option to use a **very fast** univariate sampler, i.e., instead of sampling blocks of variables jointly it samples each individually.
+An example:
 
+.. code-block:: python
+   :emphasize-lines: 14
+
+   import macau
+   import scipy.io
+
+   ## loading data
+   ic50 = scipy.io.mmread("chembl-IC50-346targets.mm")
+   ecfp = scipy.io.mmread("chembl-IC50-compound-feat.mm")
+
+   ## running factorization (Macau)
+   result = macau.macau(Y = ic50,
+                        Ytest      = 0.2,
+                        side       = [ecfp, None],
+                        num_latent = 32,
+                        precision  = 5.0,
+                        univariate = True,
+                        burnin     = 400,
+                        nsamples   = 1600)
+
+
+When using it we recommend using larger values for :python:`burnin` and :python:`nsamples`, because the univariate sampler has slower mixing.
+
+Adaptive noise
+~~~~~~~~~~~~~~
+In the previous examples we fixed the observation noise by specifying :python:`precision = 5.0`.
+Instead we can also allow the model to automatically determine the precision of the noise by setting :python:`precision = "adaptive"`.
+
+.. code-block:: python
+   :emphasize-lines: 13
+
+   import macau
+   import scipy.io
+
+   ## loading data
+   ic50 = scipy.io.mmread("chembl-IC50-346targets.mm")
+   ecfp = scipy.io.mmread("chembl-IC50-compound-feat.mm")
+
+   ## running factorization (Macau)
+   result = macau.macau(Y = ic50,
+                        Ytest      = 0.2,
+                        side       = [ecfp, None],
+                        num_latent = 32,
+                        precision  = "adaptive",
+                        univariate = True,
+                        burnin     = 400,
+                        nsamples   = 1600)
+
+In the case of adaptive noise the model updates (samples) the precision parameter in every iteration, which is then also shown in the output.
+Additionally, there is a parameter :python:`sn_max` that sets the maximum allowed signal-to-noise ratio.
+This means that if the updated precision would imply a higher signal-to-noise ratio than :python:`sn_max`, then the precision value is set to :python:`(sn_max + 1.0) / Yvar` where Yvar is the variance of the training dataset :python:`Y`.
 
 Matrix Factorization without Side Information
 ----------------------------------------------

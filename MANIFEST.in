@@ -1,0 +1,13 @@
+global-include *.c
+global-include *.cpp
+global-include *.h
+global-include *.pyx
+global-include *.pxd
+
+graft lib/eigen3
+graft lib/libfastsparse
+exclude lib/libfastsparse/.git
+exclude lib/libfastsparse/.gitignore
+
+graft python/macau/test
+graft python/macau/examples

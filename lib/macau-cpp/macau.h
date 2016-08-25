@@ -12,7 +12,8 @@ class Macau {
   public:
   int num_latent;
 
-  double alpha = 2.0; 
+  //double alpha = 2.0; 
+  std::unique_ptr<INoiseModel> noise;
   int nsamples = 100;
   int burnin   = 50;
 
@@ -29,11 +30,15 @@ class Macau {
   std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
   bool verbose = true;
 
+  bool save_model = false;
+  std::string save_prefix = "model";
+
   public:
     Macau(int D) : num_latent{D} {}
     Macau() : Macau(10) {}
     void addPrior(std::unique_ptr<ILatentPrior> & prior);
     void setPrecision(double p);
+    void setAdaptivePrecision(double sn_init, double sn_max);
     void setSamples(int burnin, int nsamples);
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols);
     void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols);
@@ -45,11 +50,13 @@ class Macau {
     Eigen::VectorXd getPredictions() { return predictions; };
     Eigen::VectorXd getStds();
     Eigen::MatrixXd getTestData();
+    void saveModel(int isample);
+    void saveGlobalParams();
+    void setSaveModel(bool save) { save_model = save; };
+    void setSavePrefix(std::string pref) { save_prefix = pref; };
     ~Macau();
 };
 
 void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);
-
-std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, double mean_rating);
 
 #endif /* MACAU_H */
