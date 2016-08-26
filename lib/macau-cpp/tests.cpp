@@ -547,3 +547,13 @@ TEST_CASE( "bpmfutils/row_mean_var", "Test if row_mean_var is correct") {
   REQUIRE( (mean - mean_tr).norm() == Approx(0.0) );
   REQUIRE( (var  - var_tr).norm()  == Approx(0.0) );
 }
+
+TEST_CASE("bpmfutils/auc","AUC ROC") {
+  Eigen::VectorXd pred(20);
+  Eigen::VectorXd test(20);
+  test << 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  pred << 20.0, 19.0, 18.0, 17.0, 16.0, 15.0, 14.0, 13.0, 12.0, 11.0,
+          10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0;
+  REQUIRE ( auc(pred, test) == Approx(0.84) );
+}
