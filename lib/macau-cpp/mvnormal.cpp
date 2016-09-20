@@ -126,6 +126,22 @@ void bmrandn_single(double* x, long n) {
   }
 }
 
+double bmrandn_single() {
+  //TODO: add bmrng as input
+  std::uniform_real_distribution<double> unif(-1.0, 1.0);
+  std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
+  
+    double x1, x2, w;
+    do {
+      x1 = unif(*bmrng);
+      x2 = unif(*bmrng);
+      w = x1 * x1 + x2 * x2;
+    } while ( w >= 1.0 );
+
+    w = sqrt( (-2.0 * log( w ) ) / w );
+    return x1 * w;
+}
+
 void bmrandn_single(Eigen::VectorXd & x) {
   bmrandn_single(x.data(), x.size());
 }

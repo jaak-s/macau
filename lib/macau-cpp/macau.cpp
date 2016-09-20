@@ -44,6 +44,10 @@ void Macau::setAdaptivePrecision(double sn_init, double sn_max) {
   noise.reset(new AdaptiveGaussianNoise(sn_init, sn_max));
 }
 
+void Macau::setProbit() {
+  noise.reset(new ProbitNoise());
+}
+
 void Macau::setSamples(int b, int n) {
   burnin = b;
   nsamples = n;
@@ -121,7 +125,9 @@ void Macau::run() {
 
     noise->update(Y, mean_rating, samples);
 
-    auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
+    //auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
+    noise->evalModel(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
+    
 
     auto endi = tick();
     auto elapsed = endi - start;
@@ -132,16 +138,16 @@ void Macau::run() {
       saveModel(i - burnin + 1);
     }
     if (verbose) {
-      printStatus(i, eval.first, eval.second, elapsedi, samples_per_sec);
+      printStatus(i, elapsedi, samples_per_sec);
     }
-    rmse_test = eval.second;
+    rmse_test = noise->getEvalMetric();
   }
 }
 
-void Macau::printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec) {
+void Macau::printStatus(int i, double elapsedi, double samples_per_sec) {
   double norm0 = priors[0]->getLinkNorm();
   double norm1 = priors[1]->getLinkNorm();
-  printf("Iter %3d: RMSE: %.4f (1samp: %.4f)  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e] %s [took %0.1fs]\n", i, rmse_avg, rmse, samples[0]->norm(), samples[1]->norm(), norm0, norm1, noise->getStatus().c_str(), elapsedi);
+  printf("Iter %3d: %s  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e] %s [took %0.1fs]\n", i, noise->getEvalString().c_str(), samples[0]->norm(), samples[1]->norm(), norm0, norm1, noise->getStatus().c_str(), elapsedi);
   // if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
   // if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
 }

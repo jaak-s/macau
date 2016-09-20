@@ -26,7 +26,6 @@ void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd 
   this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
 }
 
-
 /** BPMFPrior */
 void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
@@ -58,6 +57,17 @@ void BPMFPrior::init(const int num_latent) {
   mu0.setZero();
   b0 = 2;
   df = num_latent;
+}
+
+void BPMFPrior::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                               double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+  const int N = U.cols();
+
+#pragma omp parallel for schedule(dynamic, 2)
+  for(int n = 0; n < N; n++) {
+    sample_latent_blas_probit(U, n, mat, mean_value, samples, mu, Lambda, num_latent);
+  }
+ 
 }
 
 /** MacauPrior */
@@ -151,6 +161,18 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
   }
 }
 
+template<class FType>
+void MacauPrior<FType>::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                                       double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
+    const int N = U.cols();
+#pragma omp parallel for schedule(dynamic, 2)
+  for(int n = 0; n < N; n++) {
+    // TODO: try moving mu + Uhat.col(n) inside sample_latent for speed
+    sample_latent_blas_probit(U, n, mat, mean_value, samples, mu + Uhat.col(n), Lambda, num_latent);
+  }
+
+}
+
 void BPMFPrior::saveModel(std::string prefix) {
   writeToCSVfile(prefix + "-latentmean.csv", mu);
 }
@@ -217,6 +239,34 @@ void sample_latent_blas(MatrixXd &s, int mm, const SparseMatrix<double> &mat, do
     rr.noalias() += col * ((it.value() - mean_rating) * alpha);
   }
 
+  Eigen::LLT<MatrixXd> chol = MM.llt();
+  if(chol.info() != Eigen::Success) {
+    throw std::runtime_error("Cholesky Decomposition failed!");
+  }
+
+  rr.noalias() += Lambda_u * mu_u;
+  chol.matrixL().solveInPlace(rr);
+  for (int i = 0; i < num_latent; i++) {
+    rr[i] += randn0();
+  }
+  chol.matrixU().solveInPlace(rr);
+  s.col(mm).noalias() = rr;
+}
+
+void sample_latent_blas_probit(MatrixXd &s, int mm, const SparseMatrix<double> &mat, double mean_rating,
+    const MatrixXd &samples, const VectorXd &mu_u, const MatrixXd &Lambda_u,
+    const int num_latent)
+{ 
+    MatrixXd MM = Lambda_u;
+    VectorXd rr = VectorXd::Zero(num_latent);
+    double z;
+    auto u = s.col(mm);
+    for (SparseMatrix<double>::InnerIterator it(mat, mm); it; ++it) {
+      auto col = samples.col(it.row());
+      MM.triangularView<Eigen::Lower>() += col * col.transpose();
+      z = (2 * it.value() - 1) * fabs(col.dot(u) + bmrandn_single());
+      rr.noalias() += col * z;
+    }
   Eigen::LLT<MatrixXd> chol = MM.llt();
   if(chol.info() != Eigen::Success) {
     throw std::runtime_error("Cholesky Decomposition failed!");

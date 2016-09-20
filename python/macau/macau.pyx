@@ -257,8 +257,10 @@ def macau(Y,
     if isinstance(precision, str):
       if precision == "adaptive" or precision == "sample":
         macau.setAdaptivePrecision(np.float64(1.0), np.float64(sn_max))
+      elif precision == "probit":
+        macau.setProbit()
       else:
-        raise ValueError("Parameter 'precision' has to be either a number of \"adaptive\" for adaptive precision.")
+        raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
     else:
       macau.setPrecision(np.float64(precision))
 

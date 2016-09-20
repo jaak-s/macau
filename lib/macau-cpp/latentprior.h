@@ -11,6 +11,7 @@
  // forward declarations
 class FixedGaussianNoise;
 class AdaptiveGaussianNoise;
+class ProbitNoise;
 
 /** interface */
 class ILatentPrior {
@@ -21,6 +22,8 @@ class ILatentPrior {
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
     void virtual sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
+    void virtual sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent) = 0;
     void virtual update_prior(const Eigen::MatrixXd &U) {};
     virtual double getLinkNorm() { return NAN; };
     virtual double getLinkLambda() { return NAN; };
@@ -45,7 +48,9 @@ class BPMFPrior : public ILatentPrior {
     void init(const int num_latent);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
-                                   const Eigen::MatrixXd &samples, double alpha, const int num_latent);
+                                   const Eigen::MatrixXd &samples, double alpha, const int num_latent) override;
+    void sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                                   double mean_value, const Eigen::MatrixXd &samples, const int num_latent) override;
     void update_prior(const Eigen::MatrixXd &U) override;
     void saveModel(std::string prefix) override;
 };
@@ -80,7 +85,9 @@ class MacauPrior : public ILatentPrior {
     void init(const int num_latent, std::unique_ptr<FType> &Fmat, bool comp_FtF);
 
     void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
-                                   const Eigen::MatrixXd &samples, double alpha, const int num_latent);
+                                   const Eigen::MatrixXd &samples, double alpha, const int num_latent) override;
+    void sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                                   double mean_value, const Eigen::MatrixXd &samples, const int num_latent) override;
     void update_prior(const Eigen::MatrixXd &U) override;
     double getLinkNorm();
     double getLinkLambda() { return lambda_beta; };
@@ -113,6 +120,14 @@ void sample_latent_blas(Eigen::MatrixXd &s,
                         const Eigen::MatrixXd &Lambda_u,
                         const int num_latent);
 
+void sample_latent_blas_probit(Eigen::MatrixXd &s,
+                        int mm,
+                        const Eigen::SparseMatrix<double> &mat,
+                        double mean_rating,
+                        const Eigen::MatrixXd &samples,
+                        const Eigen::VectorXd &mu_u,
+                        const Eigen::MatrixXd &Lambda_u,
+                        const int num_latent);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);

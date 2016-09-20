@@ -39,12 +39,13 @@ class Macau {
     void addPrior(std::unique_ptr<ILatentPrior> & prior);
     void setPrecision(double p);
     void setAdaptivePrecision(double sn_init, double sn_max);
+    void setProbit();
     void setSamples(int burnin, int nsamples);
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols);
     void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols);
     void init();
     void run();
-    void printStatus(int i, double rmse, double rmse_avg, double elapsedi, double samples_per_sec);
+    void printStatus(int i, double elapsedi, double samples_per_sec);
     void setVerbose(bool v) { verbose = v; };
     double getRmseTest();
     Eigen::VectorXd getPredictions() { return predictions; };

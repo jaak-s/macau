@@ -57,6 +57,7 @@ There is a plan to support Python wheel packages. Currently, we do not have one 
 
 # Contributors
 - Jaak Simm (Macau C++ version, Cython wrapper, Macau MPI version)
+- Adam Arany (Probit noise model)
 - Tom Vander Aa (OpenMP optimized BPMF)
 - Tom Haber (Original BPMF code)
 
