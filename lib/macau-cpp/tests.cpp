@@ -5,6 +5,7 @@
 #include "mvnormal.h"
 #include "latentprior.h"
 #include "bpmfutils.h"
+#include "sparsetensor.h"
 #include <cmath>
 
 TEST_CASE( "SparseFeat/At_mul_A_bcsr", "[At_mul_A] for BinaryCSR" ) {
