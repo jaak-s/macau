@@ -167,7 +167,8 @@ void MacauOnePrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
 template<class FType>
 void MacauOnePrior<FType>::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                                           double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
-  // TODO
+ //TODO
+ throw std::runtime_error("Not implemented!");
 }
 
 template<class FType>

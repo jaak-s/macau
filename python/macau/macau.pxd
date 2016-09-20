@@ -66,6 +66,7 @@ cdef extern from "macau.h":
         void addPrior(unique_ptr[ILatentPrior] & prior)
         void setPrecision(double p)
         void setAdaptivePrecision(double sn_init, double sn_max)
+        void setProbit()
         void setSamples(int burnin, int nsamples)
         void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols)
         void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols)
