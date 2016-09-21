@@ -3,6 +3,9 @@
 
 template<int N>
 void SparseMode<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size) {
+  if (idx.rows() != vals.size()) {
+    throw std::runtime_error("idx.rows() must equal vals.size()");
+  }
   row_ptr.resize(mode_size + 1);
   row_ptr.setZero();
   values.resize(vals.size());
@@ -10,10 +13,13 @@ void SparseMode<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, 
 
   auto rows = idx.col(mode);
   const int nrow = mode_size;
-  const int nnz  = idx.rows();
+  nnz  = idx.rows();
 
   // compute number of non-zero entries per each element for the mode
-  for (int i = 0; i < nrow; i++) {
+  for (int i = 0; i < nnz; i++) {
+    if (rows(i) >= mode_size) {
+      throw std::runtime_error("SparseMode: mode value larger than mode_size");
+    }
     row_ptr(rows(i))++;
   }
   // cumsum counts
@@ -44,3 +50,25 @@ void SparseMode<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, 
     prev         = temp;
   }
 }
+
+template<int N>
+void SparseTensor<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi d) {
+  if (idx.rows() != vals.size()) {
+    throw std::runtime_error("idx.rows() must equal vals.size()");
+  }
+  dims = d;
+  nnz  = idx.rows();
+  for (int mode = 0; mode < N; mode++) {
+    sparseModes.push_back( SparseMode<N>(idx, vals, mode, dims(mode)) );
+  }
+}
+
+template class SparseMode<3>;
+template class SparseMode<4>;
+template class SparseMode<5>;
+template class SparseMode<6>;
+
+template class SparseTensor<3>;
+template class SparseTensor<4>;
+template class SparseTensor<5>;
+template class SparseTensor<6>;

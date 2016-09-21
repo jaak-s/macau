@@ -558,3 +558,67 @@ TEST_CASE("bpmfutils/auc","AUC ROC") {
           10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0;
   REQUIRE ( auc(pred, test) == Approx(0.84) );
 }
+
+TEST_CASE("sparsetensor/sparsemode", "SparseMode constructor") {
+  Eigen::MatrixXi C(5, 3);
+  C << 0, 1, 0,
+       0, 0, 0,
+       1, 3, 1,
+       2, 3, 0,
+       1, 0, 1;
+  Eigen::VectorXd v(5);
+  v << 0.1, 0.2, 0.3, 0.4, 0.5;
+
+  // mode 0
+  SparseMode<3> sm0(C, v, 0, 4);
+
+  REQUIRE( sm0.row_ptr.size() == 5 ); 
+  REQUIRE( sm0.nnz == 5 ); 
+  REQUIRE( sm0.row_ptr(0) == 0 ); 
+  REQUIRE( sm0.row_ptr(1) == 2 ); 
+  REQUIRE( sm0.row_ptr(2) == 4 ); 
+  REQUIRE( sm0.row_ptr(3) == 5 ); 
+  REQUIRE( sm0.row_ptr(4) == 5 ); 
+
+  Eigen::MatrixXi I0(5, 2);
+  I0 << 1, 0,
+        0, 0,
+        3, 1,
+        0, 1,
+        3, 0;
+  Eigen::VectorXd v0(5);
+  v0 << 0.1, 0.2, 0.3, 0.5, 0.4;
+  REQUIRE( (sm0.indices - I0).norm() == 0 );
+  REQUIRE( (sm0.values  - v0).norm() == 0 );
+
+  // mode 1
+  SparseMode<3> sm1(C, v, 1, 4);
+  Eigen::VectorXi ptr1(5);
+  ptr1 << 0, 2, 3, 3, 5;
+  I0   << 0, 0,
+          1, 1,
+          0, 0,
+          1, 1,
+          2, 0;
+  v0 << 0.2, 0.5, 0.1, 0.3, 0.4;
+  REQUIRE( (sm1.row_ptr - ptr1).norm() == 0 );
+  REQUIRE( (sm1.indices - I0).norm()   == 0 );
+  REQUIRE( (sm1.values  - v0).norm()   == 0 );
+}
+
+TEST_CASE("sparsetensor/sparsetensor", "SparseTensor constructor") {
+  Eigen::MatrixXi C(5, 3);
+  C << 0, 1, 0,
+       0, 0, 0,
+       1, 3, 1,
+       2, 3, 0,
+       1, 0, 1;
+  Eigen::VectorXd v(5);
+  v << 0.1, 0.2, 0.3, 0.4, 0.5;
+  Eigen::VectorXi dims(3);
+  dims << 4, 4, 2;
+
+  SparseTensor<3> st(C, v, dims);
+  REQUIRE( st.sparseModes.size() == 3 );
+  REQUIRE( st.nonZeros() == 5 );
+}
