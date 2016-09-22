@@ -9,10 +9,20 @@ using namespace Eigen;
 
 template<class T>
 void INoiseModelDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                                Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
-                                double mean_value, const Eigen::MatrixXd &samples, const int num_latent)
+                                        Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent)
 {
   prior->sample_latents(static_cast<T *>(this), U, mat, mean_value, samples, num_latent);
+}
+
+template<class T>
+void INoiseModelDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                        std::unique_ptr<IData> & data,
+                                        int mode,
+                                        const int num_latent)
+{
+  data->sample_latents(prior, static_cast<T *>(this), samples, mode, num_latent);
 }
 
 

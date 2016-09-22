@@ -4,6 +4,62 @@
 #include <Eigen/Sparse>
 #include <vector>
 
+#include "latentprior.h"
+#include "noisemodels.h"
+
+// forward declarations
+class ILatentPrior;
+class ProbitNoise;
+class AdaptiveGaussianNoise;
+class FixedGaussianNoise;
+
+class IData {
+  public:
+    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                ProbitNoise* noiseModel,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                int mode,
+                                const int num_latent) = 0;
+    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                AdaptiveGaussianNoise* noiseModel,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                int mode,
+                                const int num_latent) = 0;
+    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                FixedGaussianNoise* noiseModel,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                int mode,
+                                const int num_latent) = 0;
+    virtual ~IData() {};
+};
+
+template<class T>
+class IDataDisp : public IData {
+    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                        ProbitNoise* noiseModel,
+                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                        int mode,
+                        const int num_latent) override;
+    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                        AdaptiveGaussianNoise* noiseModel,
+                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                        int mode,
+                        const int num_latent) override;
+    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                        FixedGaussianNoise* noiseModel,
+                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                        int mode,
+                        const int num_latent) override;
+};
+
+//////   Matrix data    /////
+class MatrixData : public IDataDisp<MatrixData> {
+  public:
+    Eigen::SparseMatrix<double> Y, Yt, Ytest;
+    double mean_value = .0; 
+};
+
+//////   Tensor data   //////
 template<int N>
 class SparseMode {
   public:

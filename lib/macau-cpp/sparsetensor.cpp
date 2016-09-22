@@ -1,5 +1,37 @@
 #include <Eigen/Dense>
+#include <memory>
 #include "sparsetensor.h"
+#include "latentprior.h"
+
+template <class T>
+void IDataDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                  ProbitNoise* noiseModel,
+                                  std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                  int mode,
+                                  const int num_latent)
+{
+  prior->sample_latents(noiseModel, static_cast<T *>(this), samples, mode, num_latent);
+}
+
+template <class T>
+void IDataDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                  AdaptiveGaussianNoise* noiseModel,
+                                  std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                  int mode,
+                                  const int num_latent)
+{
+  prior->sample_latents(noiseModel, static_cast<T *>(this), samples, mode, num_latent);
+}
+
+template <class T>
+void IDataDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                  FixedGaussianNoise* noiseModel,
+                                  std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                  int mode,
+                                  const int num_latent)
+{
+  prior->sample_latents(noiseModel, static_cast<T *>(this), samples, mode, num_latent);
+}
 
 template<int N>
 void SparseMode<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size) {

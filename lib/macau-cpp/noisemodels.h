@@ -6,8 +6,11 @@
 #include <iomanip>
 
 #include "latentprior.h"
+#include "sparsetensor.h"
 
-class ILatentPrior; // forward declaration
+// forward declarations
+class ILatentPrior;
+class IData;
 
 /** interface */
 class INoiseModel {
@@ -15,6 +18,11 @@ class INoiseModel {
     virtual void sample_latents(std::unique_ptr<ILatentPrior> & lprior,
                                 Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                                 double mean_value, const Eigen::MatrixXd &samples, const int num_latent) = 0;
+    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                std::unique_ptr<IData> & data,
+                                int mode,
+                                const int num_latent) = 0;
     virtual void init(const Eigen::SparseMatrix<double> &train, double mean_value) = 0;
     virtual void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > &samples) = 0;
     virtual void evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) = 0;
@@ -28,8 +36,13 @@ class INoiseModel {
 template<class T>
 class INoiseModelDisp : public INoiseModel {
     void sample_latents(std::unique_ptr<ILatentPrior> & lprior,
-                              Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
-                              double mean_value, const Eigen::MatrixXd &samples, const int num_latent) override;
+                        Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent) override;
+    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
+                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                        std::unique_ptr<IData> & data,
+                        int mode,
+                        const int num_latent) override;
 };
 
 /** Gaussian noise is fixed for the whole run */

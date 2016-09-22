@@ -1,5 +1,4 @@
-#ifndef LATENTPRIOR_H
-#define LATENTPRIOR_H
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -7,11 +6,13 @@
 #include "mvnormal.h"
 #include "linop.h"
 #include "noisemodels.h"
+#include "sparsetensor.h"
 
  // forward declarations
 class FixedGaussianNoise;
 class AdaptiveGaussianNoise;
 class ProbitNoise;
+class MatrixData;
 
 /** interface */
 class ILatentPrior {
@@ -24,12 +25,21 @@ class ILatentPrior {
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
     void virtual sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent) = 0;
+    // multi-dispatch <prior, noise, data>
+    void virtual sample_latents(FixedGaussianNoise* noiseModel, MatrixData* matrixData,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent);
+    void virtual sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData* matrixData,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent);
+    void virtual sample_latents(ProbitNoise* noiseModel, MatrixData* matrixData,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent);
+
     void virtual update_prior(const Eigen::MatrixXd &U) {};
     virtual double getLinkNorm() { return NAN; };
     virtual double getLinkLambda() { return NAN; };
     virtual void saveModel(std::string prefix) {};
     virtual ~ILatentPrior() {};
 };
+
 
 /** Prior without side information (pure BPMF) */
 class BPMFPrior : public ILatentPrior {
@@ -131,5 +141,3 @@ void sample_latent_blas_probit(Eigen::MatrixXd &s,
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
-
-#endif /* LATENTPRIOR_H */
