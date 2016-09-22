@@ -2,6 +2,7 @@
 #include <memory>
 #include "sparsetensor.h"
 #include "latentprior.h"
+#include "noisemodels.h"
 
 template <class T>
 void IDataDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
@@ -93,6 +94,10 @@ void SparseTensor<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::V
   for (int mode = 0; mode < N; mode++) {
     sparseModes.push_back( SparseMode<N>(idx, vals, mode, dims(mode)) );
   }
+}
+
+void MatrixData::initNoise(AdaptiveGaussianNoise* noiseModel) {
+  init_noise(this, noiseModel);
 }
 
 template class SparseMode<3>;

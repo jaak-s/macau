@@ -6,6 +6,7 @@
 #include <unsupported/Eigen/SparseExtra>
 #include <memory>
 #include "latentprior.h"
+#include "sparsetensor.h"
 
 // try adding num_latent as template parameter to Macau
 class Macau {
@@ -17,8 +18,9 @@ class Macau {
   int nsamples = 100;
   int burnin   = 50;
 
-  double mean_rating = .0; 
-  Eigen::SparseMatrix<double> Y, Yt, Ytest;
+  //double mean_rating = .0; 
+  //Eigen::SparseMatrix<double> Y, Yt, Ytest;
+  std::unique_ptr<IData> data;
   Eigen::VectorXd predictions;
   Eigen::VectorXd predictions_var;
 

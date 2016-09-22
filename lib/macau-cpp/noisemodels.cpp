@@ -25,26 +25,34 @@ void INoiseModelDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
   data->sample_latents(prior, static_cast<T *>(this), samples, mode, num_latent);
 }
 
+template<class T>
+void INoiseModelDisp<T>::init(std::unique_ptr<IData> & data)
+{
+  data->initNoise(static_cast<T *>(this));
+}
+
 
 ////  AdaptiveGaussianNoise  ////
-void AdaptiveGaussianNoise::init(const Eigen::SparseMatrix<double> &train, double mean_value) {
+void init_noise(MatrixData* matrixData, AdaptiveGaussianNoise* noise) {
+//void AdaptiveGaussianNoise::init(const Eigen::SparseMatrix<double> &train, double mean_value) {
   double se = 0.0;
+  double mean_value = matrixData->mean_value;
 
 #pragma omp parallel for schedule(dynamic, 4) reduction(+:se)
-  for (int k = 0; k < train.outerSize(); ++k) {
-    for (SparseMatrix<double>::InnerIterator it(train,k); it; ++it) {
+  for (int k = 0; k < matrixData->Y.outerSize(); ++k) {
+    for (SparseMatrix<double>::InnerIterator it(matrixData->Y, k); it; ++it) {
       se += square(it.value() - mean_value);
     }
   }
 
-  var_total = se / train.nonZeros();
-  if (var_total <= 0.0 || std::isnan(var_total)) {
+  noise->var_total = se / matrixData->Y.nonZeros();
+  if (noise->var_total <= 0.0 || std::isnan(noise->var_total)) {
     // if var cannot be computed using 1.0
-    var_total = 1.0;
+    noise->var_total = 1.0;
   }
   // Var(noise) = Var(total) / (SN + 1)
-  alpha     = (sn_init + 1.0) / var_total;
-  alpha_max = (sn_max + 1.0) / var_total;
+  noise->alpha     = (noise->sn_init + 1.0) / noise->var_total;
+  noise->alpha_max = (noise->sn_max + 1.0)  / noise->var_total;
 }
 
 void AdaptiveGaussianNoise::update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)

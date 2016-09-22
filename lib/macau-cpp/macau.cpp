@@ -54,15 +54,13 @@ void Macau::setSamples(int b, int n) {
 }
 
 void Macau::setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols) {
-  Y.resize(nrows, ncols);
-  sparseFromIJV(Y, rows, cols, values, N);
-  Yt = Y.transpose();
-  mean_rating = Y.sum() / Y.nonZeros();
+  MatrixData* matrixData = new MatrixData();
+  matrixData->setTrain(rows, cols, values, N, nrows, ncols);
+  data.reset(matrixData);
 }
 
 void Macau::setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) {
-  Ytest.resize(nrows, ncols);
-  sparseFromIJV(Ytest, rows, cols, values, N);
+  data->setTest(rows, cols, values, N, nrows, ncols);
 }
 
 double Macau::getRmseTest() { return rmse_test; }
@@ -73,13 +71,13 @@ void Macau::init() {
     throw std::runtime_error("Only 2 priors are supported.");
   }
   init_bmrng(seed1);
-  MatrixXd* U = new MatrixXd(num_latent, Y.rows());
-  MatrixXd* V = new MatrixXd(num_latent, Y.cols());
-  U->setZero();
-  V->setZero();
-  samples.push_back( std::move(std::unique_ptr<MatrixXd>(U)) );
-  samples.push_back( std::move(std::unique_ptr<MatrixXd>(V)) );
-  noise->init(Y, mean_rating);
+  VectorXi dims = data->getDims();
+  for (int mode = 0; mode < dims.size(); mode++) {
+    MatrixXd* U = new MatrixXd(num_latent, dims(mode));
+    U->setZero();
+    samples.push_back( std::move(std::unique_ptr<MatrixXd>(U)) );
+  }
+  noise->init(data);
   keepRunning = true;
 }
 
@@ -99,10 +97,9 @@ void Macau::run() {
   }
   signal(SIGINT, intHandler);
 
-  const int num_rows = Y.rows();
-  const int num_cols = Y.cols();
-  predictions     = VectorXd::Zero( Ytest.nonZeros() );
-  predictions_var = VectorXd::Zero( Ytest.nonZeros() );
+  const VectorXi dims = data->getDims();
+  predictions     = VectorXd::Zero( data->getTestNonzeros() );
+  predictions_var = VectorXd::Zero( data->getTestNonzeros() );
 
   auto start = tick();
   for (int i = 0; i < burnin + nsamples; i++) {
@@ -116,22 +113,29 @@ void Macau::run() {
     auto starti = tick();
 
     // sample latent vectors
+    /*
     noise->sample_latents(priors[0], *samples[0], Yt, mean_rating, *samples[1], num_latent);
     noise->sample_latents(priors[1], *samples[1], Y,  mean_rating, *samples[0], num_latent);
+    */
+    for (int mode = 0; mode < dims.size(); mode++) {
+      noise->sample_latents(priors[mode], samples, data, mode, num_latent);
+    }
 
     // Sample hyperparams
-    priors[0]->update_prior(*samples[0]);
-    priors[1]->update_prior(*samples[1]);
+    for (int mode = 0; mode < dims.size(); mode++) {
+      priors[mode]->update_prior(*samples[mode]);
+    }
 
+    // TODO: 1. switch to multi-dispatch (broken atm)
     noise->update(Y, mean_rating, samples);
 
-    //auto eval = eval_rmse(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
+    // TODO: 2. switch to multi-dispatch (broken atm)
     noise->evalModel(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
     
 
     auto endi = tick();
     auto elapsed = endi - start;
-    double samples_per_sec = (i + 1) * (num_rows + num_cols) / elapsed;
+    double samples_per_sec = (i + 1) * (dims.sum()) / elapsed;
     double elapsedi = endi - starti;
 
     if (save_model && i >= burnin) {
