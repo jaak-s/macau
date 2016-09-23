@@ -25,8 +25,9 @@ class INoiseModel {
                                 int mode,
                                 const int num_latent) = 0;
     virtual void init(std::unique_ptr<IData> & data) = 0;
-    virtual void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > &samples) = 0;
-    virtual void evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) = 0;
+    virtual void update(std::unique_ptr<IData> & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > &samples) = 0;
+    //virtual void evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) = 0;
+    virtual void evalModel(std::unique_ptr<IData> & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) = 0;
     virtual double getEvalMetric() = 0;
     virtual std::string getEvalString() = 0;
     virtual std::string getInitStatus() = 0;
@@ -45,6 +46,8 @@ class INoiseModelDisp : public INoiseModel {
                         int mode,
                         const int num_latent) override;
     void init(std::unique_ptr<IData> & data) override;
+    void update(std::unique_ptr<IData> & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
+    void evalModel(std::unique_ptr<IData> & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
 };
 
 /** Gaussian noise is fixed for the whole run */
@@ -57,12 +60,10 @@ class FixedGaussianNoise : public INoiseModelDisp<FixedGaussianNoise> {
     FixedGaussianNoise(double a) { alpha = a; }
     FixedGaussianNoise() : FixedGaussianNoise(1.0) {};
 
-    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override {}
     std::string getInitStatus() override { return std::string("Noise precision: ") + std::to_string(alpha) + " (fixed)"; }
     std::string getStatus() override { return std::string(""); }
 
     void setPrecision(double a) { alpha = a; }    
-    void evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) override;
     double getEvalMetric() override { return rmse_test;}
     std::string getEvalString() { return std::string("RMSE: ") + to_string_with_precision(rmse_test,5) + " (1samp: " + to_string_with_precision(rmse_test_onesample,5)+")";}
  
@@ -85,7 +86,6 @@ class AdaptiveGaussianNoise : public INoiseModelDisp<AdaptiveGaussianNoise> {
     }
     AdaptiveGaussianNoise() : AdaptiveGaussianNoise(1.0, 10.0) {}
 
-    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
     void setSNInit(double a) { sn_init = a; }
     void setSNMax(double a)  { sn_max  = a; }
     std::string getInitStatus() override { return std::string("Noise precision: adaptive (with max precision of ") + std::to_string(alpha_max) + ")"; }
@@ -94,7 +94,6 @@ class AdaptiveGaussianNoise : public INoiseModelDisp<AdaptiveGaussianNoise> {
       return std::string("Prec:") + to_string_with_precision(alpha, 2);
     }
 
-    void evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) override;
     double getEvalMetric() override {return rmse_test;}
     std::string getEvalString() { return std::string("RMSE: ") + to_string_with_precision(rmse_test,5) + " (1samp: " + to_string_with_precision(rmse_test_onesample,5)+")";}
 };
@@ -106,10 +105,8 @@ class ProbitNoise : public INoiseModelDisp<ProbitNoise> {
     double auc_test_onesample;
     ProbitNoise() { }
 
-    void update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override {}
     std::string getInitStatus() override { return std::string("Probit noise model"); }
     std::string getStatus() override { return std::string(""); }
-    void evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) override;
     double getEvalMetric() override {return auc_test;}
     std::string getEvalString() { return std::string("AUC: ") + to_string_with_precision(auc_test,5) + " (1samp: " + to_string_with_precision(auc_test_onesample,5)+")";}
 };
@@ -117,3 +114,4 @@ class ProbitNoise : public INoiseModelDisp<ProbitNoise> {
 
 // implementation of multi-dispatch method
 void init_noise(MatrixData* matrixData, AdaptiveGaussianNoise* noise);
+void update_noise(MatrixData* matrixData, AdaptiveGaussianNoise* noise, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples);

@@ -126,11 +126,9 @@ void Macau::run() {
       priors[mode]->update_prior(*samples[mode]);
     }
 
-    // TODO: 1. switch to multi-dispatch (broken atm)
-    noise->update(Y, mean_rating, samples);
+    noise->update(data, samples);
 
-    // TODO: 2. switch to multi-dispatch (broken atm)
-    noise->evalModel(Ytest, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, *samples[1], *samples[0], mean_rating);
+    noise->evalModel(data, (i < burnin) ? 0 : (i - burnin), predictions, predictions_var, samples);
     
 
     auto endi = tick();
@@ -157,7 +155,7 @@ void Macau::printStatus(int i, double elapsedi, double samples_per_sec) {
 }
 
 Eigen::VectorXd Macau::getStds() {
-  VectorXd std(Ytest.nonZeros());
+  VectorXd std( data->getTestNonzeros() );
   if (nsamples <= 1) {
     std.setConstant(NAN);
     return std;
@@ -171,22 +169,6 @@ Eigen::VectorXd Macau::getStds() {
   return std;
 }
 
-// assumes matrix (not tensor)
-Eigen::MatrixXd Macau::getTestData() {
-  MatrixXd coords(Ytest.nonZeros(), 3);
-#pragma omp parallel for schedule(dynamic, 2)
-  for (int k = 0; k < Ytest.outerSize(); ++k) {
-    int idx = Ytest.outerIndexPtr()[k];
-    for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
-      coords(idx, 0) = it.row();
-      coords(idx, 1) = it.col();
-      coords(idx, 2) = it.value();
-      idx++;
-    }
-  }
-  return coords;
-}
-
 void Macau::saveModel(int isample) {
   string fprefix = save_prefix + "-sample" + std::to_string(isample) + "-";
   // saving latent matrices
@@ -198,6 +180,6 @@ void Macau::saveModel(int isample) {
 
 void Macau::saveGlobalParams() {
   VectorXd means(1);
-  means << mean_rating;
+  means << data->getMeanValue();
   writeToCSVfile(save_prefix + "-meanvalue.csv", means);
 }

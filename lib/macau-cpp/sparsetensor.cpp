@@ -4,6 +4,8 @@
 #include "latentprior.h"
 #include "noisemodels.h"
 
+using namespace Eigen;
+
 template <class T>
 void IDataDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
                                   ProbitNoise* noiseModel,
@@ -98,6 +100,75 @@ void SparseTensor<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::V
 
 void MatrixData::initNoise(AdaptiveGaussianNoise* noiseModel) {
   init_noise(this, noiseModel);
+}
+
+void MatrixData::updateNoise(AdaptiveGaussianNoise* noiseModel, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  update_noise(this, noiseModel, samples);
+}
+
+
+inline double nCDF(double val) {return 0.5 * erfc(-val * M_SQRT1_2);}
+
+/////  evalModel functions
+void MatrixData::evalModel(ProbitNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  const unsigned N = Ytest.nonZeros();
+  Eigen::VectorXd pred(N);
+  Eigen::VectorXd test(N);
+  Eigen::MatrixXd & rows = *samples[0];
+  Eigen::MatrixXd & cols = *samples[1];
+
+// #pragma omp parallel for schedule(dynamic,8) reduction(+:se, se_avg) <- dark magic :)
+  for (int k = 0; k < Ytest.outerSize(); ++k) {
+    int idx = Ytest.outerIndexPtr()[k];
+    for (Eigen::SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
+     pred[idx] = nCDF(cols.col(it.col()).dot(rows.col(it.row())));
+     test[idx] = it.value();
+
+      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+      double pred_avg;
+      if (n == 0) {
+        pred_avg = pred[idx];
+      } else {
+        double delta = pred[idx] - predictions[idx];
+        pred_avg = (predictions[idx] + delta / (n + 1));
+        predictions_var[idx] += delta * (pred[idx] - pred_avg);
+      }
+      predictions[idx++] = pred_avg;
+
+   }
+  }
+  noise->auc_test_onesample = auc(pred,test);
+  noise->auc_test = auc(predictions, test);
+}
+
+void MatrixData::evalModel(FixedGaussianNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+   auto rmse = eval_rmse(Ytest, n, predictions, predictions_var, *samples[1], *samples[0], mean_value);
+   noise->rmse_test = rmse.second;
+   noise->rmse_test_onesample = rmse.first;
+}
+
+void MatrixData::evalModel(AdaptiveGaussianNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+   auto rmse = eval_rmse(Ytest, n, predictions, predictions_var, *samples[1], *samples[0], mean_value);
+   noise->rmse_test = rmse.second;
+   noise->rmse_test_onesample = rmse.first;
+}
+
+Eigen::MatrixXd MatrixData::getTestData() {
+  MatrixXd coords( getTestNonzeros(), 3);
+#pragma omp parallel for schedule(dynamic, 2)
+  for (int k = 0; k < Ytest.outerSize(); ++k) {
+    int idx = Ytest.outerIndexPtr()[k];
+    for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
+      coords(idx, 0) = it.row();
+      coords(idx, 1) = it.col();
+      coords(idx, 2) = it.value();
+      idx++;
+    }
+  }
+  return coords;
 }
 
 template class SparseMode<3>;

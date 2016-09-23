@@ -31,6 +31,16 @@ void INoiseModelDisp<T>::init(std::unique_ptr<IData> & data)
   data->initNoise(static_cast<T *>(this));
 }
 
+template<class T>
+void INoiseModelDisp<T>::update(std::unique_ptr<IData> & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  data->updateNoise(static_cast<T *>(this), samples);
+}
+
+template<class T>
+void INoiseModelDisp<T>::evalModel(std::unique_ptr<IData> & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  data->evalModel(static_cast<T *>(this), n, predictions, predictions_var, samples);
+}
+
 
 ////  AdaptiveGaussianNoise  ////
 void init_noise(MatrixData* matrixData, AdaptiveGaussianNoise* noise) {
@@ -55,11 +65,14 @@ void init_noise(MatrixData* matrixData, AdaptiveGaussianNoise* noise) {
   noise->alpha_max = (noise->sn_max + 1.0)  / noise->var_total;
 }
 
-void AdaptiveGaussianNoise::update(const Eigen::SparseMatrix<double> &train, double mean_value, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)
+void update_noise(MatrixData* data, AdaptiveGaussianNoise* noise, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)
 {
   double sumsq = 0.0;
   MatrixXd & U = *samples[0];
   MatrixXd & V = *samples[1];
+
+  Eigen::SparseMatrix<double> & train = data->Y;
+  double mean_value = data->mean_value;
 
 #pragma omp parallel for schedule(dynamic, 4) reduction(+:sumsq)
   for (int j = 0; j < train.outerSize(); j++) {
@@ -71,57 +84,13 @@ void AdaptiveGaussianNoise::update(const Eigen::SparseMatrix<double> &train, dou
   }
   // (a0, b0) correspond to a prior of 1 sample of noise with full variance
   double a0 = 0.5;
-  double b0 = 0.5 * var_total;
+  double b0 = 0.5 * noise->var_total;
   double aN = a0 + train.nonZeros() / 2.0;
   double bN = b0 + sumsq / 2.0;
-  alpha = rgamma(aN, 1.0 / bN);
-  if (alpha > alpha_max) {
-    alpha = alpha_max;
+  noise->alpha = rgamma(aN, 1.0 / bN);
+  if (noise->alpha > noise->alpha_max) {
+    noise->alpha = noise->alpha_max;
   }
-}
-
- // Evaluation metrics
-void FixedGaussianNoise::evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) {
-   auto rmse = eval_rmse(Ytest, n, predictions, predictions_var, cols, rows, mean_rating);
-   rmse_test = rmse.second;
-   rmse_test_onesample = rmse.first;
-}
-
-void AdaptiveGaussianNoise::evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) {
-   auto rmse = eval_rmse(Ytest, n, predictions, predictions_var, cols, rows, mean_rating);
-   rmse_test = rmse.second;
-   rmse_test_onesample = rmse.first;
-}
-
-inline double nCDF(double val) {return 0.5 * erfc(-val * M_SQRT1_2);}
-
-void ProbitNoise::evalModel(Eigen::SparseMatrix<double> & Ytest, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &cols, const Eigen::MatrixXd &rows, double mean_rating) {
-  const unsigned N = Ytest.nonZeros();
-  Eigen::VectorXd pred(N);
-  Eigen::VectorXd test(N);
-
-// #pragma omp parallel for schedule(dynamic,8) reduction(+:se, se_avg) <- dark magic :)
-  for (int k = 0; k < Ytest.outerSize(); ++k) {
-    int idx = Ytest.outerIndexPtr()[k];
-    for (Eigen::SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
-     pred[idx] = nCDF(cols.col(it.col()).dot(rows.col(it.row())));
-     test[idx] = it.value();
-
-      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
-      double pred_avg;
-      if (n == 0) {
-        pred_avg = pred[idx];
-      } else {
-        double delta = pred[idx] - predictions[idx];
-        pred_avg = (predictions[idx] + delta / (n + 1));
-        predictions_var[idx] += delta * (pred[idx] - pred_avg);
-      }
-      predictions[idx++] = pred_avg;
-
-   }
-  }
-  auc_test_onesample = auc(pred,test);
-  auc_test = auc(predictions, test);
 }
 
 template class INoiseModelDisp<FixedGaussianNoise>;

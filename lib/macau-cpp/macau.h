@@ -18,8 +18,6 @@ class Macau {
   int nsamples = 100;
   int burnin   = 50;
 
-  //double mean_rating = .0; 
-  //Eigen::SparseMatrix<double> Y, Yt, Ytest;
   std::unique_ptr<IData> data;
   Eigen::VectorXd predictions;
   Eigen::VectorXd predictions_var;
@@ -52,7 +50,7 @@ class Macau {
     double getRmseTest();
     Eigen::VectorXd getPredictions() { return predictions; };
     Eigen::VectorXd getStds();
-    Eigen::MatrixXd getTestData();
+    Eigen::MatrixXd getTestData() { return data->getTestData(); };
     void saveModel(int isample);
     void saveGlobalParams();
     void setSaveModel(bool save) { save_model = save; };
