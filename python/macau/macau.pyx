@@ -247,7 +247,7 @@ def macau(Y,
         prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
         prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
 
-    cdef Macau *macau = new Macau(D)
+    cdef Macau *macau = make_macau(False, D)
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
     macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);

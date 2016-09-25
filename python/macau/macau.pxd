@@ -61,8 +61,6 @@ cdef extern from "macauoneprior.h":
 
 cdef extern from "macau.h":
     cdef cppclass Macau:
-        Macau()
-        Macau(int num_latent)
         void addPrior(unique_ptr[ILatentPrior] & prior)
         void setPrecision(double p)
         void setAdaptivePrecision(double sn_init, double sn_max)
@@ -78,4 +76,9 @@ cdef extern from "macau.h":
         void run()
         void setSaveModel(bool save)
         void setSavePrefix(string pref)
+    cdef cppclass MacauX[DType](Macau):
+        MacauX()
+        MacauX(int num_latent)
+    Macau* make_macau(bool tensor, int num_latent)
+
 

@@ -17,36 +17,6 @@ class FixedGaussianNoise;
 
 class IData {
   public:
-    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                                ProbitNoise* noiseModel,
-                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                                int mode,
-                                const int num_latent) = 0;
-    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                                AdaptiveGaussianNoise* noiseModel,
-                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                                int mode,
-                                const int num_latent) = 0;
-    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                                FixedGaussianNoise* noiseModel,
-                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                                int mode,
-                                const int num_latent) = 0;
-    virtual void initNoise(ProbitNoise* noise)          { /* no update needed */ };
-    virtual void initNoise(FixedGaussianNoise* noise)   { /* no update needed */ };
-    virtual void initNoise(AdaptiveGaussianNoise* noise) = 0;
-
-    virtual void updateNoise(ProbitNoise* noise, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)        { /* no update needed */ };
-    virtual void updateNoise(FixedGaussianNoise* noise, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) { /* no update needed */ };
-    virtual void updateNoise(AdaptiveGaussianNoise* noise, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) = 0;
-
-    virtual void evalModel(ProbitNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
-        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) = 0;
-    virtual void evalModel(FixedGaussianNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
-        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) = 0;
-    virtual void evalModel(AdaptiveGaussianNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
-        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) = 0;
-
     virtual void setTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) = 0;
     virtual Eigen::VectorXi & getDims() = 0;
     virtual long getTestNonzeros() = 0;
@@ -55,27 +25,8 @@ class IData {
     virtual ~IData() {};
 };
 
-template<class T>
-class IDataDisp : public IData {
-    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                        ProbitNoise* noiseModel,
-                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                        int mode,
-                        const int num_latent) override;
-    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                        AdaptiveGaussianNoise* noiseModel,
-                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                        int mode,
-                        const int num_latent) override;
-    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                        FixedGaussianNoise* noiseModel,
-                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                        int mode,
-                        const int num_latent) override;
-};
-
 //////   Matrix data    /////
-class MatrixData : public IDataDisp<MatrixData> {
+class MatrixData : public IData {
   public:
     Eigen::SparseMatrix<double> Y, Yt, Ytest;
     double mean_value = .0; 
@@ -100,16 +51,6 @@ class MatrixData : public IDataDisp<MatrixData> {
       Ytest.resize(nrows, ncols);
       sparseFromIJV(Ytest, rows, cols, values, N);
     }
-
-    void initNoise(AdaptiveGaussianNoise* noiseModel) override;
-    void updateNoise(AdaptiveGaussianNoise* noiseModel, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
-
-    void evalModel(ProbitNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
-        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
-    void evalModel(FixedGaussianNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
-        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
-    void evalModel(AdaptiveGaussianNoise* noise, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
-        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) override;
 
     Eigen::MatrixXd getTestData() override;
 };

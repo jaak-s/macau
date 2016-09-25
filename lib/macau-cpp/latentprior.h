@@ -17,20 +17,20 @@ class MatrixData;
 /** interface */
 class ILatentPrior {
   public:
-    void virtual sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
+    virtual void sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                         const Eigen::MatrixXd &samples, double alpha, const int num_latent) = 0;
-    void virtual sample_latents(FixedGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+    virtual void sample_latents(FixedGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
-    void virtual sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+    virtual void sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent);
-    void virtual sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+    virtual void sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                         double mean_value, const Eigen::MatrixXd &samples, const int num_latent) = 0;
     // multi-dispatch <prior, noise, data>
-    void virtual sample_latents(FixedGaussianNoise* noiseModel, MatrixData* matrixData,
+    void sample_latents(FixedGaussianNoise* noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent);
-    void virtual sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData* matrixData,
+    void sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent);
-    void virtual sample_latents(ProbitNoise* noiseModel, MatrixData* matrixData,
+    void sample_latents(ProbitNoise* noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent);
 
     void virtual update_prior(const Eigen::MatrixXd &U) {};

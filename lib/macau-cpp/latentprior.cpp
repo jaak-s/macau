@@ -26,30 +26,30 @@ void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd 
   this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
 }
 
-void ILatentPrior::sample_latents(FixedGaussianNoise* noiseModel, MatrixData* matrixData,
+void ILatentPrior::sample_latents(FixedGaussianNoise* noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
   if (mode == 0) {
-    this->sample_latents(noiseModel, *samples[0], matrixData->Yt, matrixData->mean_value, *samples[1], num_latent);
+    this->sample_latents(noiseModel, *samples[0], matrixData.Yt, matrixData.mean_value, *samples[1], num_latent);
   } else {
-    this->sample_latents(noiseModel, *samples[1], matrixData->Y,  matrixData->mean_value, *samples[0], num_latent);
+    this->sample_latents(noiseModel, *samples[1], matrixData.Y,  matrixData.mean_value, *samples[0], num_latent);
   }
 }
 
-void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData* matrixData,
+void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
   if (mode == 0) {
-    this->sample_latents(noiseModel, *samples[0], matrixData->Yt, matrixData->mean_value, *samples[1], num_latent);
+    this->sample_latents(noiseModel, *samples[0], matrixData.Yt, matrixData.mean_value, *samples[1], num_latent);
   } else {
-    this->sample_latents(noiseModel, *samples[1], matrixData->Y,  matrixData->mean_value, *samples[0], num_latent);
+    this->sample_latents(noiseModel, *samples[1], matrixData.Y,  matrixData.mean_value, *samples[0], num_latent);
   }
 }
 
-void ILatentPrior::sample_latents(ProbitNoise* noiseModel, MatrixData* matrixData,
+void ILatentPrior::sample_latents(ProbitNoise* noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
   if (mode == 0) {
-    this->sample_latents(noiseModel, *samples[0], matrixData->Yt, matrixData->mean_value, *samples[1], num_latent);
+    this->sample_latents(noiseModel, *samples[0], matrixData.Yt, matrixData.mean_value, *samples[1], num_latent);
   } else {
-    this->sample_latents(noiseModel, *samples[1], matrixData->Y,  matrixData->mean_value, *samples[0], num_latent);
+    this->sample_latents(noiseModel, *samples[1], matrixData.Y,  matrixData.mean_value, *samples[0], num_latent);
   }
 }
 
