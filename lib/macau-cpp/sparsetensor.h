@@ -17,8 +17,9 @@ class FixedGaussianNoise;
 
 class IData {
   public:
-    virtual void setTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) = 0;
-    virtual Eigen::VectorXi & getDims() = 0;
+    virtual void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) = 0;
+    virtual void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) = 0;
+    virtual Eigen::VectorXi getDims() = 0;
     virtual int getTestNonzeros() = 0;
     virtual Eigen::MatrixXd getTestData() = 0;
     virtual double getMeanValue() = 0;
@@ -34,22 +35,22 @@ class MatrixData : public IData {
     
     MatrixData() {}
 
-    Eigen::VectorXi & getDims() { return dims; }
+    Eigen::VectorXi getDims() { return dims; }
     int getTestNonzeros() { return Ytest.nonZeros(); }
     double getMeanValue() override { return mean_value; }
 
-    void setTrain(int* rows, int* cols, double* values, int N, int nrows, int ncols) {
+    void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override {
       Y.resize(nrows, ncols);
-      sparseFromIJV(Y, rows, cols, values, N);
+      sparseFromIJV(Y, rows, cols, values, nnz);
       Yt = Y.transpose();
       mean_value = Y.sum() / Y.nonZeros();
       dims.resize(2);
       dims << Y.rows(), Y.cols();
     }
 
-    void setTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) override {
+    void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override {
       Ytest.resize(nrows, ncols);
-      sparseFromIJV(Ytest, rows, cols, values, N);
+      sparseFromIJV(Ytest, rows, cols, values, nnz);
     }
 
     Eigen::MatrixXd getTestData() override;
@@ -63,21 +64,38 @@ class SparseMode {
     Eigen::Matrix< int, Eigen::Dynamic, N-1 > indices;
     Eigen::VectorXd values;
     int nnz;
+    int mode;
 
   public:
+    SparseMode() {}
     SparseMode(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size) { init(idx, vals, mode, mode_size); }
     void init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size);
+    int nonZeros() { return nnz; }
+    int modeSize() { return row_ptr.size() - 1; }
 };
 
 template<int N>
-class TensorData {
+class TensorData : public IData {
   public:
     Eigen::Matrix< int, N, 1 > dims;
-    int nnz;
-    int nonZeros() { return nnz; };
+    double mean_value;
     std::vector< SparseMode<N> > Y;
+    SparseMode<N> Ytest;
 
   public:
-    TensorData(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi dims) { init(idx, vals, dims); }
-    void init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi d);
+    TensorData() { }
+
+    void setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);
+    void setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);
+
+    void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
+    void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
+    Eigen::VectorXi getDims() override { return dims; };
+    int getTestNonzeros() override { return Ytest.nonZeros(); };
+    Eigen::MatrixXd getTestData() override;
+    double getMeanValue() override { return mean_value; };
 };
+
+Eigen::MatrixXi toMatrix(int** columns, int nrows, int ncols);
+Eigen::MatrixXi toMatrix(int* col1, int* col2, int nrows);
+Eigen::VectorXd toVector(double* vals, int size);

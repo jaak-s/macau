@@ -579,6 +579,7 @@ TEST_CASE("sparsetensor/sparsemode", "SparseMode constructor") {
   REQUIRE( sm0.row_ptr(2) == 4 ); 
   REQUIRE( sm0.row_ptr(3) == 5 ); 
   REQUIRE( sm0.row_ptr(4) == 5 ); 
+  REQUIRE( sm0.modeSize() == 4 );
 
   Eigen::MatrixXi I0(5, 2);
   I0 << 1, 0,
@@ -604,6 +605,7 @@ TEST_CASE("sparsetensor/sparsemode", "SparseMode constructor") {
   REQUIRE( (sm1.row_ptr - ptr1).norm() == 0 );
   REQUIRE( (sm1.indices - I0).norm()   == 0 );
   REQUIRE( (sm1.values  - v0).norm()   == 0 );
+  REQUIRE( sm1.modeSize() == 4 );
 }
 
 TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
@@ -618,7 +620,8 @@ TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
   Eigen::VectorXi dims(3);
   dims << 4, 4, 2;
 
-  TensorData<3> st(C, v, dims);
+  TensorData<3> st;
+  st.setTrain(C, v, dims);
   REQUIRE( st.Y.size() == 3 );
-  REQUIRE( st.nonZeros() == 5 );
+  REQUIRE( st.Y[0].nonZeros() == 5 );
 }
