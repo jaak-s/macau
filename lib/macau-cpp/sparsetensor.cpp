@@ -1,5 +1,6 @@
 #include <Eigen/Dense>
 #include <memory>
+#include <iostream>
 #include "sparsetensor.h"
 #include "latentprior.h"
 #include "noisemodels.h"
@@ -57,14 +58,14 @@ void SparseMode<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, 
 }
 
 template<int N>
-void SparseTensor<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi d) {
+void TensorData<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi d) {
   if (idx.rows() != vals.size()) {
     throw std::runtime_error("idx.rows() must equal vals.size()");
   }
   dims = d;
   nnz  = idx.rows();
   for (int mode = 0; mode < N; mode++) {
-    sparseModes.push_back( SparseMode<N>(idx, vals, mode, dims(mode)) );
+    Y.push_back( SparseMode<N>(idx, vals, mode, dims(mode)) );
   }
 }
 
@@ -89,7 +90,7 @@ template class SparseMode<4>;
 template class SparseMode<5>;
 template class SparseMode<6>;
 
-template class SparseTensor<3>;
-template class SparseTensor<4>;
-template class SparseTensor<5>;
-template class SparseTensor<6>;
+template class TensorData<3>;
+template class TensorData<4>;
+template class TensorData<5>;
+template class TensorData<6>;

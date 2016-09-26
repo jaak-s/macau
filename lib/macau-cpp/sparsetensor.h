@@ -19,7 +19,7 @@ class IData {
   public:
     virtual void setTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) = 0;
     virtual Eigen::VectorXi & getDims() = 0;
-    virtual long getTestNonzeros() = 0;
+    virtual int getTestNonzeros() = 0;
     virtual Eigen::MatrixXd getTestData() = 0;
     virtual double getMeanValue() = 0;
     virtual ~IData() {};
@@ -35,7 +35,7 @@ class MatrixData : public IData {
     MatrixData() {}
 
     Eigen::VectorXi & getDims() { return dims; }
-    long getTestNonzeros() { return Ytest.nonZeros(); }
+    int getTestNonzeros() { return Ytest.nonZeros(); }
     double getMeanValue() override { return mean_value; }
 
     void setTrain(int* rows, int* cols, double* values, int N, int nrows, int ncols) {
@@ -62,7 +62,7 @@ class SparseMode {
     Eigen::VectorXi row_ptr;
     Eigen::Matrix< int, Eigen::Dynamic, N-1 > indices;
     Eigen::VectorXd values;
-    long nnz;
+    int nnz;
 
   public:
     SparseMode(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size) { init(idx, vals, mode, mode_size); }
@@ -70,14 +70,14 @@ class SparseMode {
 };
 
 template<int N>
-class SparseTensor {
+class TensorData {
   public:
     Eigen::Matrix< int, N, 1 > dims;
-    long nnz;
-    long nonZeros() { return nnz; };
-    std::vector< SparseMode<N> > sparseModes;
+    int nnz;
+    int nonZeros() { return nnz; };
+    std::vector< SparseMode<N> > Y;
 
   public:
-    SparseTensor(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi dims) { init(idx, vals, dims); }
+    TensorData(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi dims) { init(idx, vals, dims); }
     void init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi d);
 };
