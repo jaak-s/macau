@@ -16,17 +16,17 @@ extern "C" {
 using namespace std; 
 using namespace Eigen;
 
-void ILatentPrior::sample_latents(FixedGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+void ILatentPrior::sample_latents(FixedGaussianNoise & noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                     double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
-  this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
+  this->sample_latents(U, mat, mean_value, samples, noise.alpha, num_latent);
 }
 
-void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+void ILatentPrior::sample_latents(AdaptiveGaussianNoise & noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                     double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
-  this->sample_latents(U, mat, mean_value, samples, noise->alpha, num_latent);
+  this->sample_latents(U, mat, mean_value, samples, noise.alpha, num_latent);
 }
 
-void ILatentPrior::sample_latents(FixedGaussianNoise* noiseModel, MatrixData & matrixData,
+void ILatentPrior::sample_latents(FixedGaussianNoise & noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
   if (mode == 0) {
     this->sample_latents(noiseModel, *samples[0], matrixData.Yt, matrixData.mean_value, *samples[1], num_latent);
@@ -35,7 +35,7 @@ void ILatentPrior::sample_latents(FixedGaussianNoise* noiseModel, MatrixData & m
   }
 }
 
-void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData & matrixData,
+void ILatentPrior::sample_latents(AdaptiveGaussianNoise & noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
   if (mode == 0) {
     this->sample_latents(noiseModel, *samples[0], matrixData.Yt, matrixData.mean_value, *samples[1], num_latent);
@@ -44,7 +44,7 @@ void ILatentPrior::sample_latents(AdaptiveGaussianNoise* noiseModel, MatrixData 
   }
 }
 
-void ILatentPrior::sample_latents(ProbitNoise* noiseModel, MatrixData & matrixData,
+void ILatentPrior::sample_latents(ProbitNoise & noiseModel, MatrixData & matrixData,
                                 std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
   if (mode == 0) {
     this->sample_latents(noiseModel, *samples[0], matrixData.Yt, matrixData.mean_value, *samples[1], num_latent);
@@ -86,7 +86,7 @@ void BPMFPrior::init(const int num_latent) {
   df = num_latent;
 }
 
-void BPMFPrior::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+void BPMFPrior::sample_latents(ProbitNoise & noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                                double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
   const int N = U.cols();
 
@@ -189,7 +189,7 @@ void MacauPrior<FType>::sample_beta(const Eigen::MatrixXd &U) {
 }
 
 template<class FType>
-void MacauPrior<FType>::sample_latents(ProbitNoise* noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
+void MacauPrior<FType>::sample_latents(ProbitNoise & noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                                        double mean_value, const Eigen::MatrixXd &samples, const int num_latent) {
     const int N = U.cols();
 #pragma omp parallel for schedule(dynamic, 2)

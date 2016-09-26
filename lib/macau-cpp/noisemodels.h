@@ -16,11 +16,6 @@ class MatrixData;
 /** interface */
 class INoiseModel {
   public:
-    virtual void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                                MatrixData & data,
-                                int mode,
-                                const int num_latent) = 0;
     virtual void init(MatrixData & data) { };
     virtual void update(MatrixData & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > &samples) { };
     virtual void evalModel(MatrixData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) = 0;
@@ -31,21 +26,12 @@ class INoiseModel {
     virtual ~INoiseModel() {};
 };
 
-template<class T>
-class INoiseModelDisp : public INoiseModel {
-    void sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                        MatrixData & data,
-                        int mode,
-                        const int num_latent) override;
-};
-
 /** Gaussian noise is fixed for the whole run */
-class FixedGaussianNoise : public INoiseModelDisp<FixedGaussianNoise> {
+class FixedGaussianNoise : public INoiseModel {
   public:
     double alpha;
-    double rmse_test;
-    double rmse_test_onesample;
+    double rmse_test = NAN;
+    double rmse_test_onesample = NAN;
   
     FixedGaussianNoise(double a) { alpha = a; }
     FixedGaussianNoise() : FixedGaussianNoise(1.0) {};
@@ -61,15 +47,15 @@ class FixedGaussianNoise : public INoiseModelDisp<FixedGaussianNoise> {
 };
 
 /** Gaussian noise that adapts to the data */
-class AdaptiveGaussianNoise : public INoiseModelDisp<AdaptiveGaussianNoise> {
+class AdaptiveGaussianNoise : public INoiseModel {
   public:
     double alpha = NAN;
     double alpha_max = NAN;
     double sn_max;
     double sn_init;
     double var_total = NAN;
-    double rmse_test;
-    double rmse_test_onesample;
+    double rmse_test = NAN;
+    double rmse_test_onesample = NAN;
 
     AdaptiveGaussianNoise(double sinit, double smax) {
       sn_max  = smax;
@@ -94,10 +80,10 @@ class AdaptiveGaussianNoise : public INoiseModelDisp<AdaptiveGaussianNoise> {
 };
 
 /** Probit noise model (binary). Fixed for the whole run */
-class ProbitNoise : public INoiseModelDisp<ProbitNoise> {
+class ProbitNoise : public INoiseModel {
   public:
-    double auc_test;
-    double auc_test_onesample;
+    double auc_test = NAN;
+    double auc_test_onesample = NAN;
     ProbitNoise() { }
 
     std::string getInitStatus() override { return std::string("Probit noise model"); }

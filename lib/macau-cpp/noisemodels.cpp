@@ -7,17 +7,6 @@
 
 using namespace Eigen;
 
-template<class T>
-void INoiseModelDisp<T>::sample_latents(std::unique_ptr<ILatentPrior> & prior,
-                                        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
-                                        MatrixData & data,
-                                        int mode,
-                                        const int num_latent)
-{
-  prior->sample_latents(static_cast<T *>(this), data, samples, mode, num_latent);
-}
-
-
 ////  AdaptiveGaussianNoise  ////
 void AdaptiveGaussianNoise::init(MatrixData & matrixData) {
   double se = 0.0;
@@ -116,7 +105,3 @@ void AdaptiveGaussianNoise::evalModel(MatrixData & data, const int n, Eigen::Vec
    rmse_test = rmse.second;
    rmse_test_onesample = rmse.first;
 }
-
-template class INoiseModelDisp<FixedGaussianNoise>;
-template class INoiseModelDisp<AdaptiveGaussianNoise>;
-template class INoiseModelDisp<ProbitNoise>;

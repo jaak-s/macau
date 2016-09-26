@@ -62,9 +62,6 @@ cdef extern from "macauoneprior.h":
 cdef extern from "macau.h":
     cdef cppclass Macau:
         void addPrior(unique_ptr[ILatentPrior] & prior)
-        void setPrecision(double p)
-        void setAdaptivePrecision(double sn_init, double sn_max)
-        void setProbit()
         void setSamples(int burnin, int nsamples)
         void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols)
         void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols)
@@ -79,6 +76,6 @@ cdef extern from "macau.h":
     cdef cppclass MacauX[DType](Macau):
         MacauX()
         MacauX(int num_latent)
-    Macau* make_macau(bool tensor, int num_latent)
-
-
+    Macau* make_macau_probit(bool tensor, int num_latent)
+    Macau* make_macau_fixed(bool tensor, int num_latent, double precision)
+    Macau* make_macau_adaptive(bool tensor, int num_latent, double sn_init, double sn_max)

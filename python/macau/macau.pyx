@@ -247,22 +247,23 @@ def macau(Y,
         prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
         prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
 
-    cdef Macau *macau = make_macau(False, D)
+    cdef Macau *macau
+    ## choosing the noise model
+    if isinstance(precision, str):
+      if precision == "adaptive" or precision == "sample":
+        macau = make_macau_adaptive(False, D, np.float64(1.0), np.float64(sn_max))
+      elif precision == "probit":
+        macau = make_macau_probit(False, D)
+      else:
+        raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
+    else:
+      macau = make_macau_fixed(False, D, np.float64(precision))
+
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
     macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
-
-    if isinstance(precision, str):
-      if precision == "adaptive" or precision == "sample":
-        macau.setAdaptivePrecision(np.float64(1.0), np.float64(sn_max))
-      elif precision == "probit":
-        macau.setProbit()
-      else:
-        raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
-    else:
-      macau.setPrecision(np.float64(precision))
 
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals

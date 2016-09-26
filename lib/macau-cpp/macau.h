@@ -1,5 +1,4 @@
-#ifndef MACAU_H
-#define MACAU_H
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -14,7 +13,6 @@ class Macau {
   int num_latent;
 
   //double alpha = 2.0; 
-  std::unique_ptr<INoiseModel> noise;
   int nsamples = 100;
   int burnin   = 50;
 
@@ -35,9 +33,6 @@ class Macau {
 
   public:
     virtual void addPrior(std::unique_ptr<ILatentPrior> & prior) = 0;
-    virtual void setPrecision(double p) = 0;
-    virtual void setAdaptivePrecision(double sn_init, double sn_max) = 0;
-    virtual void setProbit() = 0;
     virtual void setSamples(int burnin, int nsamples) = 0;
     virtual void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols) = 0;
     virtual void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) = 0;
@@ -56,16 +51,16 @@ class Macau {
     virtual ~Macau();
 };
 
-template<class DType> 
+template<class DType, class NType> 
 class MacauX : public Macau {
-  DType data;
+  public:
+    DType data;
+    NType noise;
   public:
     MacauX(int D) { num_latent = D; }
+    MacauX(int D, NType n) : noise(n) { num_latent = D; }
     MacauX() : MacauX(10) {}
     void addPrior(std::unique_ptr<ILatentPrior> & prior) override;
-    void setPrecision(double p) override;
-    void setAdaptivePrecision(double sn_init, double sn_max) override;
-    void setProbit() override;
     void setSamples(int burnin, int nsamples) override;
     void setRelationData(int* rows, int* cols, double* values, int N, int nrows, int ncols) override;
     void setRelationDataTest(int* rows, int* cols, double* values, int N, int nrows, int ncols) override;
@@ -83,7 +78,8 @@ class MacauX : public Macau {
     void saveGlobalParams() override;
 };
 
-Macau* make_macau(bool tensor, int num_latent);
-void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);
+Macau* make_macau_probit(bool tensor, int num_latent);
+Macau* make_macau_fixed(bool tensor, int num_latent, double precision);
+Macau* make_macau_adaptive(bool tensor, int num_latent, double sn_init, double sn_max);
 
-#endif /* MACAU_H */
+void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);
