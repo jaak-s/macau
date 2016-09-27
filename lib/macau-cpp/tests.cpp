@@ -1,12 +1,14 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
+
+#include <Eigen/Dense>
+#include <cmath>
 #include "linop.h"
 #include "chol.h"
 #include "mvnormal.h"
 #include "latentprior.h"
 #include "bpmfutils.h"
 #include "sparsetensor.h"
-#include <cmath>
 
 TEST_CASE( "SparseFeat/At_mul_A_bcsr", "[At_mul_A] for BinaryCSR" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
@@ -624,4 +626,32 @@ TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
   st.setTrain(C, v, dims);
   REQUIRE( st.Y.size() == 3 );
   REQUIRE( st.Y[0].nonZeros() == 5 );
+
+  // test data
+  Eigen::MatrixXi Cte(6, 3);
+  Cte << 1, 1, 0,
+         0, 0, 0,
+         1, 3, 0,
+         0, 3, 0,
+         2, 3, 1,
+         2, 0, 0;
+  Eigen::VectorXd vte(6);
+  vte << -0.1, -0.2, -0.3, -0.4, -0.5, -0.6;
+  st.setTest(Cte, vte, dims);
+
+  // fetch test data:
+  Eigen::MatrixXd testData = st.getTestData();
+
+  REQUIRE( st.getTestNonzeros() == Cte.rows() );
+  REQUIRE( testData.rows() == Cte.rows() );
+  REQUIRE( testData.cols() == 4 );
+
+  Eigen::MatrixXd testDataTr(6, 4);
+  testDataTr << 0, 0, 0, -0.2,
+           0, 3, 0, -0.4,
+           1, 1, 0, -0.1,
+           1, 3, 0, -0.3,
+           2, 3, 1, -0.5,
+           2, 0, 0, -0.6;
+  REQUIRE( (testDataTr - testData).norm() == 0);
 }

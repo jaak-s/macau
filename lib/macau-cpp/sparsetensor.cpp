@@ -89,6 +89,22 @@ void TensorData<N>::setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen:
 }
 
 template<int N>
+void TensorData<N>::setTrain(int** columns, int nmodes, double* values, int nnz, int* dims) {
+  auto idx  = toMatrix(columns, nnz, nmodes);
+  auto vals = toVector(values, nnz);
+  auto d    = toVector(dims, nmodes);
+  setTrain(idx, vals, d);
+}
+    
+template<int N>
+void TensorData<N>::setTest(int** columns, int nmodes, double* values, int nnz, int* dims) {
+  auto idx  = toMatrix(columns, nnz, nmodes);
+  auto vals = toVector(values, nnz);
+  auto d    = toVector(dims, nmodes);
+  setTest(idx, vals, d);
+}
+
+template<int N>
 void TensorData<N>::setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d) {
   if (idx.rows() != vals.size()) {
     throw std::runtime_error("setTest(): idx.rows() must equal vals.size()");
@@ -126,14 +142,13 @@ Eigen::MatrixXd TensorData<N>::getTestData() {
   MatrixXd coords( getTestNonzeros(), N + 1);
 #pragma omp parallel for schedule(dynamic, 2)
   for (int k = 0; k < Ytest.modeSize(); ++k) {
-    /* TODO
-    int idx = Ytest.outerIndexPtr()[k];
-    for (SparseMatrix<double>::InnerIterator it(Ytest,k); it; ++it) {
-      coords(idx, 0) = it.row();
-      coords(idx, 1) = it.col();
-      coords(idx, 2) = it.value();
-      idx++;
-    }*/
+    for (int idx = Ytest.row_ptr[k]; idx < Ytest.row_ptr[k+1]; idx++) {
+      coords(idx, 0) = (double)k;
+      for (int col = 0; col < Ytest.indices.cols(); col++) {
+        coords(idx, col + 1) = (double)Ytest.indices(idx, col);
+      }
+      coords(idx, N) = Ytest.values(idx);
+    }
   }
   return coords;
 }
@@ -160,6 +175,14 @@ Eigen::MatrixXi toMatrix(int** columns, int nrows, int ncols) {
 
 Eigen::VectorXd toVector(double* vals, int size) {
   Eigen::VectorXd v(size);
+  for (int i = 0; i < size; i++) {
+    v(i) = vals[i];
+  }
+  return v;
+}
+
+Eigen::VectorXi toVector(int* vals, int size) {
+  Eigen::VectorXi v(size);
   for (int i = 0; i < size; i++) {
     v(i) = vals[i];
   }
