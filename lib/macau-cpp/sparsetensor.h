@@ -67,11 +67,11 @@ class MatrixData : public IData {
 };
 
 //////   Tensor data   //////
-template<int N>
 class SparseMode {
   public:
+    int N; // 
     Eigen::VectorXi row_ptr;
-    Eigen::Matrix< int, Eigen::Dynamic, N-1 > indices;
+    Eigen::MatrixXi indices;
     Eigen::VectorXd values;
     int nnz;
     int mode;
@@ -84,16 +84,16 @@ class SparseMode {
     int modeSize() { return row_ptr.size() - 1; }
 };
 
-template<int N>
 class TensorData : public IData {
   public:
-    Eigen::Matrix< int, N, 1 > dims;
+    Eigen::MatrixXi dims;
     double mean_value;
-    std::vector< SparseMode<N> > Y;
-    SparseMode<N> Ytest;
+    std::vector< SparseMode > Y;
+    SparseMode Ytest;
+    int N;
 
   public:
-    TensorData() { }
+    TensorData(int Nmodes) : N(Nmodes) { }
 
     void setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);
     void setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);

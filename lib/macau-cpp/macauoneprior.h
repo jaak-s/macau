@@ -36,6 +36,10 @@ class MacauOnePrior : public ILatentPrior {
                                    const Eigen::MatrixXd &samples, double alpha, const int num_latent) override;
     void sample_latents(ProbitNoise & noise, Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat,
                                    double mean_value, const Eigen::MatrixXd &samples, const int num_latent) override;
+    void sample_latents(ProbitNoise& noiseModel, TensorData & data,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) override;
+    void sample_latents(double noisePrecision, TensorData & data,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) override;
     void update_prior(const Eigen::MatrixXd &U) override;
     double getLinkNorm() override { return beta.norm(); };
     double getLinkLambda() { return lambda_beta.mean(); };

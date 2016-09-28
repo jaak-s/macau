@@ -7,11 +7,12 @@
 
 using namespace Eigen;
 
-template<int N>
-void SparseMode<N>::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int m, int mode_size) {
+
+void SparseMode::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int m, int mode_size) {
   if (idx.rows() != vals.size()) {
     throw std::runtime_error("idx.rows() must equal vals.size()");
   }
+  N = idx.cols();
   row_ptr.resize(mode_size + 1);
   row_ptr.setZero();
   values.resize(vals.size());
@@ -77,46 +78,42 @@ Eigen::MatrixXd MatrixData::getTestData() {
 
 ////////  TensorData  ///////
 
-template<int N>
-void TensorData<N>::setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d) {
+void TensorData::setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d) {
   if (idx.rows() != vals.size()) {
     throw std::runtime_error("setTrain(): idx.rows() must equal vals.size()");
   }
   dims = d;
   for (int mode = 0; mode < N; mode++) {
-    Y.push_back( SparseMode<N>(idx, vals, mode, dims(mode)) );
+    Y.push_back( SparseMode(idx, vals, mode, dims(mode)) );
   }
 }
 
-template<int N>
-void TensorData<N>::setTrain(int** columns, int nmodes, double* values, int nnz, int* dims) {
+void TensorData::setTrain(int** columns, int nmodes, double* values, int nnz, int* dims) {
   auto idx  = toMatrix(columns, nnz, nmodes);
   auto vals = toVector(values, nnz);
   auto d    = toVector(dims, nmodes);
   setTrain(idx, vals, d);
 }
     
-template<int N>
-void TensorData<N>::setTest(int** columns, int nmodes, double* values, int nnz, int* dims) {
+void TensorData::setTest(int** columns, int nmodes, double* values, int nnz, int* dims) {
   auto idx  = toMatrix(columns, nnz, nmodes);
   auto vals = toVector(values, nnz);
   auto d    = toVector(dims, nmodes);
   setTest(idx, vals, d);
 }
 
-template<int N>
-void TensorData<N>::setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d) {
+
+void TensorData::setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d) {
   if (idx.rows() != vals.size()) {
     throw std::runtime_error("setTest(): idx.rows() must equal vals.size()");
   }
   if ((d - dims).norm() != 0) {
     throw std::runtime_error("setTest(): train and test Tensor sizes are not equal.");
   }
-  Ytest = SparseMode<N>(idx, vals, 0, d(0));
+  Ytest = SparseMode(idx, vals, 0, d(0));
 }
 
-template<int N>
-void TensorData<N>::setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) {
+void TensorData::setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) {
   auto idx  = toMatrix(rows, cols, nnz);
   auto vals = toVector(values, nnz);
 
@@ -126,8 +123,7 @@ void TensorData<N>::setTrain(int* rows, int* cols, double* values, int nnz, int 
   setTrain(idx, vals, d);
 }
 
-template<int N>
-void TensorData<N>::setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) {
+void TensorData::setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) {
   auto idx  = toMatrix(rows, cols, nnz);
   auto vals = toVector(values, nnz);
 
@@ -137,8 +133,7 @@ void TensorData<N>::setTest(int* rows, int* cols, double* values, int nnz, int n
   setTest(idx, vals, d);
 }
 
-template<int N>
-Eigen::MatrixXd TensorData<N>::getTestData() {
+Eigen::MatrixXd TensorData::getTestData() {
   MatrixXd coords( getTestNonzeros(), N + 1);
 #pragma omp parallel for schedule(dynamic, 2)
   for (int k = 0; k < Ytest.modeSize(); ++k) {
@@ -188,13 +183,3 @@ Eigen::VectorXi toVector(int* vals, int size) {
   }
   return v;
 }
-
-template class SparseMode<3>;
-template class SparseMode<4>;
-template class SparseMode<5>;
-template class SparseMode<6>;
-
-template class TensorData<3>;
-template class TensorData<4>;
-template class TensorData<5>;
-template class TensorData<6>;

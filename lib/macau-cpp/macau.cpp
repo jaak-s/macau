@@ -190,55 +190,31 @@ void MacauX<DType, NType>::saveGlobalParams() {
 
 Macau* make_macau_probit(int nmodes, int num_latent) {
   switch (nmodes) {
-    case 2: return new MacauX<MatrixData, ProbitNoise>(num_latent);
-    case 3: return new MacauX<TensorData<3>, ProbitNoise>(num_latent);
-    case 4: return new MacauX<TensorData<4>, ProbitNoise>(num_latent);
-    case 5: return new MacauX<TensorData<5>, ProbitNoise>(num_latent);
-    case 6: return new MacauX<TensorData<6>, ProbitNoise>(num_latent);
+    case 2: return new MacauX<MatrixData,  ProbitNoise>(num_latent, MatrixData(), ProbitNoise());
+    default: return new MacauX<TensorData, ProbitNoise>(num_latent, TensorData(nmodes), ProbitNoise());
   }
-  throw std::runtime_error("Unsupported value for nmodes: allowed values are 2 to 6.");
 }
 
 Macau* make_macau_fixed(int nmodes, int num_latent, double precision) {
   FixedGaussianNoise fnoise(precision);
   switch (nmodes) {
-    case 2: return new MacauX<MatrixData, FixedGaussianNoise>(num_latent, fnoise);
-    case 3: return new MacauX<TensorData<3>, FixedGaussianNoise>(num_latent, fnoise);
-    case 4: return new MacauX<TensorData<4>, FixedGaussianNoise>(num_latent, fnoise);
-    case 5: return new MacauX<TensorData<5>, FixedGaussianNoise>(num_latent, fnoise);
-    case 6: return new MacauX<TensorData<6>, FixedGaussianNoise>(num_latent, fnoise);
+    case 2: return new MacauX<MatrixData,  FixedGaussianNoise>(num_latent, MatrixData(), fnoise);
+    default: return new MacauX<TensorData, FixedGaussianNoise>(num_latent, TensorData(nmodes), fnoise);
   }
-  throw std::runtime_error("Unsupported value for nmodes: allowed values are 2 to 6.");
 }
 
 Macau* make_macau_adaptive(int nmodes, int num_latent, double sn_init, double sn_max) {
   AdaptiveGaussianNoise anoise(sn_init, sn_max);
   switch (nmodes) {
-    case 2: return new MacauX<MatrixData,    AdaptiveGaussianNoise>(num_latent, anoise);
-    case 3: return new MacauX<TensorData<3>, AdaptiveGaussianNoise>(num_latent, anoise);
-    case 4: return new MacauX<TensorData<4>, AdaptiveGaussianNoise>(num_latent, anoise);
-    case 5: return new MacauX<TensorData<5>, AdaptiveGaussianNoise>(num_latent, anoise);
-    case 6: return new MacauX<TensorData<6>, AdaptiveGaussianNoise>(num_latent, anoise);
+    case 2: return new MacauX<MatrixData,  AdaptiveGaussianNoise>(num_latent, MatrixData(), anoise);
+    default: return new MacauX<TensorData, AdaptiveGaussianNoise>(num_latent, TensorData(nmodes), anoise);
   }
-  throw std::runtime_error("Unsupported value for nmodes: allowed values are 2 to 6.");
 }
 
 template class MacauX<MatrixData, FixedGaussianNoise>;
 template class MacauX<MatrixData, AdaptiveGaussianNoise>;
 template class MacauX<MatrixData, ProbitNoise>;
 
-template class MacauX<TensorData<3>, FixedGaussianNoise>;
-template class MacauX<TensorData<3>, AdaptiveGaussianNoise>;
-template class MacauX<TensorData<3>, ProbitNoise>;
-
-template class MacauX<TensorData<4>, FixedGaussianNoise>;
-template class MacauX<TensorData<4>, AdaptiveGaussianNoise>;
-template class MacauX<TensorData<4>, ProbitNoise>;
-
-template class MacauX<TensorData<5>, FixedGaussianNoise>;
-template class MacauX<TensorData<5>, AdaptiveGaussianNoise>;
-template class MacauX<TensorData<5>, ProbitNoise>;
-
-template class MacauX<TensorData<6>, FixedGaussianNoise>;
-template class MacauX<TensorData<6>, AdaptiveGaussianNoise>;
-template class MacauX<TensorData<6>, ProbitNoise>;
+template class MacauX<TensorData, FixedGaussianNoise>;
+template class MacauX<TensorData, AdaptiveGaussianNoise>;
+template class MacauX<TensorData, ProbitNoise>;

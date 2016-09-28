@@ -78,6 +78,6 @@ cdef extern from "macau.h":
     cdef cppclass MacauX[DType](Macau):
         MacauX()
         MacauX(int num_latent)
-    Macau* make_macau_probit(bool tensor, int num_latent)
-    Macau* make_macau_fixed(bool tensor, int num_latent, double precision)
-    Macau* make_macau_adaptive(bool tensor, int num_latent, double sn_init, double sn_max)
+    Macau* make_macau_probit(int nmodes, int num_latent)
+    Macau* make_macau_fixed(int nmodes, int num_latent, double precision)
+    Macau* make_macau_adaptive(int nmodes, int num_latent, double sn_init, double sn_max)

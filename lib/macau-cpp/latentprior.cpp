@@ -53,6 +53,17 @@ void ILatentPrior::sample_latents(ProbitNoise & noiseModel, MatrixData & matrixD
   }
 }
 
+void ILatentPrior::sample_latents(FixedGaussianNoise& noiseModel, TensorData & data,
+                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  sample_latents(noiseModel.alpha, data, samples, mode, num_latent);
+}
+
+void ILatentPrior::sample_latents(AdaptiveGaussianNoise& noiseModel, TensorData & data,
+                            std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  sample_latents(noiseModel.alpha, data, samples, mode, num_latent);
+}
+
+
 /** BPMFPrior */
 void BPMFPrior::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMatrix<double> &mat, double mean_value,
                     const Eigen::MatrixXd &samples, double alpha, const int num_latent) {
@@ -95,6 +106,16 @@ void BPMFPrior::sample_latents(ProbitNoise & noise, Eigen::MatrixXd &U, const Ei
     sample_latent_blas_probit(U, n, mat, mean_value, samples, mu, Lambda, num_latent);
   }
  
+}
+
+void BPMFPrior::sample_latents(ProbitNoise& noiseModel, TensorData & data,
+                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  throw std::runtime_error("Unimplemented: sample_latents");
+}
+
+void BPMFPrior::sample_latents(double noisePrecision, TensorData & data,
+                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  throw std::runtime_error("Unimplemented: sample_latents");
 }
 
 /** MacauPrior */
@@ -146,6 +167,19 @@ void MacauPrior<FType>::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMa
     sample_latent_blas(U, n, mat, mean_value, samples, alpha, mu + Uhat.col(n), Lambda, num_latent);
   }
 }
+
+template<class FType>
+void MacauPrior<FType>::sample_latents(ProbitNoise& noiseModel, TensorData & data,
+                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  throw std::runtime_error("Unimplemented: sample_latents");
+}
+
+template<class FType>
+void MacauPrior<FType>::sample_latents(double noisePrecision, TensorData & data,
+                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  throw std::runtime_error("Unimplemented: sample_latents");
+}
+
 
 template<class FType>
 void MacauPrior<FType>::update_prior(const Eigen::MatrixXd &U) {

@@ -29,6 +29,10 @@ void AdaptiveGaussianNoise::init(MatrixData & matrixData) {
   alpha_max = (sn_max + 1.0)  / var_total;
 }
 
+void AdaptiveGaussianNoise::init(TensorData & data) {
+  throw std::runtime_error("TensorData init unimplemented.");
+}
+
 void AdaptiveGaussianNoise::update(MatrixData & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)
 {
   double sumsq = 0.0;
@@ -55,6 +59,10 @@ void AdaptiveGaussianNoise::update(MatrixData & data, std::vector< std::unique_p
   if (alpha > alpha_max) {
     alpha = alpha_max;
   }
+}
+void AdaptiveGaussianNoise::update(TensorData & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)
+{
+  throw std::runtime_error("TensorData init unimplemented.");
 }
 
 inline double nCDF(double val) {return 0.5 * erfc(-val * M_SQRT1_2);}
@@ -104,4 +112,25 @@ void AdaptiveGaussianNoise::evalModel(MatrixData & data, const int n, Eigen::Vec
    auto rmse = eval_rmse(data.Ytest, n, predictions, predictions_var, *samples[1], *samples[0], data.mean_value);
    rmse_test = rmse.second;
    rmse_test_onesample = rmse.first;
+}
+
+
+// evalModel for TensorData
+void ProbitNoise::evalModel(TensorData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  const unsigned N = data.Ytest.nonZeros();
+  Eigen::VectorXd pred(N);
+  Eigen::VectorXd test(N);
+
+  throw std::runtime_error("TensorData evalModel unimplemented.");
+}
+
+void FixedGaussianNoise::evalModel(TensorData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  throw std::runtime_error("TensorData evalModel unimplemented.");
+}
+
+void AdaptiveGaussianNoise::evalModel(TensorData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  throw std::runtime_error("TensorData evalModel unimplemented.");
 }

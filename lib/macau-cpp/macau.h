@@ -59,9 +59,7 @@ class MacauX : public Macau {
     DType data;
     NType noise;
   public:
-    MacauX(int D) { num_latent = D; }
-    MacauX(int D, NType n) : noise(n) { num_latent = D; }
-    MacauX() : MacauX(10) {}
+    MacauX(int D, DType d, NType n) : data(d), noise(n) { num_latent = D; }
     void addPrior(std::unique_ptr<ILatentPrior> & prior) override;
     void setSamples(int burnin, int nsamples) override;
     void setRelationData(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
@@ -82,8 +80,8 @@ class MacauX : public Macau {
     void saveGlobalParams() override;
 };
 
-Macau* make_macau_probit(bool tensor, int num_latent);
-Macau* make_macau_fixed(bool tensor, int num_latent, double precision);
-Macau* make_macau_adaptive(bool tensor, int num_latent, double sn_init, double sn_max);
+Macau* make_macau_probit(int tensor, int num_latent);
+Macau* make_macau_fixed(int tensor, int num_latent, double precision);
+Macau* make_macau_adaptive(int tensor, int num_latent, double sn_init, double sn_max);
 
 void sparseFromIJV(Eigen::SparseMatrix<double> & X, int* rows, int* cols, double* values, int N);

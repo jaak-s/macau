@@ -251,13 +251,13 @@ def macau(Y,
     ## choosing the noise model
     if isinstance(precision, str):
       if precision == "adaptive" or precision == "sample":
-        macau = make_macau_adaptive(False, D, np.float64(1.0), np.float64(sn_max))
+        macau = make_macau_adaptive(2, D, np.float64(1.0), np.float64(sn_max))
       elif precision == "probit":
-        macau = make_macau_probit(False, D)
+        macau = make_macau_probit(2, D)
       else:
         raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
     else:
-      macau = make_macau_fixed(False, D, np.float64(precision))
+      macau = make_macau_fixed(2, D, np.float64(precision))
 
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
