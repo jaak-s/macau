@@ -194,6 +194,30 @@ def remove_nan(Y):
     idx = np.where(np.isnan(Y.data) == False)[0]
     return sp.sparse.coo_matrix( (Y.data[idx], (Y.row[idx], Y.col[idx])), shape = Y.shape )
 
+class Data:
+    def __init__(self, Y, Ytest):
+        matrix_types = [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]
+        if type(Y) in matrix_types:
+            if Y.shape != Ytest.shape:
+                raise ValueError("Y (%d x %d) and Ytest (%d x %d) must have the same shape." %
+                                 (Y.shape[0], Y.shape[1], Ytest.shape[0], Ytest.shape[1]))
+            Y = Y.tocoo(copy = False)
+            Ytest = Ytest.tocoo(copy = False)
+            self.shape = Y.shape
+            self.idxTrain = [Y.row, Y.col]
+            self.valTrain = Y.data
+            self.idxTest  = [Ytest.row, Ytest.col]
+            self.valTest  = Ytest.data
+        elif type(Y) == pd.core.frame.DataFrame:
+            int_cols = filter(lambda c: Y[c].dtype==np.int64 or Y[c].dtype==np.int32, Y.columns)
+            self.shape = tuple([Y[c].max() for c in int_cols])
+            if len(int_cols) > 6:
+                raise ValueError("DataFrame Y has too many int (index) columns (%d). Maximum 6-mode tensors are supported." % len(int_cols))
+            ## TODO: copy data from DataFrame to idxTrain and valTrain
+        else:
+            raise ValueError("Unsupported Y type: %s" + type(Y))
+
+
 def prepare_Y(Y, Ytest):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
         raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
