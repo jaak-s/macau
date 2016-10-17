@@ -198,41 +198,53 @@ class Data:
     def __init__(self, Y, Ytest):
         matrix_types = [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]
         if type(Y) in matrix_types:
+            if type(Ytest) not in matrix_types:
+                raise ValueError("When Y is a sparse matrix Ytest must be too.")
             if Y.shape != Ytest.shape:
                 raise ValueError("Y (%d x %d) and Ytest (%d x %d) must have the same shape." %
                                  (Y.shape[0], Y.shape[1], Ytest.shape[0], Ytest.shape[1]))
             Y = Y.tocoo(copy = False)
+            Y = remove_nan(Y)
             Ytest = Ytest.tocoo(copy = False)
+            Ytest = remove_nan(Ytest)
             self.shape = Y.shape
             self.idxTrain = [Y.row, Y.col]
             self.valTrain = Y.data
             self.idxTest  = [Ytest.row, Ytest.col]
             self.valTest  = Ytest.data
+
         elif type(Y) == pd.core.frame.DataFrame:
-            int_cols = filter(lambda c: Y[c].dtype==np.int64 or Y[c].dtype==np.int32, Y.columns)
-            self.shape = tuple([Y[c].max() for c in int_cols])
+            if type(Ytest) != pd.core.frame.DataFrame:
+                raise ValueError("When Y is a DataFrame Ytest must be too.")
+            if (Y.columns != Ytest.columns).any():
+                raise ValueError("Columns of Y and Ytest must be the same.")
+            if (Y.dtypes != Ytest.dtypes).any():
+                raise ValueError("Y.dtypes and Ytest.dtypes must be the same.")
+            int_cols   = filter(lambda c: Y[c].dtype==np.int64 or Y[c].dtype==np.int32, Y.columns)
+            float_cols = filter(lambda c: Y[c].dtype==np.float32 or Y[c].dtype==np.float64, Y.columns)
             if len(int_cols) > 6:
-                raise ValueError("DataFrame Y has too many int (index) columns (%d). Maximum 6-mode tensors are supported." % len(int_cols))
-            ## TODO: copy data from DataFrame to idxTrain and valTrain
+                raise ValueError("Y has too many index(int) columns (%d), maximum is 6." % len(int_cols))
+            if len(int_cols) < 2:
+                raise ValueError("Y must have at least 2 index (int) columns.")
+            if len(float_cols) != 1:
+                raise ValueError("Y has %d float columns but must have exactly 1 value column." % len(float_cols))
+            value_col = float_cols[0]
+            self.shape = tuple(np.maximum([Y[c].max() for c in int_cols], [Ytest[c].max() for c in int_cols]) + 1)
+            self.idxTrain = [np.array(Y[c],     dtype=np.int32) for c in int_cols]
+            self.idxTest  = [np.array(Ytest[c], dtype=np.int32) for c in int_cols]
+            self.valTrain = np.array(Y[value_col],     dtype=np.float64)
+            self.valTest  = np.array(Ytest[value_col], dtype=np.float64)
+
         else:
             raise ValueError("Unsupported Y type: %s" + type(Y))
 
 
 def prepare_Y(Y, Ytest):
-    if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
-        raise ValueError("Y must be either coo, csr or csc (from scipy.sparse)")
-    Y = Y.tocoo(copy = False)
-    Y = remove_nan(Y)
-    if Ytest is not None:
-        if isinstance(Ytest, numbers.Real):
-            Y, Ytest = make_train_test(Y, Ytest)
-        if type(Ytest) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
-            raise ValueError("Ytest must be either coo, csr or csc (from scipy.sparse)")
-        if Ytest.shape != Y.shape:
-            raise ValueError("Ytest and Y must have the same shape")
-        Ytest = Ytest.tocoo(copy = False)
-        Ytest = remove_nan(Ytest)
-    return Y, Ytest
+    if Ytest is None:
+        Ytest = 0.0
+    if isinstance(Ytest, numbers.Real):
+        Y, Ytest = make_train_test(Y, Ytest)
+    return Data(Y, Ytest)
 
 def macau(Y,
           Ytest      = None,
@@ -247,11 +259,8 @@ def macau(Y,
           sn_max     = 20.0,
           save_prefix= None,
           verbose    = True):
-    Y, Ytest = prepare_Y(Y, Ytest)
-
-    cdef np.ndarray[int] irows = Y.row.astype(np.int32, copy=False)
-    cdef np.ndarray[int] icols = Y.col.astype(np.int32, copy=False)
-    cdef np.ndarray[np.double_t] ivals = Y.data.astype(np.double, copy=False)
+    #Y, Ytest = prepare_Y(Y, Ytest)
+    data = prepare_Y(Y, Ytest)
 
     ## side information
     if not side:
@@ -283,9 +292,13 @@ def macau(Y,
     else:
       macau = make_macau_fixed(2, D, np.float64(precision))
 
+    cdef np.ndarray[int] irows = data.idxTrain[0].astype(np.int32, copy=False)
+    cdef np.ndarray[int] icols = data.idxTrain[1].astype(np.int32, copy=False)
+    cdef np.ndarray[np.double_t] ivals = data.valTrain.astype(np.double, copy=False)
+
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
-    macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], Y.shape[0], Y.shape[1]);
+    macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], data.shape[0], data.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
 
@@ -293,10 +306,10 @@ def macau(Y,
     cdef np.ndarray[np.double_t] tvals
 
     if Ytest is not None:
-        trows = Ytest.row.astype(np.int32, copy=False)
-        tcols = Ytest.col.astype(np.int32, copy=False)
-        tvals = Ytest.data.astype(np.double, copy=False)
-        macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], Y.shape[0], Y.shape[1])
+        trows = data.idxTest[0].astype(np.int32, copy=False)
+        tcols = data.idxTest[1].astype(np.int32, copy=False)
+        tvals = data.valTest.astype(np.double, copy=False)
+        macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], data.shape[0], data.shape[1])
 
     if save_prefix is None:
         macau.setSaveModel(0)
@@ -328,9 +341,9 @@ def macau(Y,
 
     result = MacauResult()
     result.rmse_test  = macau.getRmseTest()
-    result.Yshape     = Y.shape
-    result.ntrain     = Y.nnz
-    result.ntest      = Ytest.nnz if Ytest is not None else 0
+    result.Yshape     = data.shape
+    result.ntrain     = data.valTrain.shape[0]
+    result.ntest      = data.valTest.shape[0] if Ytest is not None else 0
     result.prediction = pd.DataFrame(df)
 
     del macau
