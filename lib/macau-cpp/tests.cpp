@@ -491,10 +491,33 @@ TEST_CASE( "bpmfutils/sparseFromIJV", "Convert triplets to Eigen SparseMatrix") 
   int cols[3] = {2, 1, 0};
   double vals[3] = {1.0, 0.0, 2.0};
   Eigen::SparseMatrix<double> Y;
-  Y.resize(3, 3);
+  Eigen::MatrixXd Ytrue(3, 3), Ydense(3, 3);
+  Ytrue << 0.0, 0.0, 1.0,
+           0.0, 0.0, 0.0,
+           2.0, 0.0, 0.0;
 
+  Y.resize(3, 3);
   sparseFromIJV(Y, rows, cols, vals, 3);
   REQUIRE( Y.nonZeros() == 3 );
+
+  Ydense = Eigen::MatrixXd(Y);
+  REQUIRE( (Ytrue - Ydense).norm() == Approx(0.0));
+
+  // testing idx version of sparseFromIJV
+  Eigen::MatrixXi idx(3, 2);
+  Eigen::VectorXd valx(3);
+  idx << 0, 2,
+         1, 1,
+         2, 0;
+  valx << 1.0, 0.0, 2.0;
+
+  Eigen::SparseMatrix<double> Y2;
+  Y2.resize(3, 3);
+  sparseFromIJV(Y2, idx, valx);
+
+  REQUIRE( Y2.nonZeros() == 3 );
+  Ydense = Eigen::MatrixXd(Y2);
+  REQUIRE( (Ytrue - Ydense).norm() == Approx(0.0));
 }
 
 TEST_CASE( "bpmfutils/eval_rmse", "Test if prediction variance is correctly calculated") {

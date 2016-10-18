@@ -61,6 +61,23 @@ inline void sparseFromIJV(Eigen::SparseMatrix<double> &X, int* rows, int* cols, 
   X.setFromTriplets(tripletList.begin(), tripletList.end());
 }
 
+inline void sparseFromIJV(Eigen::SparseMatrix<double> &X, Eigen::MatrixXi &idx, Eigen::VectorXd &values) {
+  if (idx.rows() != values.size()) {
+    throw std::runtime_error("sparseFromIJV: idx.rows() must equal values.size().");
+  }
+  if (idx.cols() != 2) {
+    throw std::runtime_error("sparseFromIJV: idx.cols() must be equal to 2.");
+  }
+  typedef Eigen::Triplet<double> T;
+  std::vector<T> tripletList;
+  int N = values.size();
+  tripletList.reserve(N);
+  for (int n = 0; n < N; n++) {
+    tripletList.push_back(T(idx(n, 0), idx(n, 1), values(n)));
+  }
+  X.setFromTriplets(tripletList.begin(), tripletList.end());
+}
+
 inline double square(double x) { return x * x; }
 
 inline std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var, const Eigen::MatrixXd &sample_m, const Eigen::MatrixXd &sample_u, double mean_rating)

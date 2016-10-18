@@ -19,8 +19,8 @@ class IData {
   public:
     virtual void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) = 0;
     virtual void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) = 0;
-    virtual void setTrain(int** idx, int nmodes, double* values, int nnz, int* dims) = 0;
-    virtual void setTest(int** idx, int nmodes, double* values, int nnz, int* dims) = 0;
+    virtual void setTrain(int* idx, int nmodes, double* values, int nnz, int* dims) = 0;
+    virtual void setTest(int* idx, int nmodes, double* values, int nnz, int* dims) = 0;
     virtual Eigen::VectorXi getDims() = 0;
     virtual int getTestNonzeros() = 0;
     virtual Eigen::MatrixXd getTestData() = 0;
@@ -55,13 +55,8 @@ class MatrixData : public IData {
       sparseFromIJV(Ytest, rows, cols, values, nnz);
     }
 
-    void setTrain(int** idx, int nmodes, double* values, int nnz, int* dims) override {
-      throw std::runtime_error("MatrixData: tensor training input not supported.");
-    }
-    
-    void setTest(int** idx, int nmodes, double* values, int nnz, int* dims) override {
-      throw std::runtime_error("MatrixData: tensor test input not supported.");
-    }
+    void setTrain(int* idx, int nmodes, double* values, int nnz, int* dims) override;
+    void setTest(int* idx, int nmodes, double* values, int nnz, int* dims) override;
 
     Eigen::MatrixXd getTestData() override;
 };
@@ -97,8 +92,8 @@ class TensorData : public IData {
 
     void setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);
     void setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);
-    void setTrain(int** idx, int nmodes, double* values, int nnz, int* dims) override;
-    void setTest(int** idx, int nmodes, double* values, int nnz, int* dims) override;
+    void setTrain(int* idx, int nmodes, double* values, int nnz, int* dims) override;
+    void setTest(int* idx, int nmodes, double* values, int nnz, int* dims) override;
 
     void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
     void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
@@ -108,7 +103,7 @@ class TensorData : public IData {
     double getMeanValue() override { return mean_value; };
 };
 
-Eigen::MatrixXi toMatrix(int** columns, int nrows, int ncols);
+Eigen::MatrixXi toMatrix(int* columns, int nrows, int ncols);
 Eigen::MatrixXi toMatrix(int* col1, int* col2, int nrows);
 Eigen::VectorXd toVector(double* vals, int size);
 Eigen::VectorXi toVector(int* vals, int size);

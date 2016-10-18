@@ -238,6 +238,11 @@ class Data:
         else:
             raise ValueError("Unsupported Y type: %s" + type(Y))
 
+cdef np.ndarray idx_matrix(idxList):
+    cdef np.ndarray idx = np.zeros([len(idxList), len(idxList[0])], dtype=np.int32, order='F')
+    for i in range(len(idxList)):
+        idx[:, i] = idxList[i]
+    return idx
 
 def prepare_Y(Y, Ytest):
     if Ytest is None:
@@ -259,7 +264,6 @@ def macau(Y,
           sn_max     = 20.0,
           save_prefix= None,
           verbose    = True):
-    #Y, Ytest = prepare_Y(Y, Ytest)
     data = prepare_Y(Y, Ytest)
 
     ## side information

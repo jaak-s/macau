@@ -36,8 +36,8 @@ class Macau {
     virtual void setSamples(int burnin, int nsamples) = 0;
     virtual void setRelationData(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) = 0;
     virtual void setRelationDataTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) = 0;
-    virtual void setRelationData(int** idx, int nmodes, double* values, int nnz, int* dims) = 0;
-    virtual void setRelationDataTest(int** idx, int nmodes, double* values, int nnz, int* dims) = 0;
+    virtual void setRelationData(int* idx, int nmodes, double* values, int nnz, int* dims) = 0;
+    virtual void setRelationDataTest(int* idx, int nmodes, double* values, int nnz, int* dims) = 0;
     virtual void init() = 0;
     virtual void run() = 0;
     virtual void printStatus(int i, double elapsedi, double samples_per_sec) = 0;
@@ -64,8 +64,8 @@ class MacauX : public Macau {
     void setSamples(int burnin, int nsamples) override;
     void setRelationData(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
     void setRelationDataTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
-    void setRelationData(int** idx, int nmodes, double* values, int nnz, int* dims) override;
-    void setRelationDataTest(int** idx, int nmodes, double* values, int nnz, int* dims) override;
+    void setRelationData(int* idx, int nmodes, double* values, int nnz, int* dims) override;
+    void setRelationDataTest(int* idx, int nmodes, double* values, int nnz, int* dims) override;
     void init() override;
     void run() override;
     void printStatus(int i, double elapsedi, double samples_per_sec) override;

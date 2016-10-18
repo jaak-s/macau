@@ -55,12 +55,12 @@ void MacauX<DType, NType>::setRelationDataTest(int* rows, int* cols, double* val
 }
 
 template<class DType, class NType> 
-void MacauX<DType, NType>::setRelationData(int** idx, int nmodes, double* values, int nnz, int* dims) {
+void MacauX<DType, NType>::setRelationData(int* idx, int nmodes, double* values, int nnz, int* dims) {
   data.setTrain(idx, nmodes, values, nnz, dims);
 }
 
 template<class DType, class NType> 
-void MacauX<DType, NType>::setRelationDataTest(int** idx, int nmodes, double* values, int nnz, int* dims) {
+void MacauX<DType, NType>::setRelationDataTest(int* idx, int nmodes, double* values, int nnz, int* dims) {
   data.setTest(idx, nmodes, values, nnz, dims);
 }
 

@@ -75,6 +75,33 @@ Eigen::MatrixXd MatrixData::getTestData() {
   return coords;
 }
 
+void MatrixData::setTrain(int* columns, int nmodes, double* values, int nnz, int* d) {
+  if (nmodes != 2) {
+    throw std::runtime_error("MatrixData: tensor training input not supported.");
+  }
+  auto idx  = toMatrix(columns, nnz, nmodes);
+  auto vals = toVector(values, nnz);
+
+  Y.resize(d[0], d[1]);
+  sparseFromIJV(Y, idx, vals);
+
+  Yt = Y.transpose();
+  mean_value = Y.sum() / Y.nonZeros();
+  dims.resize(2);
+  dims << Y.rows(), Y.cols();
+}
+    
+void MatrixData::setTest(int* columns, int nmodes, double* values, int nnz, int* d) {
+  if (nmodes != 2) {
+    throw std::runtime_error("MatrixData: tensor training input not supported.");
+  }
+  auto idx  = toMatrix(columns, nnz, nmodes);
+  auto vals = toVector(values, nnz);
+
+  Ytest.resize(d[0], d[1]);
+  sparseFromIJV(Ytest, idx, vals);
+}
+
 
 ////////  TensorData  ///////
 
@@ -88,14 +115,14 @@ void TensorData::setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::Ve
   }
 }
 
-void TensorData::setTrain(int** columns, int nmodes, double* values, int nnz, int* dims) {
+void TensorData::setTrain(int* columns, int nmodes, double* values, int nnz, int* dims) {
   auto idx  = toMatrix(columns, nnz, nmodes);
   auto vals = toVector(values, nnz);
   auto d    = toVector(dims, nmodes);
   setTrain(idx, vals, d);
 }
     
-void TensorData::setTest(int** columns, int nmodes, double* values, int nnz, int* dims) {
+void TensorData::setTest(int* columns, int nmodes, double* values, int nnz, int* dims) {
   auto idx  = toMatrix(columns, nnz, nmodes);
   auto vals = toVector(values, nnz);
   auto d    = toVector(dims, nmodes);
@@ -150,19 +177,19 @@ Eigen::MatrixXd TensorData::getTestData() {
 
 // util functions
 Eigen::MatrixXi toMatrix(int* col1, int* col2, int nrows) {
-  int** ptr = new int*[2];
-  ptr[0] = col1;
-  ptr[1] = col2;
-  auto idx = toMatrix(ptr, nrows, 2);
-  delete ptr;
+  Eigen::MatrixXi idx(nrows, 2);
+  for (int row = 0; row < nrows; row++) {
+    idx(row, 0) = col1[row];
+    idx(row, 1) = col2[row];
+  }
   return idx;
 }
 
-Eigen::MatrixXi toMatrix(int** columns, int nrows, int ncols) {
+Eigen::MatrixXi toMatrix(int* columns, int nrows, int ncols) {
   Eigen::MatrixXi idx(nrows, ncols);
   for (int row = 0; row < nrows; row++) {
     for (int col = 0; col < ncols; col++) {
-      idx(row, col) = columns[col][row];
+      idx(row, col) = columns[col * nrows + row];
     }
   }
   return idx;
