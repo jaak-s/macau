@@ -207,7 +207,7 @@ class Data:
             Y = remove_nan(Y)
             Ytest = Ytest.tocoo(copy = False)
             Ytest = remove_nan(Ytest)
-            self.shape = Y.shape
+            self.shape = np.array(Y.shape, dtype=np.int32)
             self.idxTrain = [Y.row, Y.col]
             self.valTrain = Y.data
             self.idxTest  = [Ytest.row, Ytest.col]
@@ -229,7 +229,8 @@ class Data:
             if len(float_cols) != 1:
                 raise ValueError("Y has %d float columns but must have exactly 1 value column." % len(float_cols))
             value_col = float_cols[0]
-            self.shape = tuple(np.maximum([Y[c].max() for c in int_cols], [Ytest[c].max() for c in int_cols]) + 1)
+            self.shape = np.array(np.maximum([Y[c].max() for c in int_cols],
+                                             [Ytest[c].max() for c in int_cols]) + 1, dtype=np.int32)
             self.idxTrain = [np.array(Y[c],     dtype=np.int32) for c in int_cols]
             self.idxTest  = [np.array(Ytest[c], dtype=np.int32) for c in int_cols]
             self.valTrain = np.array(Y[value_col],     dtype=np.float64)
@@ -239,10 +240,20 @@ class Data:
             raise ValueError("Unsupported Y type: %s" + type(Y))
 
 cdef np.ndarray idx_matrix(idxList):
-    cdef np.ndarray idx = np.zeros([len(idxList), len(idxList[0])], dtype=np.int32, order='F')
+    cdef np.ndarray idx = np.zeros([len(idxList[0]), len(idxList)], dtype=np.int32, order='F')
     for i in range(len(idxList)):
         idx[:, i] = idxList[i]
     return idx
+
+cdef setData(Macau* macau, data):
+    ## training data
+    cdef np.ndarray[int] dims = np.array(data.shape, dtype=np.int32)
+    cdef np.ndarray[int, ndim=2] idx  = idx_matrix(data.idxTrain)
+    cdef np.ndarray[np.double_t] ivals = data.valTrain.astype(np.double, copy=False)
+
+    macau.setRelationData(&idx[0,0], len(data.shape), &ivals[0], idx.shape[0], &dims[0])
+
+    ## testing data (TODO)
 
 def prepare_Y(Y, Ytest):
     if Ytest is None:
@@ -296,13 +307,14 @@ def macau(Y,
     else:
       macau = make_macau_fixed(2, D, np.float64(precision))
 
-    cdef np.ndarray[int] irows = data.idxTrain[0].astype(np.int32, copy=False)
-    cdef np.ndarray[int] icols = data.idxTrain[1].astype(np.int32, copy=False)
-    cdef np.ndarray[np.double_t] ivals = data.valTrain.astype(np.double, copy=False)
+#    cdef np.ndarray[int] irows = data.idxTrain[0].astype(np.int32, copy=False)
+#    cdef np.ndarray[int] icols = data.idxTrain[1].astype(np.int32, copy=False)
+#    cdef np.ndarray[np.double_t] ivals = data.valTrain.astype(np.double, copy=False)
+#    macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], data.shape[0], data.shape[1])
+    setData(macau, data)
 
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
-    macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], data.shape[0], data.shape[1]);
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
 
