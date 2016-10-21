@@ -30,15 +30,15 @@ In this example we use MCMC (Gibbs) sampling to perform factorization of the `co
                         side       = [ecfp, None],
                         num_latent = 32,
                         precision  = 5.0,
-                        burnin     = 50,
-                        nsamples   = 500)
+                        burnin     = 400,
+                        nsamples   = 1600)
 
 Input matrix for :python:`Y` is a sparse scipy matrix (either coo_matrix, csr_matrix or csc_matrix).
 
 In this example, we have assigned 20% of the IC50 data to the test set by setting :python:`Ytest = 0.2`.
 If you want to use a predefined test data, set :python:`Ytest = my_test_matrix`, where the matrix is a sparse matrix of the same size as :python:`Y`.
-Here we have used burn-in of 50 samples for the Gibbs sampler and then collected 200 samples from the model.
-Using higher numbers, like :python:`burnin = 200, nsamples = 800` gives us better accuracy.
+Here we have used burn-in of 400 samples for the Gibbs sampler and then collected 1600 samples from the model.
+This is usually sufficient. For quick runs smaller numbers can be used, like :python:`burnin = 100, nsamples = 500`.
 
 The parameter :python:`side = [ecfp, None]` sets the side information for rows and columns, respectively.
 In this example we only use side information for the compounds (rows of the matrix).
@@ -85,11 +85,11 @@ An example:
                         num_latent = 32,
                         precision  = 5.0,
                         univariate = True,
-                        burnin     = 400,
-                        nsamples   = 1600)
+                        burnin     = 500,
+                        nsamples   = 3500)
 
 
-When using it we recommend using larger values for :python:`burnin` and :python:`nsamples`, because the univariate sampler has slower mixing.
+When using it we recommend using larger values for :python:`burnin` and :python:`nsamples`, because the univariate sampler mixes slower than the blocked sampler.
 
 Adaptive noise
 ~~~~~~~~~~~~~~
@@ -113,8 +113,8 @@ Instead we can also allow the model to automatically determine the precision of 
                         num_latent = 32,
                         precision  = "adaptive",
                         univariate = True,
-                        burnin     = 400,
-                        nsamples   = 1600)
+                        burnin     = 500,
+                        nsamples   = 3500)
 
 In the case of adaptive noise the model updates (samples) the precision parameter in every iteration, which is then also shown in the output.
 Additionally, there is a parameter :python:`sn_max` that sets the maximum allowed signal-to-noise ratio.
@@ -130,8 +130,8 @@ To run matrix factorization without side information you can just drop the :pyth
                         Ytest      = 0.2,
                         num_latent = 32,
                         precision  = 5.0,
-                        burnin     = 50,
-                        nsamples   = 200)
+                        burnin     = 200,
+                        nsamples   = 800)
 
 Without side information Macau is equivalent to standard Bayesian Matrix Factorization (BPMF).
 However, if available using side information can significantly improve the model accuracy.

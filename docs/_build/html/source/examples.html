@@ -8,7 +8,7 @@
     
     <title>Examples &mdash; Macau 0.3.4 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="Macau 0.3.4 documentation" href="../index.html" />
     <link rel="next" title="Saving models" href="saving_models.html" />
     <link rel="prev" title="Welcome to Macau’s documentation!" href="../index.html" /> 
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../index.html" title="Welcome to Macau’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,25 +63,25 @@ wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
-<span class="c">## loading data</span>
-<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
-<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+<span class="c1">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
 
-<span class="c">## running factorization (Macau)</span>
+<span class="c1">## running factorization (Macau)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
                      <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
-                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">500</span><span class="p">)</span>
+                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">1600</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Input matrix for <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></code> is a sparse scipy matrix (either coo_matrix, csr_matrix or csc_matrix).</p>
 <p>In this example, we have assigned 20% of the IC50 data to the test set by setting <code class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">0.2</span></span></code>.
 If you want to use a predefined test data, set <code class="code python docutils literal"><span class="name"><span class="pre">Ytest</span></span> <span class="operator"><span class="pre">=</span></span> <span class="name"><span class="pre">my_test_matrix</span></span></code>, where the matrix is a sparse matrix of the same size as <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></code>.
-Here we have used burn-in of 50 samples for the Gibbs sampler and then collected 200 samples from the model.
-Using higher numbers, like <code class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">200</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name"><span class="pre">nsamples</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">800</span></span></code> gives us better accuracy.</p>
+Here we have used burn-in of 400 samples for the Gibbs sampler and then collected 1600 samples from the model.
+This is usually sufficient. For quick runs smaller numbers can be used, like <code class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">100</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name"><span class="pre">nsamples</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number integer"><span class="pre">500</span></span></code>.</p>
 <p>The parameter <code class="code python docutils literal"><span class="name"><span class="pre">side</span></span> <span class="operator"><span class="pre">=</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">ecfp</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name builtin pseudo"><span class="pre">None</span></span><span class="punctuation"><span class="pre">]</span></span></code> sets the side information for rows and columns, respectively.
 In this example we only use side information for the compounds (rows of the matrix).</p>
 <p>The <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></code> specifies the precision of the IC50 observations, i.e., 1 / variance.</p>
@@ -108,43 +108,43 @@ An example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
-<span class="c">## loading data</span>
-<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
-<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+<span class="c1">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
 
-<span class="c">## running factorization (Macau)</span>
+<span class="c1">## running factorization (Macau)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
                      <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
 <span class="hll">                     <span class="n">univariate</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
-</span>                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
-                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">1600</span><span class="p">)</span>
+</span>                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">3500</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>When using it we recommend using larger values for <code class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span></code> and <code class="code python docutils literal"><span class="name"><span class="pre">nsamples</span></span></code>, because the univariate sampler has slower mixing.</p>
+<p>When using it we recommend using larger values for <code class="code python docutils literal"><span class="name"><span class="pre">burnin</span></span></code> and <code class="code python docutils literal"><span class="name"><span class="pre">nsamples</span></span></code>, because the univariate sampler mixes slower than the blocked sampler.</p>
 </div>
 <div class="section" id="adaptive-noise">
 <h3>Adaptive noise<a class="headerlink" href="#adaptive-noise" title="Permalink to this headline">¶</a></h3>
 <p>In the previous examples we fixed the observation noise by specifying <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></code>.
-Instead we can also allow the model to automatically determine the precision of the noise by setting <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string"><span class="pre">&quot;adaptive&quot;</span></span></code>.</p>
+Instead we can also allow the model to automatically determine the precision of the noise by setting <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string double"><span class="pre">&quot;adaptive&quot;</span></span></code>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
-<span class="c">## loading data</span>
-<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
-<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+<span class="c1">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
 
-<span class="c">## running factorization (Macau)</span>
+<span class="c1">## running factorization (Macau)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
-<span class="hll">                     <span class="n">precision</span>  <span class="o">=</span> <span class="s">&quot;adaptive&quot;</span><span class="p">,</span>
+<span class="hll">                     <span class="n">precision</span>  <span class="o">=</span> <span class="s2">&quot;adaptive&quot;</span><span class="p">,</span>
 </span>                     <span class="n">univariate</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
-                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
-                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">1600</span><span class="p">)</span>
+                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">3500</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>In the case of adaptive noise the model updates (samples) the precision parameter in every iteration, which is then also shown in the output.
@@ -159,8 +159,8 @@ This means that if the updated precision would imply a higher signal-to-noise ra
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
                      <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
-                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">200</span><span class="p">)</span>
+                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">800</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Without side information Macau is equivalent to standard Bayesian Matrix Factorization (BPMF).
@@ -230,12 +230,12 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
         <li class="right" >
           <a href="../index.html" title="Welcome to Macau’s documentation!"
              >previous</a> |</li>
-        <li><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2016, Jaak Simm.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
     </div>
   </body>
 </html>
