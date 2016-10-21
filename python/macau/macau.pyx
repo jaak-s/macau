@@ -198,6 +198,8 @@ class Data:
     def __init__(self, Y, Ytest):
         matrix_types = [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]
         if type(Y) in matrix_types:
+            if Ytest is None:
+                Ytest = sp.sparse.coo_matrix(Y.shape, np.float64)
             if type(Ytest) not in matrix_types:
                 raise ValueError("When Y is a sparse matrix Ytest must be too.")
             if Y.shape != Ytest.shape:
@@ -214,6 +216,8 @@ class Data:
             self.valTest  = Ytest.data
 
         elif type(Y) == pd.core.frame.DataFrame:
+            if Ytest is None:
+                Ytest = Y[0:0]
             if type(Ytest) != pd.core.frame.DataFrame:
                 raise ValueError("When Y is a DataFrame Ytest must be too.")
             if (Y.columns != Ytest.columns).any():
@@ -253,7 +257,10 @@ cdef setData(Macau* macau, data):
 
     macau.setRelationData(&idx[0,0], len(data.shape), &ivals[0], idx.shape[0], &dims[0])
 
-    ## testing data (TODO)
+    ## testing data
+    cdef np.ndarray[int, ndim=2] te_idx   = idx_matrix(data.idxTest)
+    cdef np.ndarray[np.double_t] te_ivals = data.valTest.astype(np.double, copy=False)
+    macau.setRelationDataTest(&te_idx[0,0], len(data.shape), &te_ivals[0], te_idx.shape[0], &dims[0])
 
 def prepare_Y(Y, Ytest):
     if Ytest is None:
@@ -307,25 +314,12 @@ def macau(Y,
     else:
       macau = make_macau_fixed(2, D, np.float64(precision))
 
-#    cdef np.ndarray[int] irows = data.idxTrain[0].astype(np.int32, copy=False)
-#    cdef np.ndarray[int] icols = data.idxTrain[1].astype(np.int32, copy=False)
-#    cdef np.ndarray[np.double_t] ivals = data.valTrain.astype(np.double, copy=False)
-#    macau.setRelationData(&irows[0], &icols[0], &ivals[0], irows.shape[0], data.shape[0], data.shape[1])
     setData(macau, data)
 
     macau.addPrior(prior_u)
     macau.addPrior(prior_v)
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
-
-    cdef np.ndarray[int] trows, tcols
-    cdef np.ndarray[np.double_t] tvals
-
-    if Ytest is not None:
-        trows = data.idxTest[0].astype(np.int32, copy=False)
-        tcols = data.idxTest[1].astype(np.int32, copy=False)
-        tvals = data.valTest.astype(np.double, copy=False)
-        macau.setRelationDataTest(&trows[0], &tcols[0], &tvals[0], trows.shape[0], data.shape[0], data.shape[1])
 
     if save_prefix is None:
         macau.setSaveModel(0)
