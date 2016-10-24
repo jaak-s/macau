@@ -286,11 +286,12 @@ def macau(Y,
 
     ## side information
     if not side:
-        side = [None, None]
+        side = [None for i in range(len(data.shape))]
     if type(side) not in [list, tuple]:
         raise ValueError("Parameter 'side' must be a tuple or a list.")
-    if len(side) != 2:
-        raise ValueError("If specified 'side' must contain 2 elements.")
+    if len(side) != len(data.shape):
+        raise ValueError("Length of 'side' is %d but must be equal to the number of data dimensions (%d)." % 
+                (len(side), len(data.shape)) )
 
     cdef int D = np.int32(num_latent)
     cdef unique_ptr[ILatentPrior] prior_u

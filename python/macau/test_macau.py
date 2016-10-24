@@ -12,6 +12,11 @@ class TestMacau(unittest.TestCase):
                              univariate = False)
         self.assertEqual(Ytest.nnz, results.prediction.shape[0])
 
+    def test_bpmf_numerictest(self):
+        X = scipy.sparse.rand(15, 10, 0.2)
+        Xt = 0.3
+        macau.bpmf(X, Xt, num_latent = 10, burnin=10, nsamples=15, verbose = False)
+
     def test_macau(self):
         Y = scipy.sparse.rand(10, 20, 0.2)
         Y, Ytest = macau.make_train_test(Y, 0.5)
@@ -23,6 +28,14 @@ class TestMacau(unittest.TestCase):
                              univariate = False)
         self.assertEqual(Ytest.nnz, results.prediction.shape[0])
 
+    def test_macau_side_bin(self):
+        X = scipy.sparse.rand(15, 10, 0.2)
+        Xt = scipy.sparse.rand(15, 10, 0.1)
+        F = scipy.sparse.rand(15, 2, 0.5)
+        F.data[:] = 1
+        macau.macau(X, Xt, side=[F, None], num_latent = 5, burnin=10, nsamples=5, verbose = False)
+
+
     def test_macau_univariate(self):
         Y = scipy.sparse.rand(10, 20, 0.2)
         Y, Ytest = macau.make_train_test(Y, 0.5)
@@ -33,6 +46,18 @@ class TestMacau(unittest.TestCase):
                              verbose = False, burnin = 50, nsamples = 50,
                              univariate = True)
         self.assertEqual(Ytest.nnz, results.prediction.shape[0])
+
+    def test_too_many_sides(self):
+        Y = scipy.sparse.rand(10, 20, 0.2)
+        with self.assertRaises(ValueError):
+            macau.macau(Y, verbose = False, side = [None, None, None])
+
+    def test_make_train_test(self):
+        X = scipy.sparse.rand(15, 10, 0.2)
+        Xtr, Xte = macau.make_train_test(X, 0.5)
+        self.assertEqual(X.nnz, Xtr.nnz + Xte.nnz)
+        diff = np.linalg.norm( (X - Xtr - Xte).todense() )
+        self.assertEqual(diff, 0.0)
 
 if __name__ == '__main__':
     unittest.main()
