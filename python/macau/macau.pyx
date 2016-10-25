@@ -262,6 +262,15 @@ cdef setData(Macau* macau, data):
     cdef np.ndarray[np.double_t] te_ivals = data.valTest.astype(np.double, copy=False)
     macau.setRelationDataTest(&te_idx[0,0], len(data.shape), &te_ivals[0], te_idx.shape[0], &dims[0])
 
+cdef setSidePriors(Macau* macau, side, int D, double lambda_beta, double tol, bool univariate):
+    cdef unique_ptr[ILatentPrior] prior
+    for s in side:
+        if univariate:
+            prior = unique_ptr[ILatentPrior](make_one_prior(s, D, lambda_beta))
+        else:
+            prior = unique_ptr[ILatentPrior](make_prior(s, D, 10000, lambda_beta, tol))
+        macau.addPrior(prior)
+
 def prepare_Y(Y, Ytest):
     if Ytest is None:
         Ytest = 0.0
@@ -294,31 +303,23 @@ def macau(Y,
                 (len(side), len(data.shape)) )
 
     cdef int D = np.int32(num_latent)
-    cdef unique_ptr[ILatentPrior] prior_u
-    cdef unique_ptr[ILatentPrior] prior_v
-    if univariate:
-        prior_u = unique_ptr[ILatentPrior](make_one_prior(side[0], D, lambda_beta))
-        prior_v = unique_ptr[ILatentPrior](make_one_prior(side[1], D, lambda_beta))
-    else:
-        prior_u = unique_ptr[ILatentPrior](make_prior(side[0], D, 10000, lambda_beta, tol))
-        prior_v = unique_ptr[ILatentPrior](make_prior(side[1], D, 10000, lambda_beta, tol))
-
     cdef Macau *macau
+
     ## choosing the noise model
+    cdef int Nmodes = len(data.shape)
     if isinstance(precision, str):
       if precision == "adaptive" or precision == "sample":
-        macau = make_macau_adaptive(2, D, np.float64(1.0), np.float64(sn_max))
+        macau = make_macau_adaptive(Nmodes, D, np.float64(1.0), np.float64(sn_max))
       elif precision == "probit":
-        macau = make_macau_probit(2, D)
+        macau = make_macau_probit(Nmodes, D)
       else:
         raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
     else:
-      macau = make_macau_fixed(2, D, np.float64(precision))
+      macau = make_macau_fixed(Nmodes, D, np.float64(precision))
 
     setData(macau, data)
+    setSidePriors(macau, side, D, np.float64(lambda_beta), np.float64(tol), np.bool(univariate))
 
-    macau.addPrior(prior_u)
-    macau.addPrior(prior_v)
     macau.setSamples(np.int32(burnin), np.int32(nsamples))
     macau.setVerbose(verbose)
 
