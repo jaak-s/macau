@@ -72,7 +72,7 @@ cdef extern from "macau.h":
         VectorXd getPredictions()
         VectorXd getStds()
         MatrixXd getTestData()
-        void run()
+        void run() except *
         void setSaveModel(bool save)
         void setSavePrefix(string pref)
     cdef cppclass MacauX[DType](Macau):

@@ -70,8 +70,8 @@ double MacauX<DType, NType>::getRmseTest() { return rmse_test; }
 template<class DType, class NType> 
 void MacauX<DType, NType>::init() {
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-  if (priors.size() != 2) {
-    throw std::runtime_error("Only 2 priors are supported.");
+  if (priors.size() < 2) {
+    throw std::runtime_error("Less 2 priors are not supported.");
   }
   init_bmrng(seed1);
   VectorXi dims = data.getDims();
