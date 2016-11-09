@@ -220,7 +220,7 @@ def macau(Y,
           nsamples   = 400,
           univariate = False,
           tol        = 1e-6,
-          sn_max     = 20.0,
+          sn_max     = 10.0,
           save_prefix= None,
           verbose    = True):
     Y, Ytest = prepare_Y(Y, Ytest)
