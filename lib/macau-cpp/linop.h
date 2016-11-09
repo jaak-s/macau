@@ -539,7 +539,7 @@ inline void A_mul_B_omp(
   for (int block = 0; block < nblocks; block++) {
     int col = block * 64;
     int bcols = std::min(64, ncol - col);
-    out.template block(0, col, nrow, bcols).noalias() = alpha * out.template block(0, col, nrow, bcols) + beta * A * B.template block(0, col, nrow, bcols);
+    out.block(0, col, nrow, bcols).noalias() = alpha * out.block(0, col, nrow, bcols) + beta * A * B.block(0, col, nrow, bcols);
   }
 }
 
