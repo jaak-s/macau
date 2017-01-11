@@ -151,6 +151,35 @@ Instead we can also allow the model to automatically determine the precision of 
 Additionally, there is a parameter <code class="code python docutils literal"><span class="name"><span class="pre">sn_max</span></span></code> that sets the maximum allowed signal-to-noise ratio.
 This means that if the updated precision would imply a higher signal-to-noise ratio than <code class="code python docutils literal"><span class="name"><span class="pre">sn_max</span></span></code>, then the precision value is set to <code class="code python docutils literal"><span class="punctuation"><span class="pre">(</span></span><span class="name"><span class="pre">sn_max</span></span> <span class="operator"><span class="pre">+</span></span> <span class="literal number float"><span class="pre">1.0</span></span><span class="punctuation"><span class="pre">)</span></span> <span class="operator"><span class="pre">/</span></span> <span class="name"><span class="pre">Yvar</span></span></code> where Yvar is the variance of the training dataset <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span></code>.</p>
 </div>
+<div class="section" id="binary-matrices">
+<h3>Binary matrices<a class="headerlink" href="#binary-matrices" title="Permalink to this headline">¶</a></h3>
+<p>Macau can also factorize binary matrices (with or without side information). As an input the sparse matrix should only contain values of 0 or 1.
+To factorize them we employ probit noise model that can be enabled by <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string double"><span class="pre">&quot;probit&quot;</span></span></code>.</p>
+<p>Care has to be taken to make input to the model, as operating with sparse matrices can drop real 0 measurements. In the below example, we first copy the matrix (line 9) and then threshold the data to binary (line 10).</p>
+<p>Currently, the probit model only works with the multivariate sampler (<code class="code python docutils literal"><span class="name"><span class="pre">univariate</span></span> <span class="operator"><span class="pre">=</span></span> <span class="name builtin pseudo"><span class="pre">False</span></span></code>).</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<span class="kn">import</span> <span class="nn">scipy.io</span>
+
+<span class="c1">## loading data</span>
+<span class="n">ic50</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-346targets.mm&quot;</span><span class="p">)</span>
+<span class="n">ecfp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mmread</span><span class="p">(</span><span class="s2">&quot;chembl-IC50-compound-feat.mm&quot;</span><span class="p">)</span>
+
+<span class="c1">## using activity threshold pIC50 &gt; 6.5</span>
+<span class="hll"><span class="n">act</span> <span class="o">=</span> <span class="n">ic50</span>
+</span><span class="hll"><span class="n">act</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">act</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="mf">6.5</span>
+</span>
+<span class="c1">## running factorization (Macau)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
+                     <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+                     <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
+                     <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+<span class="hll">                     <span class="n">precision</span>  <span class="o">=</span> <span class="s2">&quot;probit&quot;</span><span class="p">,</span>
+</span>                     <span class="n">univariate</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+                     <span class="n">burnin</span>     <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+                     <span class="n">nsamples</span>   <span class="o">=</span> <span class="mi">1600</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="matrix-factorization-without-side-information">
 <h2>Matrix Factorization without Side Information<a class="headerlink" href="#matrix-factorization-without-side-information" title="Permalink to this headline">¶</a></h2>
@@ -181,6 +210,7 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
 <li><a class="reference internal" href="#matrix-factorization-with-side-information">Matrix Factorization with Side Information</a><ul>
 <li><a class="reference internal" href="#univariate-sampler">Univariate sampler</a></li>
 <li><a class="reference internal" href="#adaptive-noise">Adaptive noise</a></li>
+<li><a class="reference internal" href="#binary-matrices">Binary matrices</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#matrix-factorization-without-side-information">Matrix Factorization without Side Information</a></li>

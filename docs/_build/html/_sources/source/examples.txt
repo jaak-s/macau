@@ -120,6 +120,40 @@ In the case of adaptive noise the model updates (samples) the precision paramete
 Additionally, there is a parameter :python:`sn_max` that sets the maximum allowed signal-to-noise ratio.
 This means that if the updated precision would imply a higher signal-to-noise ratio than :python:`sn_max`, then the precision value is set to :python:`(sn_max + 1.0) / Yvar` where Yvar is the variance of the training dataset :python:`Y`.
 
+Binary matrices
+~~~~~~~~~~~~~~~~
+Macau can also factorize binary matrices (with or without side information). As an input the sparse matrix should only contain values of 0 or 1.
+To factorize them we employ probit noise model that can be enabled by :python:`precision = "probit"`.
+
+Care has to be taken to make input to the model, as operating with sparse matrices can drop real 0 measurements. In the below example, we first copy the matrix (line 9) and then threshold the data to binary (line 10).
+
+Currently, the probit model only works with the multivariate sampler (:python:`univariate = False`).
+
+.. code-block:: python
+   :emphasize-lines: 9,10,17
+
+   import macau
+   import scipy.io
+
+   ## loading data
+   ic50 = scipy.io.mmread("chembl-IC50-346targets.mm")
+   ecfp = scipy.io.mmread("chembl-IC50-compound-feat.mm")
+
+   ## using activity threshold pIC50 > 6.5
+   act = ic50
+   act.data = act.data > 6.5
+
+   ## running factorization (Macau)
+   result = macau.macau(Y = ic50,
+                        Ytest      = 0.2,
+                        side       = [ecfp, None],
+                        num_latent = 32,
+                        precision  = "probit",
+                        univariate = False,
+                        burnin     = 400,
+                        nsamples   = 1600)
+
+
 Matrix Factorization without Side Information
 ----------------------------------------------
 To run matrix factorization without side information you can just drop the :python:`side` parameter.
