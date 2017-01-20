@@ -37,6 +37,16 @@ class TestBPMF(unittest.TestCase):
         self.assertEqual(X.nnz, Xtr.nnz + Xte.nnz)
         diff = np.linalg.norm( (X - Xtr - Xte).todense() )
         self.assertEqual(diff, 0.0)
+
+    def test_bpmf_emptytest(self):
+        X = scipy.sparse.rand(15, 10, 0.2)
+        macau.bpmf(X, Ytest = 0, num_latent = 10, burnin=10, nsamples=15, verbose=False)
         
+    def test_bpmf_emptytest_probit(self):
+        X = scipy.sparse.rand(15, 10, 0.2)
+        X.data = X.data > 0.5
+        macau.bpmf(X, Ytest = 0, num_latent = 10, burnin=10, nsamples=15, precision="probit", verbose=False)
+        macau.bpmf(X, Ytest = None, num_latent = 10, burnin=10, nsamples=15, precision="probit", verbose=False)
+
 if __name__ == '__main__':
     unittest.main()

@@ -267,7 +267,7 @@ def macau(Y,
     cdef np.ndarray[int] trows, tcols
     cdef np.ndarray[np.double_t] tvals
 
-    if Ytest is not None:
+    if Ytest is not None and Ytest.nnz > 0:
         trows = Ytest.row.astype(np.int32, copy=False)
         tcols = Ytest.col.astype(np.int32, copy=False)
         tvals = Ytest.data.astype(np.double, copy=False)
