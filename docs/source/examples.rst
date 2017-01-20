@@ -144,7 +144,7 @@ Currently, the probit model only works with the multivariate sampler (:python:`u
    act.data = act.data > 6.5
 
    ## running factorization (Macau)
-   result = macau.macau(Y = ic50,
+   result = macau.macau(Y = act,
                         Ytest      = 0.2,
                         side       = [ecfp, None],
                         num_latent = 32,
