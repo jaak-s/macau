@@ -167,8 +167,8 @@ inline double auc(Eigen::VectorXd & pred, Eigen::VectorXd & test)
 	}
 	std::sort(permutation.begin(), permutation.end(), [&pred](unsigned int a, unsigned int b) { return pred[a] < pred[b];});
 
-	int NP = test.sum();
-	int NN = test.size() - NP;
+	double NP = test.sum();
+	double NN = test.size() - NP;
 	//Build stack_x and stack_y
 	stack_x[0] = test[permutation[0]];
 	stack_y[0] = 1-stack_x[0];
@@ -178,8 +178,8 @@ inline double auc(Eigen::VectorXd & pred, Eigen::VectorXd & test)
 	}
 
 	for(int i=0; i < pred.size() - 1; i++) {
-		auc += (stack_x(i+1) - stack_x(i)) * stack_y(i+1) / (NP*NN); //TODO:Make it Eigen
+		auc += (stack_x(i+1) - stack_x(i)) * stack_y(i+1); //TODO:Make it Eigen
 	}
 
-	return auc;
+	return auc / (NP*NN);
 }
