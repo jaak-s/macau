@@ -200,6 +200,8 @@ class Data:
         if type(Y) in matrix_types:
             if Ytest is None:
                 Ytest = sp.sparse.coo_matrix(Y.shape, np.float64)
+            if isinstance(Ytest, numbers.Real):
+                Y, Ytest = make_train_test(Y, Ytest)
             if type(Ytest) not in matrix_types:
                 raise ValueError("When Y is a sparse matrix Ytest must be too.")
             if Y.shape != Ytest.shape:
@@ -218,14 +220,28 @@ class Data:
         elif type(Y) == pd.core.frame.DataFrame:
             if Ytest is None:
                 Ytest = Y[0:0]
+            if isinstance(Ytest, numbers.Real):
+                ## randomly spliting train-test
+                ntest = Ytest
+                if ntest < 1:
+                    ntest = Y.shape[0] * ntest
+                ntest  = int(round(ntest))
+                rperm  = np.random.permutation(Y.shape[0])
+                train  = rperm[ntest:]
+                test   = rperm[0:ntest]
+                Ytrain = Y.iloc[train]
+                Ytest  = Y.iloc[test]
+            else:
+                Ytrain = Y
+
             if type(Ytest) != pd.core.frame.DataFrame:
                 raise ValueError("When Y is a DataFrame Ytest must be too.")
             if (Y.columns != Ytest.columns).any():
                 raise ValueError("Columns of Y and Ytest must be the same.")
             if (Y.dtypes != Ytest.dtypes).any():
                 raise ValueError("Y.dtypes and Ytest.dtypes must be the same.")
-            int_cols   = filter(lambda c: Y[c].dtype==np.int64 or Y[c].dtype==np.int32, Y.columns)
-            float_cols = filter(lambda c: Y[c].dtype==np.float32 or Y[c].dtype==np.float64, Y.columns)
+            int_cols   = filter(lambda c: Ytrain[c].dtype==np.int64 or Ytrain[c].dtype==np.int32, Ytrain.columns)
+            float_cols = filter(lambda c: Ytrain[c].dtype==np.float32 or Ytrain[c].dtype==np.float64, Ytrain.columns)
             if len(int_cols) > 6:
                 raise ValueError("Y has too many index(int) columns (%d), maximum is 6." % len(int_cols))
             if len(int_cols) < 2:
@@ -260,7 +276,8 @@ cdef setData(Macau* macau, data):
     ## testing data
     cdef np.ndarray[int, ndim=2] te_idx   = idx_matrix(data.idxTest)
     cdef np.ndarray[np.double_t] te_ivals = data.valTest.astype(np.double, copy=False)
-    macau.setRelationDataTest(&te_idx[0,0], len(data.shape), &te_ivals[0], te_idx.shape[0], &dims[0])
+    if te_idx.shape[0] > 0:
+        macau.setRelationDataTest(&te_idx[0,0], len(data.shape), &te_ivals[0], te_idx.shape[0], &dims[0])
 
 cdef setSidePriors(Macau* macau, side, int D, double lambda_beta, double tol, bool univariate):
     cdef unique_ptr[ILatentPrior] prior
@@ -270,13 +287,6 @@ cdef setSidePriors(Macau* macau, side, int D, double lambda_beta, double tol, bo
         else:
             prior = unique_ptr[ILatentPrior](make_prior(s, D, 10000, lambda_beta, tol))
         macau.addPrior(prior)
-
-def prepare_Y(Y, Ytest):
-    if Ytest is None:
-        Ytest = 0.0
-    if isinstance(Ytest, numbers.Real):
-        Y, Ytest = make_train_test(Y, Ytest)
-    return Data(Y, Ytest)
 
 def macau(Y,
           Ytest      = None,
@@ -288,10 +298,10 @@ def macau(Y,
           nsamples   = 400,
           univariate = False,
           tol        = 1e-6,
-          sn_max     = 20.0,
+          sn_max     = 10.0,
           save_prefix= None,
           verbose    = True):
-    data = prepare_Y(Y, Ytest)
+    data = Data(Y, Ytest)
 
     ## side information
     if not side:

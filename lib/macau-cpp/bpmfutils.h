@@ -170,29 +170,33 @@ inline std::string to_string_with_precision(const double a_value, const int n = 
 
 inline double auc(Eigen::VectorXd & pred, Eigen::VectorXd & test)
 {
-   Eigen::VectorXd stack_x(pred.size());
-   Eigen::VectorXd stack_y(pred.size());
-   double auc = 0.0;
- 
-   std::vector<unsigned int> permutation( pred.size() );
-   for(unsigned int i = 0; i < pred.size(); i++) {
-     permutation[i] = i;
-   }
-   std::sort(permutation.begin(), permutation.end(), [&pred](unsigned int a, unsigned int b) { return pred[a] < pred[b];});
+	Eigen::VectorXd stack_x(pred.size());
+	Eigen::VectorXd stack_y(pred.size());
+	double auc = 0.0;
 
-   int NP = test.sum();
-   int NN = test.size() - NP;
-   //Build stack_x and stack_y
-     stack_x[0] = test[permutation[0]];
-     stack_y[0] = 1-stack_x[0];
-   for(int i=1; i < pred.size(); i++) {
-     stack_x[i] = stack_x[i-1] + test[permutation[i]];
-     stack_y[i] = stack_y[i-1] + 1 - test[permutation[i]];
-   }
-   
-   for(int i=0; i < pred.size() - 1; i++) {
-	auc += (stack_x(i+1) - stack_x(i)) * stack_y(i+1) / (NP*NN); //TODO:Make it Eigen
-   }
+	if (pred.size() == 0) {
+		return NAN;
+	}
 
-return auc;
+	std::vector<unsigned int> permutation( pred.size() );
+	for(unsigned int i = 0; i < pred.size(); i++) {
+		permutation[i] = i;
+	}
+	std::sort(permutation.begin(), permutation.end(), [&pred](unsigned int a, unsigned int b) { return pred[a] < pred[b];});
+
+	double NP = test.sum();
+	double NN = test.size() - NP;
+	//Build stack_x and stack_y
+	stack_x[0] = test[permutation[0]];
+	stack_y[0] = 1-stack_x[0];
+	for(int i=1; i < pred.size(); i++) {
+		stack_x[i] = stack_x[i-1] + test[permutation[i]];
+		stack_y[i] = stack_y[i-1] + 1 - test[permutation[i]];
+	}
+
+	for(int i=0; i < pred.size() - 1; i++) {
+		auc += (stack_x(i+1) - stack_x(i)) * stack_y(i+1); //TODO:Make it Eigen
+	}
+
+	return auc / (NP*NN);
 }
