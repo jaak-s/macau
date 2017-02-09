@@ -169,7 +169,7 @@ To factorize them we employ probit noise model that can be enabled by <code clas
 </span><span class="hll"><span class="n">act</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">act</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="mf">6.5</span>
 </span>
 <span class="c1">## running factorization (Macau)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">act</span><span class="p">,</span>
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">side</span>       <span class="o">=</span> <span class="p">[</span><span class="n">ecfp</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
