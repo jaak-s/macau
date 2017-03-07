@@ -649,8 +649,8 @@ TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
 
   TensorData st(3);
   st.setTrain(C, v, dims);
-  REQUIRE( st.Y.size() == 3 );
-  REQUIRE( st.Y[0].nonZeros() == 5 );
+  REQUIRE( st.Y->size() == 3 );
+  REQUIRE( (*st.Y)[0]->nonZeros() == 5 );
 
   // test data
   Eigen::MatrixXi Cte(6, 3);
@@ -679,4 +679,18 @@ TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
                 2, 3, 1, -0.5,
                 2, 0, 0, -0.6;
   REQUIRE( (testDataTr - testData).norm() == 0);
+}
+
+TEST_CASE("sparsetensor/vectorview", "VectorView test") {
+	std::vector<std::unique_ptr<int> > vec2;
+	vec2.push_back( std::unique_ptr<int>(new int(0)) );
+	vec2.push_back( std::unique_ptr<int>(new int(2)) );
+	vec2.push_back( std::unique_ptr<int>(new int(4)) );
+	vec2.push_back( std::unique_ptr<int>(new int(6)) );
+	vec2.push_back( std::unique_ptr<int>(new int(8)) );
+	VectorView<int> vv2(vec2, 1);
+	REQUIRE( *vv2.get(0) == 0 );
+	REQUIRE( *vv2.get(1) == 4 );
+	REQUIRE( *vv2.get(2) == 6 );
+	REQUIRE( *vv2.get(3) == 8 );
 }

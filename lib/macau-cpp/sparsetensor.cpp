@@ -111,7 +111,7 @@ void TensorData::setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::Ve
   }
   dims = d;
   for (int mode = 0; mode < N; mode++) {
-    Y.push_back( SparseMode(idx, vals, mode, dims(mode)) );
+    Y->push_back( std::unique_ptr<SparseMode>(new SparseMode(idx, vals, mode, dims(mode))) );
   }
 }
 

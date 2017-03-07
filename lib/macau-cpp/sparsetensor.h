@@ -61,6 +61,31 @@ class MatrixData : public IData {
     Eigen::MatrixXd getTestData() override;
 };
 
+template<class T>
+class VectorView {
+	public:
+		std::vector<T*> vec;
+		unsigned int removed;
+
+		VectorView(std::vector< std::unique_ptr<T> > & cvec, unsigned int cremoved) {
+			for (unsigned int i = 0; i < cvec.size(); i++) {
+				if (cremoved == i) {
+					continue;
+				}
+				vec.push_back( cvec[i].get() );
+			}
+			removed = cremoved;
+		}
+
+		T* get(int i) {
+			return vec[i];
+		}
+
+		int size() {
+			return vec.size();
+		}
+};
+
 //////   Tensor data   //////
 class SparseMode {
   public:
@@ -83,12 +108,12 @@ class TensorData : public IData {
   public:
     Eigen::MatrixXi dims;
     double mean_value;
-    std::vector< SparseMode > Y;
+    std::vector< std::unique_ptr<SparseMode> >* Y;
     SparseMode Ytest;
     int N;
 
   public:
-    TensorData(int Nmodes) : N(Nmodes) { }
+    TensorData(int Nmodes) : N(Nmodes) { Y = new std::vector< std::unique_ptr<SparseMode> >(); }
 
     void setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);
     void setTest(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::VectorXi &d);

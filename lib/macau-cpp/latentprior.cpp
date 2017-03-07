@@ -110,12 +110,67 @@ void BPMFPrior::sample_latents(ProbitNoise & noise, Eigen::MatrixXd &U, const Ei
 
 void BPMFPrior::sample_latents(ProbitNoise& noiseModel, TensorData & data,
                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+  // TODO
   throw std::runtime_error("Unimplemented: sample_latents");
 }
 
-void BPMFPrior::sample_latents(double noisePrecision, TensorData & data,
-                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
-  throw std::runtime_error("Unimplemented: sample_latents");
+void sample_latent_tensor(std::unique_ptr<Eigen::MatrixXd> &U,
+                          int n,
+                          std::unique_ptr<SparseMode> & sparseMode,
+                          VectorView<Eigen::MatrixXd> & view,
+                          double mean_value,
+                          double alpha,
+                          Eigen::VectorXd & mu,
+                          Eigen::MatrixXd & Lambda) {
+  MatrixXd MM = Lambda;
+  VectorXd rr = VectorXd::Zero(mu.size());
+  const int nmodes1 = view.size();
+  const int num_latent = U->rows();
+
+  Eigen::VectorXi & row_ptr = sparseMode->row_ptr;
+  Eigen::MatrixXi & indices = sparseMode->indices;
+  Eigen::VectorXd & values  = sparseMode->values;
+
+  Eigen::MatrixXd* S0 = view.get(0);
+
+  for (int j = row_ptr(n); j < row_ptr(n + 1); j++) {
+    VectorXd col = S0->col(indices(j, 0));
+    for (int m = 1; m < nmodes1; m++) {
+      col *= view.get(m)->col(indices(j, m));
+    }
+
+    MM.triangularView<Eigen::Lower>() += alpha * col * col.transpose();
+    rr.noalias() += col * ((values(j) - mean_value) * alpha);
+  }
+
+  Eigen::LLT<MatrixXd> chol = MM.llt();
+  if(chol.info() != Eigen::Success) {
+    throw std::runtime_error("Cholesky Decomposition failed!");
+  }
+
+  rr.noalias() += Lambda * mu;
+  chol.matrixL().solveInPlace(rr);
+  for (int i = 0; i < num_latent; i++) {
+    rr[i] += randn0();
+  }
+  chol.matrixU().solveInPlace(rr);
+  U->col(n).noalias() = rr;
+}
+
+void BPMFPrior::sample_latents(double noisePrecision,
+                               TensorData & data,
+                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                               const int mode,
+                               const int num_latent) {
+  auto& sparseMode = (*data.Y)[mode];
+  auto& U = samples[mode];
+  const int N = U->cols();
+  VectorView<Eigen::MatrixXd> view(samples, mode);
+
+#pragma omp parallel for schedule(dynamic, 2)
+  for (int n = 0; n < N; n++) {
+    sample_latent_tensor(U, n, sparseMode, view, data.mean_value, noisePrecision, mu, Lambda);
+  }
 }
 
 /** MacauPrior */
@@ -171,13 +226,22 @@ void MacauPrior<FType>::sample_latents(Eigen::MatrixXd &U, const Eigen::SparseMa
 template<class FType>
 void MacauPrior<FType>::sample_latents(ProbitNoise& noiseModel, TensorData & data,
                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
-  throw std::runtime_error("Unimplemented: sample_latents");
+  // TODO:
 }
 
 template<class FType>
 void MacauPrior<FType>::sample_latents(double noisePrecision, TensorData & data,
                                std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
-  throw std::runtime_error("Unimplemented: sample_latents");
+  auto& sparseMode = (*data.Y)[mode];
+  auto& U = samples[mode];
+  const int N = U->cols();
+  VectorView<Eigen::MatrixXd> view(samples, mode);
+
+#pragma omp parallel for schedule(dynamic, 2)
+  for (int n = 0; n < N; n++) {
+    Eigen::VectorXd mu2 = mu + Uhat.col(n);
+    sample_latent_tensor(U, n, sparseMode, view, data.mean_value, noisePrecision, mu2, Lambda);
+  }
 }
 
 
