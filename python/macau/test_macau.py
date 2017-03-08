@@ -84,9 +84,9 @@ class TestMacau(unittest.TestCase):
             "C": np.random.randint(0, 3, 5),
             "value": np.random.randn(5)
         })
-        #results = macau.bpmf(Y, Ytest = Ytest, num_latent = 4,
-        #                     verbose = False, burnin = 50, nsamples = 50,
-        #                     univariate = False)
+        results = macau.bpmf(Y, Ytest = Ytest, num_latent = 4,
+                             verbose = False, burnin = 50, nsamples = 50,
+                             univariate = False)
 
 if __name__ == '__main__':
     unittest.main()

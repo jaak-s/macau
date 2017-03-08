@@ -2,6 +2,7 @@
 #include <Eigen/Sparse>
 #include <memory>
 #include <cmath>
+#include <iostream>
 
 #include "noisemodels.h"
 
@@ -30,7 +31,23 @@ void AdaptiveGaussianNoise::init(MatrixData & matrixData) {
 }
 
 void AdaptiveGaussianNoise::init(TensorData & data) {
-  throw std::runtime_error("TensorData init unimplemented.");
+  double se = 0.0;
+  double mean_value = data.mean_value;
+
+  auto& sparseMode   = (*data.Y)[0];
+  VectorXd & values  = sparseMode->values;
+
+#pragma omp parallel for schedule(dynamic, 4) reduction(+:se)
+  for (int i = 0; i < values.size(); i++) {
+    se += square(values(i) - mean_value);
+  }
+  var_total = se / values.size();
+  if (var_total <= 0.0 || std::isnan(var_total)) {
+    var_total = 1.0;
+  }
+  // Var(noise) = Var(total) / (SN + 1)
+  alpha     = (sn_init + 1.0) / var_total;
+  alpha_max = (sn_max + 1.0)  / var_total;
 }
 
 void AdaptiveGaussianNoise::update(MatrixData & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)
@@ -60,9 +77,48 @@ void AdaptiveGaussianNoise::update(MatrixData & data, std::vector< std::unique_p
     alpha = alpha_max;
   }
 }
+
 void AdaptiveGaussianNoise::update(TensorData & data, std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples)
 {
-  throw std::runtime_error("TensorData init unimplemented.");
+  double sumsq = 0.0;
+  double mean_value = data.mean_value;
+
+  auto& sparseMode = (*data.Y)[0];
+  auto& U = samples[0];
+
+  const int nmodes = samples.size();
+  const int num_latents = U->rows();
+
+#pragma omp parallel for schedule(dynamic, 4) reduction(+:sumsq)
+  for (int n = 0; n < data.dims(0); n++) {
+    Eigen::VectorXd u = U->col(n);
+    for (int j = sparseMode->row_ptr(n);
+             j < sparseMode->row_ptr(n + 1);
+             j++)
+    {
+      VectorXi idx = sparseMode->indices.row(j);
+      // computing prediction from tensor
+      double Yhat = mean_value;
+      for (int d = 0; d < num_latents; d++) {
+        double tmp = u(d);
+
+        for (int m = 1; m < nmodes; m++) {
+          tmp *= (*samples[m])(d, idx(m - 1));
+        }
+        Yhat += tmp;
+      }
+      sumsq += square(Yhat - sparseMode->values(j));
+    }
+
+  }
+  double a0 = 0.5;
+  double b0 = 0.5;
+  double aN = a0 + sparseMode->values.size() / 2.0;
+  double bN = b0 + sumsq / 2.0;
+  alpha = rgamma(aN, 1.0 / bN);
+  if (alpha > alpha_max) {
+    alpha = alpha_max;
+  }
 }
 
 inline double nCDF(double val) {return 0.5 * erfc(-val * M_SQRT1_2);}
@@ -116,21 +172,78 @@ void AdaptiveGaussianNoise::evalModel(MatrixData & data, const int n, Eigen::Vec
 
 
 // evalModel for TensorData
-void ProbitNoise::evalModel(TensorData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+void ProbitNoise::evalModel(TensorData & data, const int Nepoch, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
         std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
-  const unsigned N = data.Ytest.nonZeros();
-  Eigen::VectorXd pred(N);
-  Eigen::VectorXd test(N);
+  // TODO
+  throw std::runtime_error("ProbitNoise::evalModel unimplemented.");
+}
 
-  throw std::runtime_error("TensorData evalModel unimplemented.");
+std::pair<double,double> eval_rmse_tensor(TensorData & data, const int Nepoch, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
+  //Eigen::VectorXd pred(N);
+  //Eigen::VectorXd test(N);
+  double mean_value = data.mean_value;
+
+  auto& sparseMode = (*data.Y)[0];
+  auto& U = samples[0];
+
+  const int nmodes = samples.size();
+  const int num_latents = U->rows();
+
+  const unsigned N = sparseMode->values.size();
+  double se = 0.0, se_avg = 0.0;
+
+  // remove #include<iostream>
+  std::cout << "Ntest = " << N << "\n";
+  std::cout << "predictions.size() = " << predictions.size() << "\n";
+
+  /* TODO: find a bug in this code (invalid pointer):
+#pragma omp parallel for schedule(dynamic, 2) reduction(+:se, se_avg)
+  for (int n = 0; n < data.dims(0); n++) {
+    Eigen::VectorXd u = U->col(n);
+    for (int j = sparseMode->row_ptr(n);
+             j < sparseMode->row_ptr(n + 1);
+             j++)
+    {
+      VectorXi idx = sparseMode->indices.row(j);
+      double pred = mean_value;
+      for (int d = 0; d < num_latents; d++) {
+        double tmp = u(d);
+
+        for (int m = 1; m < nmodes; m++) {
+          tmp *= (*samples[m])(d, idx(m - 1));
+        }
+        pred += tmp;
+      }
+
+      double pred_avg;
+      if (Nepoch == 0) {
+        pred_avg = pred;
+      } else {
+        double delta = pred - predictions(j);
+        pred_avg = (predictions(j) + delta / (Nepoch + 1));
+        predictions_var(j) += delta * (pred - pred_avg);
+      }
+      se     += square(sparseMode->values(j) - pred);
+      se_avg += square(sparseMode->values(j) - pred_avg);
+      predictions(j) = pred_avg;
+    }
+  }*/
+  const double rmse = sqrt(se / N);
+  const double rmse_avg = sqrt(se_avg / N);
+  return std::make_pair(rmse, rmse_avg);
 }
 
 void FixedGaussianNoise::evalModel(TensorData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
         std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
-  throw std::runtime_error("TensorData evalModel unimplemented.");
+  auto rmse = eval_rmse_tensor(data, n, predictions, predictions_var, samples);
+  rmse_test = rmse.second;
+  rmse_test_onesample = rmse.first;
 }
 
 void AdaptiveGaussianNoise::evalModel(TensorData & data, const int n, Eigen::VectorXd & predictions, Eigen::VectorXd & predictions_var,
         std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples) {
-  throw std::runtime_error("TensorData evalModel unimplemented.");
+  auto rmse = eval_rmse_tensor(data, n, predictions, predictions_var, samples);
+  rmse_test = rmse.second;
+  rmse_test_onesample = rmse.first;
 }
