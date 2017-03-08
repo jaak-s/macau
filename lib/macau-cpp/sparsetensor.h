@@ -41,19 +41,9 @@ class MatrixData : public IData {
     int getTestNonzeros() { return Ytest.nonZeros(); }
     double getMeanValue() override { return mean_value; }
 
-    void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override {
-      Y.resize(nrows, ncols);
-      sparseFromIJV(Y, rows, cols, values, nnz);
-      Yt = Y.transpose();
-      mean_value = Y.sum() / Y.nonZeros();
-      dims.resize(2);
-      dims << Y.rows(), Y.cols();
-    }
 
-    void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override {
-      Ytest.resize(nrows, ncols);
-      sparseFromIJV(Ytest, rows, cols, values, nnz);
-    }
+		void setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
+		void setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) override;
 
     void setTrain(int* idx, int nmodes, double* values, int nnz, int* dims) override;
     void setTest(int* idx, int nmodes, double* values, int nnz, int* dims) override;

@@ -75,6 +75,20 @@ Eigen::MatrixXd MatrixData::getTestData() {
   return coords;
 }
 
+void MatrixData::setTrain(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) {
+	Y.resize(nrows, ncols);
+	sparseFromIJV(Y, rows, cols, values, nnz);
+	Yt = Y.transpose();
+	mean_value = Y.sum() / Y.nonZeros();
+	dims.resize(2);
+	dims << Y.rows(), Y.cols();
+}
+
+void MatrixData::setTest(int* rows, int* cols, double* values, int nnz, int nrows, int ncols) {
+	Ytest.resize(nrows, ncols);
+	sparseFromIJV(Ytest, rows, cols, values, nnz);
+}
+
 void MatrixData::setTrain(int* columns, int nmodes, double* values, int nnz, int* d) {
   if (nmodes != 2) {
     throw std::runtime_error("MatrixData: tensor training input not supported.");

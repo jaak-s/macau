@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 import macau
+import itertools
 
 class TestMacau(unittest.TestCase):
     def test_bpmf(self):
@@ -87,6 +88,20 @@ class TestMacau(unittest.TestCase):
         results = macau.bpmf(Y, Ytest = Ytest, num_latent = 4,
                              verbose = False, burnin = 50, nsamples = 50,
                              univariate = False)
+
+    def test_bpmf_tensor2(self):
+        A = np.random.randn(15, 2)
+        B = np.random.randn(20, 2)
+        C = np.random.randn(3, 2)
+
+        idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )
+        df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
+        df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
+
+        results = macau.bpmf(Y = df, Ytest = 0.2, num_latent = 4,
+                             verbose = True, burnin = 20, nsamples = 20,
+                             univariate = False, precision = 50)
+
 
 if __name__ == '__main__':
     unittest.main()

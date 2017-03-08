@@ -8,6 +8,8 @@
 #include <fstream>
 #include <iomanip>
 
+class SparseMode;
+
 inline double tick() {
     return std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); 
 }
@@ -109,6 +111,14 @@ inline std::pair<double,double> eval_rmse(Eigen::SparseMatrix<double> & P, const
   const double rmse_avg = sqrt( se_avg / N );
   return std::make_pair(rmse, rmse_avg);
 }
+
+std::pair<double,double> eval_rmse_tensor(
+		SparseMode & sparseMode,
+		const int Nepoch,
+		Eigen::VectorXd & predictions,
+		Eigen::VectorXd & predictions_var,
+		std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+		double mean_value);
 
 inline void row_mean_var(Eigen::VectorXd & mean, Eigen::VectorXd & var, const Eigen::MatrixXd X) {
   const int N = X.cols();

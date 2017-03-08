@@ -14,7 +14,7 @@ test: tests
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-OBJS = mvnormal.o chol.o linop.o noisemodels.o sparsetensor.o latentprior.o tests.o
+OBJS = bpmfutils.o mvnormal.o chol.o linop.o noisemodels.o sparsetensor.o latentprior.o tests.o
 tests: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o tests $(OBJS) $(LDFLAGS) $(LIBLOCS)
 

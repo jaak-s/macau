@@ -7,6 +7,7 @@
 
 #include "latentprior.h"
 #include "sparsetensor.h"
+#include "bpmfutils.h"
 
 // forward declarations
 class ILatentPrior;
