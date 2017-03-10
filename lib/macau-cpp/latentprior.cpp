@@ -167,6 +167,9 @@ void BPMFPrior::sample_latents(double noisePrecision,
   const int N = U->cols();
   VectorView<Eigen::MatrixXd> view(samples, mode);
 
+  std::cout << "Sampling mode " << mode << "\n";
+  std::cout << *samples[mode] << "\n";
+
 #pragma omp parallel for schedule(dynamic, 2)
   for (int n = 0; n < N; n++) {
     sample_latent_tensor(U, n, sparseMode, view, data.mean_value, noisePrecision, mu, Lambda);
@@ -230,8 +233,11 @@ void MacauPrior<FType>::sample_latents(ProbitNoise& noiseModel, TensorData & dat
 }
 
 template<class FType>
-void MacauPrior<FType>::sample_latents(double noisePrecision, TensorData & data,
-                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+void MacauPrior<FType>::sample_latents(double noisePrecision,
+                                       TensorData & data,
+                                       std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+                                       int mode,
+                                       const int num_latent) {
   auto& sparseMode = (*data.Y)[mode];
   auto& U = samples[mode];
   const int N = U->cols();

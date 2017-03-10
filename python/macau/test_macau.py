@@ -71,6 +71,23 @@ class TestMacau(unittest.TestCase):
         diff = np.linalg.norm( (X - Xtr - Xte).todense() )
         self.assertEqual(diff, 0.0)
 
+    def test_make_train_test_df(self):
+        idx = list( itertools.product(np.arange(10), np.arange(8), np.arange(3) ))
+        df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
+        df["value"] = np.arange(10.0 * 8.0 * 3.0)
+
+        Ytr, Yte = macau.make_train_test_df(df, 0.4)
+        self.assertEqual(Ytr.shape[0], df.shape[0] * 0.6)
+        self.assertEqual(Yte.shape[0], df.shape[0] * 0.4)
+
+        A1 = np.zeros( (10, 8, 3) )
+        A2 = np.zeros( (10, 8, 3) )
+        A1[df.A, df.B, df.C] = df.value
+        A2[Ytr.A, Ytr.B, Ytr.C] = Ytr.value
+        A2[Yte.A, Yte.B, Yte.C] = Yte.value
+
+        self.assertTrue(np.allclose(A1, A2))
+
     def test_bpmf_tensor(self):
         np.random.seed(1234)
         Y = pd.DataFrame({
@@ -89,16 +106,38 @@ class TestMacau(unittest.TestCase):
                              verbose = False, burnin = 50, nsamples = 50,
                              univariate = False)
 
-    def test_bpmf_tensor2(self):
+#    def test_bpmf_tensor2(self):
+#        A = np.random.randn(15, 2)
+#        B = np.random.randn(20, 2)
+#        C = np.random.randn(3, 2)
+#
+#        idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )
+#        df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
+#        df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
+#        Ytrain, Ytest = macau.make_train_test_df(df, 0.2)
+#
+#        results = macau.bpmf(Y = Ytrain, Ytest = Ytest, num_latent = 4,
+#                             verbose = True, burnin = 20, nsamples = 20,
+#                             univariate = False, precision = 50)
+
+    def test_bpmf_tensor3(self):
         A = np.random.randn(15, 2)
         B = np.random.randn(20, 2)
-        C = np.random.randn(3, 2)
+        C = np.random.randn(1, 2)
 
         idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )
         df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
         df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
+        Ytrain, Ytest = macau.make_train_test_df(df, 0.2)
 
-        results = macau.bpmf(Y = df, Ytest = 0.2, num_latent = 4,
+        results = macau.bpmf(Y = Ytrain, Ytest = Ytest, num_latent = 4,
+                             verbose = True, burnin = 20, nsamples = 20,
+                             univariate = False, precision = 50)
+
+        Ytrain_sp = scipy.sparse.coo_matrix( (Ytrain.value, (Ytrain.A, Ytrain.B) ) )
+        Ytest_sp  = scipy.sparse.coo_matrix( (Ytest.value,  (Ytest.A, Ytest.B) ) )
+
+        results = macau.bpmf(Y = Ytrain_sp, Ytest = Ytest_sp, num_latent = 4,
                              verbose = True, burnin = 20, nsamples = 20,
                              univariate = False, precision = 50)
 

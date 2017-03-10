@@ -106,9 +106,9 @@ cdef vecview(VectorXd *v):
 
 def make_train_test(Y, ntest):
     if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
-        raise ValueError("Unsupported Y type: %s" + type(Y))
+        raise TypeError("Unsupported Y type: %s" + type(Y))
     if not isinstance(ntest, numbers.Real) or ntest < 0:
-        raise ValueError("ntest has to be a non-negative number (number or ratio of test samples).")
+        raise TypeError("ntest has to be a non-negative number (number or ratio of test samples).")
     Y = Y.tocoo(copy = False)
     if ntest < 1:
         ntest = Y.nnz * ntest
@@ -119,6 +119,21 @@ def make_train_test(Y, ntest):
     Ytrain = sp.sparse.coo_matrix( (Y.data[train], (Y.row[train], Y.col[train])), shape=Y.shape )
     Ytest  = sp.sparse.coo_matrix( (Y.data[test],  (Y.row[test],  Y.col[test])),  shape=Y.shape )
     return Ytrain, Ytest
+
+def make_train_test_df(Y, ntest):
+    if type(Y) != pd.core.frame.DataFrame:
+        raise TypeError("Y should be DataFrame.")
+    if not isinstance(ntest, numbers.Real) or ntest < 0:
+        raise TypeError("ntest has to be a non-negative number (number or ratio of test samples).")
+
+    ## randomly spliting train-test
+    if ntest < 1:
+        ntest = Y.shape[0] * ntest
+    ntest  = int(round(ntest))
+    rperm  = np.random.permutation(Y.shape[0])
+    train  = rperm[ntest:]
+    test   = rperm[0:ntest]
+    return Y.iloc[train], Y.iloc[test]
 
 cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lambda_beta, double tol) except NULL:
     if (side is None) or side == ():
@@ -221,25 +236,16 @@ class Data:
             if Ytest is None:
                 Ytest = Y[0:0]
             if isinstance(Ytest, numbers.Real):
-                ## randomly spliting train-test
-                ntest = Ytest
-                if ntest < 1:
-                    ntest = Y.shape[0] * ntest
-                ntest  = int(round(ntest))
-                rperm  = np.random.permutation(Y.shape[0])
-                train  = rperm[ntest:]
-                test   = rperm[0:ntest]
-                Ytrain = Y.iloc[train]
-                Ytest  = Y.iloc[test]
+                Ytrain, Ytest = make_train_test_df(Y, Ytest)
             else:
                 Ytrain = Y
 
             if type(Ytest) != pd.core.frame.DataFrame:
-                raise ValueError("When Y is a DataFrame Ytest must be too.")
+                raise TypeError("When Y is a DataFrame Ytest must be too.")
             if (Y.columns != Ytest.columns).any():
                 raise ValueError("Columns of Y and Ytest must be the same.")
             if (Y.dtypes != Ytest.dtypes).any():
-                raise ValueError("Y.dtypes and Ytest.dtypes must be the same.")
+                raise TypeError("Y.dtypes and Ytest.dtypes must be the same.")
             int_cols   = filter(lambda c: Ytrain[c].dtype==np.int64 or Ytrain[c].dtype==np.int32, Ytrain.columns)
             float_cols = filter(lambda c: Ytrain[c].dtype==np.float32 or Ytrain[c].dtype==np.float64, Ytrain.columns)
             if len(int_cols) > 6:
@@ -257,7 +263,7 @@ class Data:
             self.valTest  = np.array(Ytest[value_col], dtype=np.float64)
 
         else:
-            raise ValueError("Unsupported Y type: %s" + type(Y))
+            raise TypeError("Unsupported Y type: %s" + type(Y))
 
 cdef np.ndarray idx_matrix(idxList):
     cdef np.ndarray idx = np.zeros([len(idxList[0]), len(idxList)], dtype=np.int32, order='F')
