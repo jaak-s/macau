@@ -15,12 +15,12 @@ df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in i
 Ytrain, Ytest = macau.make_train_test_df(df, 0.2)
 
 results = macau.bpmf(Y = Ytrain, Ytest = Ytest, num_latent = 4,
-                     verbose = True, burnin = 3, nsamples = 2,
+                     verbose = True, burnin = 20, nsamples = 2,
                      univariate = False, precision = 50)
 
 Ytrain_sp = scipy.sparse.coo_matrix( (Ytrain.value, (Ytrain.A, Ytrain.B) ) )
 Ytest_sp  = scipy.sparse.coo_matrix( (Ytest.value,  (Ytest.A, Ytest.B) ) )
 
-#results = macau.bpmf(Y = Ytrain_sp, Ytest = Ytest_sp, num_latent = 4,
-#                     verbose = True, burnin = 20, nsamples = 20,
-#                     univariate = False, precision = 50)
+results = macau.bpmf(Y = Ytrain_sp, Ytest = Ytest_sp, num_latent = 4,
+                     verbose = True, burnin = 20, nsamples = 2,
+                     univariate = False, precision = 50)

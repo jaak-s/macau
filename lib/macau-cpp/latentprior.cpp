@@ -122,10 +122,12 @@ void sample_latent_tensor(std::unique_ptr<Eigen::MatrixXd> &U,
                           double alpha,
                           Eigen::VectorXd & mu,
                           Eigen::MatrixXd & Lambda) {
-  MatrixXd MM = Lambda;
-  VectorXd rr = VectorXd::Zero(mu.size());
   const int nmodes1 = view.size();
   const int num_latent = U->rows();
+
+  MatrixXd MM(num_latent, num_latent);
+  MM = Lambda;
+  VectorXd rr = VectorXd::Zero(mu.size());
 
   Eigen::VectorXi & row_ptr = sparseMode->row_ptr;
   Eigen::MatrixXi & indices = sparseMode->indices;
@@ -136,12 +138,16 @@ void sample_latent_tensor(std::unique_ptr<Eigen::MatrixXd> &U,
   for (int j = row_ptr(n); j < row_ptr(n + 1); j++) {
     VectorXd col = S0->col(indices(j, 0));
     for (int m = 1; m < nmodes1; m++) {
-      col *= view.get(m)->col(indices(j, m));
+      std::cout << col << std::endl;
+      std::cout << view.get(m)->col(indices(j, m)) << std::endl;
+      col.noalias() = col.cwiseProduct(view.get(m)->col(indices(j, m)));
+      std::cout << col << std::endl;
     }
 
     MM.triangularView<Eigen::Lower>() += alpha * col * col.transpose();
     rr.noalias() += col * ((values(j) - mean_value) * alpha);
   }
+  std::cout << "was here 2" << std::endl;
 
   Eigen::LLT<MatrixXd> chol = MM.llt();
   if(chol.info() != Eigen::Success) {

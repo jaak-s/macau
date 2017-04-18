@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-std=c++11 -Wall -Wno-unknown-pragmas -O3 -fopenmp -fstrict-aliasing
+CXXFLAGS=-g -std=c++11 -Wall -Wno-unknown-pragmas -O0 -fopenmp -fstrict-aliasing
 LINK.o=$(CXX) $(CXXFLAGS)
 
 INCLUDES := -I ../eigen3 -I ../libfastsparse
