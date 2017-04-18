@@ -138,16 +138,12 @@ void sample_latent_tensor(std::unique_ptr<Eigen::MatrixXd> &U,
   for (int j = row_ptr(n); j < row_ptr(n + 1); j++) {
     VectorXd col = S0->col(indices(j, 0));
     for (int m = 1; m < nmodes1; m++) {
-      std::cout << col << std::endl;
-      std::cout << view.get(m)->col(indices(j, m)) << std::endl;
       col.noalias() = col.cwiseProduct(view.get(m)->col(indices(j, m)));
-      std::cout << col << std::endl;
     }
 
     MM.triangularView<Eigen::Lower>() += alpha * col * col.transpose();
     rr.noalias() += col * ((values(j) - mean_value) * alpha);
   }
-  std::cout << "was here 2" << std::endl;
 
   Eigen::LLT<MatrixXd> chol = MM.llt();
   if(chol.info() != Eigen::Success) {
@@ -172,9 +168,6 @@ void BPMFPrior::sample_latents(double noisePrecision,
   auto& U = samples[mode];
   const int N = U->cols();
   VectorView<Eigen::MatrixXd> view(samples, mode);
-
-  std::cout << "Sampling mode " << mode << "\n";
-  std::cout << *samples[mode] << "\n";
 
 #pragma omp parallel for schedule(dynamic, 2)
   for (int n = 0; n < N; n++) {

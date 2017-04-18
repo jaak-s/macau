@@ -21,6 +21,7 @@
 #include "mvnormal.h"
 #include "bpmfutils.h"
 #include "latentprior.h"
+#include "noisemodels.h"
 #include "sparsetensor.h"
 
 using namespace std; 
