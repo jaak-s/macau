@@ -56,7 +56,7 @@ CC=g++-5 CXX=g++-5 python setup.py install
 There is a plan to support Python wheel packages. Currently, we do not have one built yet.
 
 # Contributors
-- Jaak Simm (Macau C++ version, Cython wrapper, Macau MPI version)
+- Jaak Simm (Macau C++ version, Cython wrapper, Macau MPI version, Tensor factorization)
 - Adam Arany (Probit noise model)
 - Tom Vander Aa (OpenMP optimized BPMF)
 - Tom Haber (Original BPMF code)
