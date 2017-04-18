@@ -635,6 +635,46 @@ TEST_CASE("sparsetensor/sparsemode", "SparseMode constructor") {
   REQUIRE( sm1.modeSize() == 4 );
 }
 
+TEST_CASE("bpmfutils/eval_rmse_tensor", "Testing eval_rmse_tensor") {
+  Eigen::MatrixXi C(5, 3);
+  C << 0, 1, 0,
+       0, 0, 0,
+       1, 3, 1,
+       1, 0, 1,
+       2, 3, 0;
+  Eigen::VectorXd v(5);
+  v << 0.1, 0.2, 0.3, 0.4, 0.5;
+
+  // mode 0
+  SparseMode sm0(C, v, 0, 4);
+  int nlatent = 5;
+  double gmean = 0.9;
+
+  std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
+  Eigen::VectorXi dims(3);
+  dims << 4, 5, 2;
+
+  for (int d = 0; d < 3; d++) {
+    Eigen::MatrixXd* x = new Eigen::MatrixXd(nlatent, dims(d));
+    bmrandn(*x);
+    samples.push_back( std::move(std::unique_ptr<Eigen::MatrixXd>(x)) );
+  }
+
+  Eigen::VectorXd pred(5);
+  Eigen::VectorXd pred_var(5);
+  pred.setZero();
+  pred_var.setZero();
+
+  eval_rmse_tensor(sm0, 0, pred, pred_var, samples, gmean);
+
+  for (int i = 0; i < C.rows(); i++) {
+    auto v0 = gmean + samples[0]->col(C(i, 0)).
+                  cwiseProduct( samples[1]->col(C(i, 1)) ).
+                  cwiseProduct( samples[2]->col(C(i, 2)) ).sum();
+    REQUIRE(v0 == Approx(pred(i)));
+  }
+}
+
 TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
   Eigen::MatrixXi C(5, 3);
   C << 0, 1, 0,
