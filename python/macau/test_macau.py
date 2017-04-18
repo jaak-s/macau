@@ -157,7 +157,7 @@ class TestMacau(unittest.TestCase):
 
         Acoo = scipy.sparse.coo_matrix(A)
 
-        results = macau.bpmf(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
+        results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
                              verbose = True, burnin = 20, nsamples = 20,
                              univariate = False, precision = 50)
         self.assertTrue(results.rmse_test < 0.5,
