@@ -6,6 +6,7 @@
 
 #include "sparsetensor.h"
 #include "bpmfutils.h"
+#include "noisemodels.h"
 
 using namespace Eigen;
 

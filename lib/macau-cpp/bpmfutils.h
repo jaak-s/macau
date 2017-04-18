@@ -8,7 +8,7 @@
 #include <fstream>
 #include <iomanip>
 
-class SparseMode;
+#include "sparsetensor.h"
 
 inline double tick() {
     return std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); 

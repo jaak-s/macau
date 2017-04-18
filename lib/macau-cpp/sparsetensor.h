@@ -4,11 +4,6 @@
 #include <Eigen/Sparse>
 #include <vector>
 
-#include "latentprior.h"
-#include "noisemodels.h"
-#include "bpmfutils.h"
-
-
 // forward declarations
 class ILatentPrior;
 class ProbitNoise;

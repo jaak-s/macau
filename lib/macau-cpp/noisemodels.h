@@ -9,12 +9,6 @@
 #include "sparsetensor.h"
 #include "bpmfutils.h"
 
-// forward declarations
-class ILatentPrior;
-class IData;
-class MatrixData;
-class TensorData;
-
 /** interface */
 class INoiseModel {
   public:

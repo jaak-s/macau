@@ -5,7 +5,6 @@
 #include <memory>
 #include "mvnormal.h"
 #include "linop.h"
-#include "noisemodels.h"
 #include "sparsetensor.h"
 
  // forward declarations
@@ -156,6 +155,14 @@ void sample_latent_blas_probit(Eigen::MatrixXd &s,
                         const Eigen::VectorXd &mu_u,
                         const Eigen::MatrixXd &Lambda_u,
                         const int num_latent);
+void sample_latent_tensor(std::unique_ptr<Eigen::MatrixXd> &U,
+                          int n,
+                          std::unique_ptr<SparseMode> & sparseMode,
+                          VectorView<Eigen::MatrixXd> & view,
+                          double mean_value,
+                          double alpha,
+                          Eigen::VectorXd & mu,
+                          Eigen::MatrixXd & Lambda);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
