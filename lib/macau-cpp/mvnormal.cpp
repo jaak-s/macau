@@ -304,18 +304,14 @@ std::pair<VectorXd, MatrixXd> CondNormalWishart(const MatrixXd &U, const VectorX
   /// TODO: parallelize (for computing C and C * C')
   int N = U.cols();
 
-  VectorXd Um = U.rowwise().mean();
+	auto NU = U.rowwise().sum();
+	auto NS = U * U.adjoint();
 
-  // http://stackoverflow.com/questions/15138634/eigen-is-there-an-inbuilt-way-to-calculate-sample-covariance
-  auto C = U.colwise() - Um;
-  MatrixXd S = (C * C.adjoint()) / double(N - 1);
-  VectorXd mu_c = (kappa*mu + N*Um) / (kappa + N);
-  double kappa_c = kappa + N;
-  auto mu_m = (mu - Um);
-  double kappa_m = (kappa * N)/(kappa + N);
-  auto X = ( T + N * S + kappa_m * (mu_m * mu_m.transpose()));
-  MatrixXd T_c = X.inverse();
-  int nu_c = nu + N;
+	int nu_c = nu + N;
+	double kappa_c = kappa + N;
+	auto mu_c = (kappa * mu + NU) / (kappa + N);
+	auto X    = (T + NS + kappa * mu * mu.adjoint() - kappa_c * mu_c * mu_c.adjoint());
+	Eigen::MatrixXd T_c = X.inverse();
 
 #ifdef TEST_MVNORMAL
   cout << "mu_c:\n" << mu_c << endl;
