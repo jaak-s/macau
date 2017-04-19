@@ -9,6 +9,7 @@
 #include "latentprior.h"
 #include "bpmfutils.h"
 #include "sparsetensor.h"
+#include "macauoneprior.h"
 
 TEST_CASE( "SparseFeat/At_mul_A_bcsr", "[At_mul_A] for BinaryCSR" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
@@ -691,6 +692,11 @@ TEST_CASE("sparsetensor/sparsetensor", "TensorData constructor") {
   st.setTrain(C, v, dims);
   REQUIRE( st.Y->size() == 3 );
   REQUIRE( (*st.Y)[0]->nonZeros() == 5 );
+  REQUIRE( st.mean_value == Approx(v.mean()) );
+  REQUIRE( st.N == 3 );
+  REQUIRE( st.dims(0) == dims(0) );
+  REQUIRE( st.dims(1) == dims(1) );
+  REQUIRE( st.dims(2) == dims(2) );
 
   // test data
   Eigen::MatrixXi Cte(6, 3);
@@ -776,4 +782,54 @@ TEST_CASE("latentprior/sample_tensor", "Test whether sampling tensor is correct"
 
 	VectorView<Eigen::MatrixXd> vv0(samples, 0);
   sample_latent_tensor(samples[0], 0, sparseModes[0], vv0, mvalue, alpha, mu, Lambda);
+}
+
+TEST_CASE("macauoneprior/sample_tensor_uni", "Testing sampling tensor univariate") {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  SparseFeat* sf = new SparseFeat(6, 4, 9, rows, cols);
+  auto sfptr = std::unique_ptr<SparseFeat>(sf);
+
+  Eigen::MatrixXi C(5, 3);
+  C << 0, 1, 0,
+       0, 0, 0,
+       1, 3, 1,
+       2, 3, 0,
+       1, 0, 1;
+  Eigen::VectorXd v(5);
+  v << 0.15, 0.23, 0.31, 0.47, 0.59;
+
+	Eigen::VectorXd mu(3);
+	Eigen::MatrixXd Lambda(3, 3);
+	mu << 0.03, -0.08, 0.12;
+	Lambda << 1.2, 0.11, 0.17,
+				    0.11, 1.4, 0.08,
+						0.17, 0.08, 1.7;
+
+	double mvalue = 0.2;
+	double alpha  = 7.5;
+  int nlatent = 3;
+
+  MacauOnePrior<SparseFeat> prior(nlatent, sfptr);
+
+  std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
+	//std::vector< std::unique_ptr<SparseMode> > sparseModes;
+
+  Eigen::VectorXi dims(3);
+  dims << 6, 5, 2;
+  TensorData st(3);
+  st.setTrain(C, v, dims);
+
+  for (int d = 0; d < 3; d++) {
+    Eigen::MatrixXd* x = new Eigen::MatrixXd(nlatent, dims(d));
+    bmrandn(*x);
+    samples.push_back( std::move(std::unique_ptr<Eigen::MatrixXd>(x)) );
+
+		//SparseMode* sm  = new SparseMode(C, v, d, dims(d));
+		//sparseModes.push_back( std::move(std::unique_ptr<SparseMode>(sm)) );
+  }
+
+  std::cout << *samples[0] << std::endl;
+  prior.sample_latents(alpha, st, samples, 0, nlatent);
+  std::cout << *samples[0] << std::endl;
 }

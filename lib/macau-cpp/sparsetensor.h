@@ -92,7 +92,7 @@ class SparseMode {
 class TensorData : public IData {
   public:
     Eigen::MatrixXi dims;
-    double mean_value;
+    double mean_value = .0;
     std::vector< std::unique_ptr<SparseMode> >* Y;
     SparseMode Ytest;
     int N;

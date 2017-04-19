@@ -149,11 +149,26 @@ void MacauX<DType, NType>::run() {
 
 template<class DType, class NType> 
 void MacauX<DType, NType>::printStatus(int i, double elapsedi, double samples_per_sec) {
-  double norm0 = priors[0]->getLinkNorm();
-  double norm1 = priors[1]->getLinkNorm();
-  printf("Iter %3d: %s  U:[%1.2e, %1.2e]  Side:[%1.2e, %1.2e] %s [took %0.1fs]\n", i, noise.getEvalString().c_str(), samples[0]->norm(), samples[1]->norm(), norm0, norm1, noise.getStatus().c_str(), elapsedi);
-  // if (!std::isnan(norm0)) printf("U.link(%1.2e) U.lambda(%.1f) ", norm0, priors[0]->getLinkLambda());
-  // if (!std::isnan(norm1)) printf("V.link(%1.2e) V.lambda(%.1f)",   norm1, priors[1]->getLinkLambda());
+  printf("Iter %3d: %s  ", i, noise.getEvalString().c_str());
+
+  printf("U:[");
+  for (unsigned p = 0; p < priors.size(); p++) {
+    printf("%1.2e", samples[p]->norm());
+    if (p + 1 < priors.size()) {
+      printf(", ");
+    }
+  }
+  printf("]");
+
+  printf("\tSide:[");
+  for (unsigned p = 0; p < priors.size(); p++) {
+    printf("%1.2e", priors[p]->getLinkNorm());
+    if (p + 1 < priors.size()) {
+      printf(", ");
+    }
+  }
+  printf("]");
+  printf("%s [took %0.1fs]\n", noise.getStatus().c_str(), elapsedi);
 }
 
 template<class DType, class NType> 

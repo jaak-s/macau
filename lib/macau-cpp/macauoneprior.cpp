@@ -95,15 +95,97 @@ void MacauOnePrior<FType>::sample_latents(
 }
 
 template<class FType>
-void MacauOnePrior<FType>::sample_latents(ProbitNoise& noiseModel, TensorData & data,
-                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
+void MacauOnePrior<FType>::sample_latents(
+        ProbitNoise& noiseModel,
+        TensorData & data,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+        int mode,
+        const int num_latent)
+{
   throw std::runtime_error("Unimplemented: sample_latents");
 }
 
 template<class FType>
-void MacauOnePrior<FType>::sample_latents(double noisePrecision, TensorData & data,
-                               std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples, int mode, const int num_latent) {
-  throw std::runtime_error("Unimplemented: sample_latents");
+void MacauOnePrior<FType>::sample_latents(
+        double noisePrecision,
+        TensorData & data,
+        std::vector< std::unique_ptr<Eigen::MatrixXd> > & samples,
+        int mode,
+        const int num_latent)
+{
+  auto& sparseMode = (*data.Y)[mode];
+  auto& U = samples[mode];
+  const int N = U->cols();
+  const int D = U->rows();
+  VectorView<Eigen::MatrixXd> view(samples, mode);
+  const int nmodes1 = view.size();
+  const double mean_value = data.mean_value;
+
+  Eigen::VectorXi & row_ptr = sparseMode->row_ptr;
+  Eigen::MatrixXi & indices = sparseMode->indices;
+  Eigen::VectorXd & values  = sparseMode->values;
+
+  std::cout << "samples[0]:\n" << *samples[0] << std::endl;
+  std::cout << "samples[1]:\n" << *samples[1] << std::endl;
+  std::cout << "samples[2]:\n" << *samples[2] << std::endl;
+  std::cout << "lambda\n" << lambda << std::endl;
+
+//TODO: uncomment OpenMP after debugging
+//#pragma omp parallel for schedule(dynamic, 8)
+  for (int i = 0; i < N; i++) {
+    // looping over all non-zeros for row i of the mode
+    // precalculating Yhat and Qi
+    const int nnz = row_ptr(i + 1) - row_ptr(i);
+    VectorXd Yhat(nnz);
+    VectorXd tmpd(nnz);
+    VectorXd Qi = lambda;
+
+    for (int idx = 0; idx < nnz; idx++) {
+      int j = idx + row_ptr(i);
+      VectorXd prod = U->col(i);
+      for (int m = 0; m < nmodes1; m++) {
+        auto v = view.get(m)->col(indices(j, m));
+        Qi.noalias()  += noisePrecision * v.cwiseAbs2();
+        prod.noalias() = prod.cwiseProduct(v);
+      }
+      Yhat(idx) = mean_value + prod.sum();
+    }
+
+    // generating random numbers
+    VectorXd rnorms(num_latent);
+    bmrandn_single(rnorms);
+
+    for (int d = 0; d < D; d++) {
+      // computing Lid
+      const double uid = (*U)(d, i);
+      double Lid = lambda(d) * (mu(d) + Uhat(d, i));
+      
+      for (int idx = 0; idx < nnz; idx++) {
+        int j = idx + row_ptr(i);
+
+        // computing t = vjd * wkd * ..
+        double t = 1.0;
+        for (int m = 0; m < nmodes1; m++) {
+          t *= (*view.get(m))(d, indices(j, m));
+        }
+        tmpd(idx) = t;
+        // L_id += alpha * (Y_ijk - k_ijkd) * v_jd * wkd
+        Lid += noisePrecision * (values(j) - (Yhat(idx) - uid * t)) * t;
+      }
+      // Now use Lid and Qid to update uid
+      double uid_old = uid;
+      double uid_var = 1.0 / Qi(d);
+
+      // sampling new u_id ~ Norm(Lid / Qid, 1/Qid)
+      (*U)(d, i) = Lid * uid_var + sqrt(uid_var) * rnorms(d);
+
+      // updating Yhat
+      double uid_delta = (*U)(d, i) - uid_old;
+      for (int idx = 0; idx < nnz; idx++) {
+        Yhat(idx) += uid_delta * tmpd(idx);
+      }
+    }
+  }
 }
 
 template<class FType>

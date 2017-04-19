@@ -124,6 +124,7 @@ void TensorData::setTrain(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, Eigen::Ve
     throw std::runtime_error("setTrain(): idx.rows() must equal vals.size()");
   }
   dims = d;
+	mean_value = vals.mean();
   for (int mode = 0; mode < N; mode++) {
     Y->push_back( std::unique_ptr<SparseMode>(new SparseMode(idx, vals, mode, dims(mode))) );
   }

@@ -160,9 +160,36 @@ class TestMacau(unittest.TestCase):
         results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
                              verbose = False, burnin = 20, nsamples = 20,
                              univariate = False, precision = 50)
+
         self.assertTrue(results.rmse_test < 0.5,
                         msg="Tensor factorization gave RMSE above 0.5 (%f)." % results.rmse_test)
 
+    def test_macau_tensor_univariate(self):
+        A = np.random.randn(30, 2)
+        B = np.random.randn(4, 2)
+        C = np.random.randn(1, 2)
+
+        idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )
+        df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
+        df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
+        Ytrain, Ytest = macau.make_train_test_df(df, 0.2)
+
+        Acoo = scipy.sparse.coo_matrix(A)
+
+        results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
+                             verbose = True, burnin = 20, nsamples = 20,
+                             univariate = True, precision = 50)
+
+        s = (A.shape[0], B.shape[0])
+        Ytrain_sp = scipy.sparse.coo_matrix( (Ytrain.value, (Ytrain.A, Ytrain.B) ), shape=s )
+        Ytest_sp  = scipy.sparse.coo_matrix( (Ytest.value,  (Ytest.A, Ytest.B) ), shape=s )
+
+        results_sp = macau.bpmf(Y = Ytrain_sp, Ytest = Ytest_sp, num_latent = 4,
+                             verbose = True, burnin = 20, nsamples = 20,
+                             univariate = True, precision = 50)
+
+        self.assertTrue(results.rmse_test < 0.5,
+                        msg="Tensor factorization gave RMSE above 0.5 (%f)." % results.rmse_test)
 
 if __name__ == '__main__':
     unittest.main()
