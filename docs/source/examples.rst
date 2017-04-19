@@ -196,7 +196,9 @@ Here is a simple toy example with factorizing a 3-tensor with side information o
     B = np.random.randn(3, 2)
     C = np.random.randn(2, 2)
 
-    idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )
+    idx = list( itertools.product(np.arange(A.shape[0]),
+                                  np.arange(B.shape[0]),
+                                  np.arange(C.shape[0])) )
     df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
     df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
 
