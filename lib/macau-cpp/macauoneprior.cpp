@@ -116,19 +116,18 @@ void MacauOnePrior<FType>::sample_latents(
   auto& sparseMode = (*data.Y)[mode];
   auto& U = samples[mode];
   const int N = U->cols();
-  const int D = U->rows();
+  const int D = num_latent;
   VectorView<Eigen::MatrixXd> view(samples, mode);
   const int nmodes1 = view.size();
   const double mean_value = data.mean_value;
 
+  if (U->rows() != num_latent) {
+    throw std::runtime_error("U->rows() must be equal to num_latent.");
+  }
+
   Eigen::VectorXi & row_ptr = sparseMode->row_ptr;
   Eigen::MatrixXi & indices = sparseMode->indices;
   Eigen::VectorXd & values  = sparseMode->values;
-
-  std::cout << "samples[0]:\n" << *samples[0] << std::endl;
-  std::cout << "samples[1]:\n" << *samples[1] << std::endl;
-  std::cout << "samples[2]:\n" << *samples[2] << std::endl;
-  std::cout << "lambda\n" << lambda << std::endl;
 
 //TODO: uncomment OpenMP after debugging
 //#pragma omp parallel for schedule(dynamic, 8)
@@ -142,13 +141,13 @@ void MacauOnePrior<FType>::sample_latents(
 
     for (int idx = 0; idx < nnz; idx++) {
       int j = idx + row_ptr(i);
-      VectorXd prod = U->col(i);
+      VectorXd prod = VectorXd::Ones(D);
       for (int m = 0; m < nmodes1; m++) {
         auto v = view.get(m)->col(indices(j, m));
-        Qi.noalias()  += noisePrecision * v.cwiseAbs2();
         prod.noalias() = prod.cwiseProduct(v);
       }
-      Yhat(idx) = mean_value + prod.sum();
+      Qi.noalias() += noisePrecision * prod.cwiseAbs2();
+      Yhat(idx) = mean_value + U->col(i).dot(prod);
     }
 
     // generating random numbers

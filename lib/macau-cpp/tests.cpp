@@ -813,7 +813,6 @@ TEST_CASE("macauoneprior/sample_tensor_uni", "Testing sampling tensor univariate
   MacauOnePrior<SparseFeat> prior(nlatent, sfptr);
 
   std::vector< std::unique_ptr<Eigen::MatrixXd> > samples;
-	//std::vector< std::unique_ptr<SparseMode> > sparseModes;
 
   Eigen::VectorXi dims(3);
   dims << 6, 5, 2;
@@ -824,12 +823,7 @@ TEST_CASE("macauoneprior/sample_tensor_uni", "Testing sampling tensor univariate
     Eigen::MatrixXd* x = new Eigen::MatrixXd(nlatent, dims(d));
     bmrandn(*x);
     samples.push_back( std::move(std::unique_ptr<Eigen::MatrixXd>(x)) );
-
-		//SparseMode* sm  = new SparseMode(C, v, d, dims(d));
-		//sparseModes.push_back( std::move(std::unique_ptr<SparseMode>(sm)) );
   }
 
-  std::cout << *samples[0] << std::endl;
   prior.sample_latents(alpha, st, samples, 0, nlatent);
-  std::cout << *samples[0] << std::endl;
 }
