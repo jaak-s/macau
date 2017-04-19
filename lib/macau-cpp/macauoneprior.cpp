@@ -129,8 +129,7 @@ void MacauOnePrior<FType>::sample_latents(
   Eigen::MatrixXi & indices = sparseMode->indices;
   Eigen::VectorXd & values  = sparseMode->values;
 
-//TODO: uncomment OpenMP after debugging
-//#pragma omp parallel for schedule(dynamic, 8)
+#pragma omp parallel for schedule(dynamic, 8)
   for (int i = 0; i < N; i++) {
     // looping over all non-zeros for row i of the mode
     // precalculating Yhat and Qi

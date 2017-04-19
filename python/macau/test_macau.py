@@ -182,6 +182,22 @@ class TestMacau(unittest.TestCase):
         self.assertTrue(results.rmse_test < 0.5,
                         msg="Tensor factorization gave RMSE above 0.5 (%f)." % results.rmse_test)
 
+    def test_macau_tensor_empty(self):
+        A = np.random.randn(30, 2)
+        B = np.random.randn(4, 2)
+        C = np.random.randn(2, 2)
+
+        idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )
+        df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
+        df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
+
+        Acoo = scipy.sparse.coo_matrix(A)
+        r0 = macau.macau(df, Ytest = 0, num_latent = 2, burnin=5, nsamples=5, precision=1.0, verbose=False)
+        r1 = macau.macau(df, Ytest = None, num_latent = 2, burnin=5, nsamples=5, precision=1.0, verbose=False)
+
+        self.assertTrue( np.isnan(r0.rmse_test) )
+        self.assertTrue( np.isnan(r1.rmse_test) )
+
 
 if __name__ == '__main__':
     unittest.main()

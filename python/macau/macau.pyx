@@ -234,7 +234,8 @@ class Data:
 
         elif type(Y) == pd.core.frame.DataFrame:
             if Ytest is None:
-                Ytest = Y[0:0]
+                Ytrain = Y
+                Ytest  = Y[0:0]
             if isinstance(Ytest, numbers.Real):
                 Ytrain, Ytest = make_train_test_df(Y, Ytest)
             else:
@@ -254,9 +255,16 @@ class Data:
                 raise ValueError("Y must have at least 2 index (int) columns.")
             if len(float_cols) != 1:
                 raise ValueError("Y has %d float columns but must have exactly 1 value column." % len(float_cols))
+            if Ytrain.shape[0] == 0:
+                raise ValueError("Ytrain must not be empty.")
             value_col = float_cols[0]
-            self.shape = np.array(np.maximum([Y[c].max() for c in int_cols],
-                                             [Ytest[c].max() for c in int_cols]) + 1, dtype=np.int32)
+
+            if Ytest.shape[0] > 0:
+                self.shape = np.array(np.maximum([Y[c].max() for c in int_cols],
+                                                 [Ytest[c].max() for c in int_cols]) + 1, dtype=np.int32)
+            else:
+                self.shape = np.array([Y[c].max() for c in int_cols], dtype=np.int32) + 1
+
             self.idxTrain = [np.array(Y[c],     dtype=np.int32) for c in int_cols]
             self.idxTest  = [np.array(Ytest[c], dtype=np.int32) for c in int_cols]
             self.valTrain = np.array(Y[value_col],     dtype=np.float64)

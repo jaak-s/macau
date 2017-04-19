@@ -1,6 +1,7 @@
 #include <Eigen/Dense>
 #include <memory>
 #include <iostream>
+#include <limits>
 #include "bpmfutils.h"
 #include "sparsetensor.h"
 
@@ -21,6 +22,12 @@ std::pair<double,double> eval_rmse_tensor(
 
   const unsigned N = sparseMode.values.size();
   double se = 0.0, se_avg = 0.0;
+
+  if (N == 0) {
+    // No test data, returning NaN's
+    return std::make_pair(std::numeric_limits<double>::quiet_NaN(),
+                          std::numeric_limits<double>::quiet_NaN());
+  }
 
   if (N != predictions.size()) {
     throw std::runtime_error("Ytest.size() and predictions.size() must be equal.");
