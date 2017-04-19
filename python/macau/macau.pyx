@@ -231,6 +231,7 @@ class Data:
             self.valTrain = Y.data
             self.idxTest  = [Ytest.row, Ytest.col]
             self.valTest  = Ytest.data
+            self.colnames   = np.array(["row", "col"], dtype=np.object)
 
         elif type(Y) == pd.core.frame.DataFrame:
             if Ytest is None:
@@ -258,6 +259,7 @@ class Data:
             if Ytrain.shape[0] == 0:
                 raise ValueError("Ytrain must not be empty.")
             value_col = float_cols[0]
+            self.colnames = int_cols
 
             if Ytest.shape[0] > 0:
                 self.shape = np.array(np.maximum([Y[c].max() for c in int_cols],
@@ -367,13 +369,10 @@ def macau(Y,
     cdef np.ndarray[np.double_t] yhat_sd = vecview( & yhat_sd_raw ).copy()
     cdef np.ndarray[np.double_t, ndim=2] testdata = matview( & testdata_raw ).copy()
 
-    df = pd.DataFrame({
-      "row" : pd.Series(testdata[:,0], dtype='int'),
-      "col" : pd.Series(testdata[:,1], dtype='int'),
-      "y"   : pd.Series(testdata[:,2]),
-      "y_pred" : pd.Series(yhat),
-      "y_pred_std" : pd.Series(yhat_sd)
-    })
+    df = pd.DataFrame(testdata[:, :-1], columns=data.colnames, dtype='int')
+    df["y"]      = pd.Series(testdata[:, -1])
+    df["y_pred"] = pd.Series(yhat)
+    df["y_pred_std"] = pd.Series(yhat_sd)
 
     result = MacauResult()
     result.rmse_test  = macau.getRmseTest()

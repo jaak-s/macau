@@ -13,6 +13,7 @@ class TestMacau(unittest.TestCase):
                              verbose = False, burnin = 50, nsamples = 50,
                              univariate = False)
         self.assertEqual(Ytest.nnz, results.prediction.shape[0])
+        self.assertTrue( (results.prediction.columns[0:2] == ["row", "col"]).all() )
 
     def test_bpmf_numerictest(self):
         X = scipy.sparse.rand(15, 10, 0.2)
@@ -161,6 +162,7 @@ class TestMacau(unittest.TestCase):
                              verbose = False, burnin = 20, nsamples = 20,
                              univariate = False, precision = 50)
 
+        self.assertTrue( (results.prediction.columns[0:3] == ["A", "B", "C"]).all() )
         self.assertTrue(results.rmse_test < 0.5,
                         msg="Tensor factorization gave RMSE above 0.5 (%f)." % results.rmse_test)
 
