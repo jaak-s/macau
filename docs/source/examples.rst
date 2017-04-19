@@ -225,3 +225,12 @@ the accuracy. The factorization can be executed also without the side informatio
                           univariate = False, precision = 50)
 
 
+Tensor factorization also supports the univariate sampler. To execute that set :python:`univariate = True`, for example
+
+.. code-block:: python
+
+    results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
+                          verbose = True, burnin = 20, nsamples = 20,
+                          univariate = True, precision = 50)
+
+
