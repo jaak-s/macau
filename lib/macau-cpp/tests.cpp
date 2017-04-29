@@ -598,7 +598,7 @@ TEST_CASE("sparsetensor/sparsemode", "SparseMode constructor") {
   // mode 0
   SparseMode sm0(C, v, 0, 4);
 
-  REQUIRE( sm0.N == 3);
+  REQUIRE( sm0.num_modes == 3);
   REQUIRE( sm0.row_ptr.size() == 5 ); 
   REQUIRE( sm0.nnz == 5 ); 
   REQUIRE( sm0.row_ptr(0) == 0 ); 
@@ -629,7 +629,7 @@ TEST_CASE("sparsetensor/sparsemode", "SparseMode constructor") {
           1, 1,
           2, 0;
   v0 << 0.2, 0.5, 0.1, 0.3, 0.4;
-  REQUIRE( sm1.N == 3);
+  REQUIRE( sm1.num_modes == 3);
   REQUIRE( (sm1.row_ptr - ptr1).norm() == 0 );
   REQUIRE( (sm1.indices - I0).norm()   == 0 );
   REQUIRE( (sm1.values  - v0).norm()   == 0 );

@@ -74,7 +74,7 @@ class VectorView {
 //////   Tensor data   //////
 class SparseMode {
   public:
-    int N; // 
+    int num_modes; // number of modes
     Eigen::VectorXi row_ptr;
     Eigen::MatrixXi indices;
     Eigen::VectorXd values;
@@ -82,7 +82,7 @@ class SparseMode {
     int mode;
 
   public:
-    SparseMode() {}
+    SparseMode() :  num_modes(0), nnz(0), mode(0) {}
     SparseMode(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size) { init(idx, vals, mode, mode_size); }
     void init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int mode, int mode_size);
     int nonZeros() { return nnz; }

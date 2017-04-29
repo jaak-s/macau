@@ -12,7 +12,7 @@ void SparseMode::init(Eigen::MatrixXi &idx, Eigen::VectorXd &vals, int m, int mo
   if (idx.rows() != vals.size()) {
     throw std::runtime_error("idx.rows() must equal vals.size()");
   }
-  N = idx.cols();
+  num_modes = idx.cols();
   row_ptr.resize(mode_size + 1);
   row_ptr.setZero();
   values.resize(vals.size());
