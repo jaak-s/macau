@@ -162,8 +162,8 @@ def get_blas_libs():
 
 
 def download_eigen_if_needed():
-    url = "http://bitbucket.org/eigen/eigen/get/3.3-beta1.tar.bz2"
-    eigen_inner = "eigen-eigen-ce5a455b34c0"
+    url = "http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2"
+    eigen_inner = "eigen-eigen-67e894c6cd8f"
     dest = "lib/eigen3"
     if os.path.isdir(dest + "/Eigen"):
         return
