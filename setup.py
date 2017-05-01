@@ -161,15 +161,13 @@ def get_blas_libs():
     sys.exit(1)
 
 
-def download_eigen_if_needed():
-    url = "http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2"
-    eigen_inner = "eigen-eigen-67e894c6cd8f"
-    dest = "lib/eigen3"
+def download_eigen_if_needed(dest, url, eigen_inner):
+    """ dest - directory for eigen to save to  """
     if os.path.isdir(dest + "/Eigen"):
         return
     print("Downloading Eigen (v3.3)...")
     tmpdir = tempfile.mkdtemp()
-    bzfile = tmpdir + "/3.3-beta1.tar.bz2"
+    bzfile = tmpdir + "/eigen.tar.bz2"
     urllib.urlretrieve(url, bzfile)
     print("Download complete. Extracting Eigen ...")
     tf = tarfile.open(bzfile, "r:bz2")
@@ -226,8 +224,12 @@ class build_clibx(build_clib):
                                             output_dir = self.build_clib,
                                             debug=self.debug)
 
+eigen_dest = "lib/eigen3.3.3"
+eigen_url  = "http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2"
+eigen_inner = "eigen-eigen-67e894c6cd8f"
+
 blas_libs = get_blas_libs()
-inc = ['lib/macau-cpp', 'lib/eigen3', 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]
+inc = ['lib/macau-cpp', eigen_dest, 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]
 ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
 
 libmacau = ('macau-cpp', dict(
@@ -270,7 +272,7 @@ CLASSIFIERS = [
 ]
 
 def main():
-    download_eigen_if_needed()
+    download_eigen_if_needed(eigen_dest, eigen_url, eigen_inner)
     checkout_libfastsparse()
 
     ## reading __version__:
