@@ -2,6 +2,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 import scipy as sp
+import scipy.sparse
 import timeit
 import numbers
 import pandas as pd
@@ -105,7 +106,7 @@ cdef vecview(VectorXd *v):
     return np.asarray(view)
 
 def make_train_test(Y, ntest):
-    if type(Y) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+    if type(Y) not in [scipy.sparse.coo.coo_matrix, scipy.sparse.csr.csr_matrix, scipy.sparse.csc.csc_matrix]:
         raise TypeError("Unsupported Y type: %s" + type(Y))
     if not isinstance(ntest, numbers.Real) or ntest < 0:
         raise TypeError("ntest has to be a non-negative number (number or ratio of test samples).")
@@ -116,8 +117,8 @@ def make_train_test(Y, ntest):
     rperm = np.random.permutation(Y.nnz)
     train = rperm[ntest:]
     test  = rperm[0:ntest]
-    Ytrain = sp.sparse.coo_matrix( (Y.data[train], (Y.row[train], Y.col[train])), shape=Y.shape )
-    Ytest  = sp.sparse.coo_matrix( (Y.data[test],  (Y.row[test],  Y.col[test])),  shape=Y.shape )
+    Ytrain = scipy.sparse.coo_matrix( (Y.data[train], (Y.row[train], Y.col[train])), shape=Y.shape )
+    Ytest  = scipy.sparse.coo_matrix( (Y.data[test],  (Y.row[test],  Y.col[test])),  shape=Y.shape )
     return Ytrain, Ytest
 
 def make_train_test_df(Y, ntest):
@@ -138,7 +139,7 @@ def make_train_test_df(Y, ntest):
 cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lambda_beta, double tol) except NULL:
     if (side is None) or side == ():
         return new BPMFPrior(num_latent)
-    if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+    if type(side) not in [scipy.sparse.coo.coo_matrix, scipy.sparse.csr.csr_matrix, scipy.sparse.csc.csc_matrix]:
         raise ValueError("Unsupported side information type: '%s'" % type(side).__name__)
 
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
@@ -164,7 +165,7 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lamb
 cdef ILatentPrior* make_one_prior(side, int num_latent, double lambda_beta) except NULL:
     if (side is None) or side == ():
         return new BPMFPrior(num_latent)
-    if type(side) not in [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]:
+    if type(side) not in [scipy.sparse.coo.coo_matrix, scipy.sparse.csr.csr_matrix, scipy.sparse.csc.csc_matrix]:
         raise ValueError("Unsupported side information type: '%s'" % type(side).__name__)
 
     ## binary CSR
@@ -207,14 +208,14 @@ def remove_nan(Y):
     if not np.any(np.isnan(Y.data)):
         return Y
     idx = np.where(np.isnan(Y.data) == False)[0]
-    return sp.sparse.coo_matrix( (Y.data[idx], (Y.row[idx], Y.col[idx])), shape = Y.shape )
+    return scipy.sparse.coo_matrix( (Y.data[idx], (Y.row[idx], Y.col[idx])), shape = Y.shape )
 
 class Data:
     def __init__(self, Y, Ytest):
-        matrix_types = [sp.sparse.coo.coo_matrix, sp.sparse.csr.csr_matrix, sp.sparse.csc.csc_matrix]
+        matrix_types = [scipy.sparse.coo.coo_matrix, scipy.sparse.csr.csr_matrix, scipy.sparse.csc.csc_matrix]
         if type(Y) in matrix_types:
             if Ytest is None:
-                Ytest = sp.sparse.coo_matrix(Y.shape, np.float64)
+                Ytest = scipy.sparse.coo_matrix(Y.shape, np.float64)
             if isinstance(Ytest, numbers.Real):
                 Y, Ytest = make_train_test(Y, Ytest)
             if type(Ytest) not in matrix_types:
