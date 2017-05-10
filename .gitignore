@@ -1,6 +1,6 @@
 build/
 dist/
 tmp/
-lib/eigen3/
+lib/eigen3*/
 .*.swp
 MANIFEST
