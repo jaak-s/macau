@@ -17,9 +17,14 @@ from textwrap import dedent
 
 # for downloading Eigen
 import tempfile
-import urllib
 import tarfile
 import shutil
+
+if sys.version_info[0] >= 3:
+    from urllib.request import urlretrieve
+else:
+    from urllib import urlretrieve
+
 
 # checking out libfastsparse
 import subprocess
@@ -168,7 +173,7 @@ def download_eigen_if_needed(dest, url, eigen_inner):
     print("Downloading Eigen (v3.3)...")
     tmpdir = tempfile.mkdtemp()
     bzfile = tmpdir + "/eigen.tar.bz2"
-    urllib.urlretrieve(url, bzfile)
+    urlretrieve(url, bzfile)
     print("Download complete. Extracting Eigen ...")
     tf = tarfile.open(bzfile, "r:bz2")
     if not os.path.exists(dest):
