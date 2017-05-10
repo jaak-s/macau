@@ -234,8 +234,8 @@ ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/
 
 libmacau = ('macau-cpp', dict(
     package='macau',
-    sources = filter(lambda a: a.find("tests.cpp") < 0 and a.find("macau_mpi.cpp") < 0,
-                               glob('lib/macau-cpp/*.cpp')),
+    sources = list(filter(lambda a: a.find("tests.cpp") < 0 and a.find("macau_mpi.cpp") < 0,
+                               glob('lib/macau-cpp/*.cpp'))),
     include_dirs = inc,
     extra_compile_args = ['-fopenmp', '-O3', '-fstrict-aliasing', '-std=c++11'],
     #extra_link_args = ['-fopenmp'],
@@ -271,12 +271,12 @@ CLASSIFIERS = [
     "Operating System :: MacOS"
 ]
 
+## reading __version__:
+exec(open('python/macau/version.py').read())
+
 def main():
     download_eigen_if_needed(eigen_dest, eigen_url, eigen_inner)
     checkout_libfastsparse()
-
-    ## reading __version__:
-    exec(open('python/macau/version.py').read())
 
     setup(
         name = 'macau',
