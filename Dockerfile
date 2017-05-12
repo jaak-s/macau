@@ -18,5 +18,8 @@ RUN mkdir $HOME/git && \
     cd $HOME/git && \
     git clone https://github.com/jaak-s/macau.git && \
     cd $HOME/git/macau && \
-    python3 setup.py install --user
+    python3 setup.py install --user && \
+    cd $HOME && rm -rf git
+
+ADD python/macau/examples/Macau-with-ChEMBL.ipynb $HOME/work/
 
