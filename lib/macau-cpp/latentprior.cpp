@@ -434,5 +434,5 @@ Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B) {
 
 template class MacauPrior<SparseFeat>;
 template class MacauPrior<SparseDoubleFeat>;
-//template class MacauPrior<Eigen::MatrixXd>;
+template class MacauPrior<Eigen::MatrixXd>;
 

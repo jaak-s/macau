@@ -178,6 +178,32 @@ TEST_CASE( "MatrixXd/compute_uhat", "compute_uhat for MatrixXd" ) {
   }
 }
 
+TEST_CASE( "linop/solve_blockcg_dense", "BlockCG solver for dense (3rhs separately)" ) {
+  int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
+  int cols[9] = { 1, 0, 2, 1, 3, 0, 1, 3, 2 };
+  Eigen::MatrixXd B(3, 4), X(3, 4), X_true(3, 4), sf(6, 4);
+
+	sf = Eigen::MatrixXd::Zero(6, 4);
+	for (int i = 0; i < 9; i++) {
+		sf(rows[i], cols[i]) = 1.0;
+	}
+
+  B << 0.56,  0.55,  0.3 , -1.78,
+       0.34,  0.05, -1.48,  1.11,
+       0.09,  0.51, -0.63,  1.59;
+
+  X_true << 0.35555556,  0.40709677, -0.16444444, -0.87483871,
+            1.69333333, -0.12709677, -1.94666667,  0.49483871,
+            0.66      , -0.04064516, -0.78      ,  0.65225806;
+
+  solve_blockcg(X, sf, 0.5, B, 1e-6);
+  for (int i = 0; i < X.rows(); i++) {
+    for (int j = 0; j < X.cols(); j++) {
+      REQUIRE( X(i,j) == Approx(X_true(i,j)) );
+    }
+  }
+}
+
 TEST_CASE( "chol/chol_solve_t", "[chol_solve_t]" ) {
   Eigen::MatrixXd m(3,3), rhs(5,3), xopt(5,3);
   m << 7, 0, 0,
