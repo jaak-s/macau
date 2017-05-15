@@ -38,6 +38,11 @@ class TestMacau(unittest.TestCase):
         F.data[:] = 1
         macau.macau(X, Xt, side=[F, None], num_latent = 5, burnin=10, nsamples=5, verbose = False)
 
+    def test_macau_dense(self):
+        Y  = scipy.sparse.rand(15, 10, 0.2)
+        Yt = scipy.sparse.rand(15, 10, 0.1)
+        F  = np.random.randn(15, 2)
+        macau.macau(Y, Yt, side=[F, None], num_latent = 5, burnin=10, nsamples=5, verbose = False)
 
     def test_macau_univariate(self):
         Y = scipy.sparse.rand(10, 20, 0.2)
