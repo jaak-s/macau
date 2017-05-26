@@ -7,6 +7,7 @@ import timeit
 import numbers
 import pandas as pd
 import signal
+import sys
 
 class MacauResult(object):
   def __init__(self):
@@ -356,7 +357,10 @@ def macau(Y,
         if type(save_prefix) != str:
             raise ValueError("Parameter 'save_prefix' has to be a string (str) or None.")
         macau.setSaveModel(1)
-        macau.setSavePrefix(save_prefix)
+        if sys.version_info[0] >= 3:
+            macau.setSavePrefix(save_prefix.encode())
+        else:
+            macau.setSavePrefix(save_prefix)
 
     macau.run()
     ## restoring Python default signal handler
