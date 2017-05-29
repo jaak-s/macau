@@ -50,11 +50,6 @@ cpdef blas_AtA(np.ndarray[np.double_t, ndim=2] X, np.ndarray[np.double_t, ndim=2
     At_mul_A_eig(Xeig, AtAeig)
     return 0
 
-cdef MatrixXd* numpy2eigen(X):
-    cdef np.ndarray[np.double_t, ndim=2] Xf = np.asfortranarray(X, dtype=np.float64)
-    cdef MatrixXd* Xeig = new Map[MatrixXd](&Xf[0, 0], Xf.shape[0], Xf.shape[1])
-    return Xeig
-
 cdef SparseFeat* sparse2SparseBinFeat(X):
     X = X.tocoo(copy=False)
     cdef np.ndarray[int] irows = X.row.astype(np.int32, copy=False)
@@ -142,7 +137,7 @@ def make_train_test_df(Y, ntest):
     return Y.iloc[train], Y.iloc[test]
 
 cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lambda_beta, double tol) except NULL:
-    if (side is None) or side == ():
+    if side is None:
         return new BPMFPrior(num_latent)
     if type(side) not in [scipy.sparse.coo.coo_matrix, scipy.sparse.csr.csr_matrix, scipy.sparse.csc.csc_matrix, np.ndarray]:
         raise TypeError("Unsupported side information type: '%s'" % type(side).__name__)
@@ -150,14 +145,15 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lamb
     cdef bool compute_ff = (side.shape[1] <= max_ff_size)
     
     ## dense side information
-    cdef unique_ptr[MatrixXd] dense_ptr
     cdef MacauPrior[MatrixXd]* dense_prior
+    cdef np.ndarray[np.double_t, ndim=2] X
+    cdef bool colMajor
     if type(side) == np.ndarray:
-        ## TODO: create a special function in C++ side for MacauPrior<MatrixXd>
         if len(side.shape) != 2:
             raise TypeError("Side information must have 2 dimensions (got %d)." % len(side.shape))
-        dense_ptr   = unique_ptr[MatrixXd]( numpy2eigen(side) )
-        dense_prior = new MacauPrior[MatrixXd](num_latent, dense_ptr, compute_ff)
+        X = side
+        colMajor = np.isfortran(side)
+        dense_prior = make_dense_prior(num_latent, &X[0, 0], side.shape[0], side.shape[1], colMajor, compute_ff)
         dense_prior.setLambdaBeta(lambda_beta)
         dense_prior.setTol(tol)
         return dense_prior

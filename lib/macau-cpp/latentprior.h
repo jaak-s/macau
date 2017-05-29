@@ -166,3 +166,5 @@ void sample_latent_tensor(std::unique_ptr<Eigen::MatrixXd> &U,
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, Eigen::MatrixXd & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseFeat & B);
 Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B);
+
+MacauPrior<Eigen::MatrixXd>* make_dense_prior(int nlatent, double* ptr, int nrows, int ncols, bool colMajor, bool comp_FtF);

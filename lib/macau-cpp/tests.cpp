@@ -853,3 +853,31 @@ TEST_CASE("macauoneprior/sample_tensor_uni", "Testing sampling tensor univariate
 
   prior.sample_latents(alpha, st, samples, 0, nlatent);
 }
+
+TEST_CASE("macauprior/make_dense_prior", "Making MacauPrior with MatrixXd") {
+ 	double x[6] = {0.1, 0.4, -0.7, 0.3, 0.11, 0.23};
+
+	// ColMajor case
+  auto prior = make_dense_prior(3, x, 3, 2, true, true);
+  Eigen::MatrixXd Ftrue(3, 2);
+  Ftrue <<  0.1, 0.3,
+						0.4, 0.11,
+					 -0.7, 0.23;
+  REQUIRE( (*(prior->F) - Ftrue).norm() == Approx(0) );
+	Eigen::MatrixXd tmp = Eigen::MatrixXd::Zero(2, 2);
+	tmp.triangularView<Eigen::Lower>()  = prior->FtF;
+	tmp.triangularView<Eigen::Lower>() -= Ftrue.transpose() * Ftrue;
+  REQUIRE( tmp.norm() == Approx(0) );
+
+	// RowMajor case
+  auto prior2 = make_dense_prior(3, x, 3, 2, false, true);
+	Eigen::MatrixXd Ftrue2(3, 2);
+	Ftrue2 << 0.1,  0.4,
+				   -0.7,  0.3,
+					  0.11, 0.23;
+  REQUIRE( (*(prior2->F) - Ftrue2).norm() == Approx(0) );
+	Eigen::MatrixXd tmp2 = Eigen::MatrixXd::Zero(2, 2);
+	tmp2.triangularView<Eigen::Lower>()  = prior2->FtF;
+	tmp2.triangularView<Eigen::Lower>() -= Ftrue2.transpose() * Ftrue2;
+  REQUIRE( tmp2.norm() == Approx(0) );
+}
