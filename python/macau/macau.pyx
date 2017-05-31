@@ -151,7 +151,7 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lamb
     if type(side) == np.ndarray:
         if len(side.shape) != 2:
             raise TypeError("Side information must have 2 dimensions (got %d)." % len(side.shape))
-        X = side
+        X = side.astype(np.float64, copy=False)
         colMajor = np.isfortran(side)
         dense_prior = make_dense_prior(num_latent, &X[0, 0], side.shape[0], side.shape[1], colMajor, compute_ff)
         dense_prior.setLambdaBeta(lambda_beta)
