@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Macau 0.3.4 documentation</title>
+    <title>Examples &mdash; Macau 0.4.2 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.4',
+        VERSION:     '0.4.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Macau 0.3.4 documentation" href="../index.html" />
+    <link rel="top" title="Macau 0.4.2 documentation" href="../index.html" />
     <link rel="next" title="Saving models" href="saving_models.html" />
     <link rel="prev" title="Welcome to Macau’s documentation!" href="../index.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../index.html" title="Welcome to Macau’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -53,14 +53,14 @@
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
 <p>In these examples we use ChEMBL dataset for compound-proteins activities (IC50). The IC50 values and ECFP fingerprints can be downloaded from these two urls:</p>
-<div class="highlight-bash"><div class="highlight"><pre>wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-346targets.mm
+<div class="highlight-bash"><div class="highlight"><pre><span></span>wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-346targets.mm
 wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm
 </pre></div>
 </div>
 <div class="section" id="matrix-factorization-with-side-information">
 <h2>Matrix Factorization with Side Information<a class="headerlink" href="#matrix-factorization-with-side-information" title="Permalink to this headline">¶</a></h2>
 <p>In this example we use MCMC (Gibbs) sampling to perform factorization of the <cite>compound x protein</cite> IC50 matrix by using side information on the compounds.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
 <span class="c1">## loading data</span>
@@ -86,7 +86,7 @@ This is usually sufficient. For quick runs smaller numbers can be used, like <co
 In this example we only use side information for the compounds (rows of the matrix).</p>
 <p>The <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></code> specifies the precision of the IC50 observations, i.e., 1 / variance.</p>
 <p>When the run has completed you can check the <code class="code python docutils literal"><span class="name"><span class="pre">result</span></span></code> object and its <code class="code python docutils literal"><span class="name"><span class="pre">prediction</span></span></code> field, which is a Pandas DataFrame.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span>
 <span class="go">Matrix factorization results</span>
 <span class="go">Test RMSE:        0.6393</span>
 <span class="go">Matrix size:      [15073 x 346]</span>
@@ -105,7 +105,7 @@ In this example we only use side information for the compounds (rows of the matr
 <h3>Univariate sampler<a class="headerlink" href="#univariate-sampler" title="Permalink to this headline">¶</a></h3>
 <p>Macau also includes an option to use a <strong>very fast</strong> univariate sampler, i.e., instead of sampling blocks of variables jointly it samples each individually.
 An example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
 <span class="c1">## loading data</span>
@@ -129,7 +129,7 @@ An example:</p>
 <h3>Adaptive noise<a class="headerlink" href="#adaptive-noise" title="Permalink to this headline">¶</a></h3>
 <p>In the previous examples we fixed the observation noise by specifying <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal number float"><span class="pre">5.0</span></span></code>.
 Instead we can also allow the model to automatically determine the precision of the noise by setting <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string double"><span class="pre">&quot;adaptive&quot;</span></span></code>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
 <span class="c1">## loading data</span>
@@ -157,7 +157,7 @@ This means that if the updated precision would imply a higher signal-to-noise ra
 To factorize them we employ probit noise model that can be enabled by <code class="code python docutils literal"><span class="name"><span class="pre">precision</span></span> <span class="operator"><span class="pre">=</span></span> <span class="literal string double"><span class="pre">&quot;probit&quot;</span></span></code>.</p>
 <p>Care has to be taken to make input to the model, as operating with sparse matrices can drop real 0 measurements. In the below example, we first copy the matrix (line 9) and then threshold the data to binary (line 10).</p>
 <p>Currently, the probit model only works with the multivariate sampler (<code class="code python docutils literal"><span class="name"><span class="pre">univariate</span></span> <span class="operator"><span class="pre">=</span></span> <span class="name builtin pseudo"><span class="pre">False</span></span></code>).</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
 <span class="c1">## loading data</span>
@@ -184,7 +184,7 @@ To factorize them we employ probit noise model that can be enabled by <code clas
 <div class="section" id="matrix-factorization-without-side-information">
 <h2>Matrix Factorization without Side Information<a class="headerlink" href="#matrix-factorization-without-side-information" title="Permalink to this headline">¶</a></h2>
 <p>To run matrix factorization without side information you can just drop the <code class="code python docutils literal"><span class="name"><span class="pre">side</span></span></code> parameter.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">ic50</span><span class="p">,</span>
                      <span class="n">Ytest</span>      <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
                      <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
                      <span class="n">precision</span>  <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
@@ -195,6 +195,60 @@ To factorize them we employ probit noise model that can be enabled by <code clas
 <p>Without side information Macau is equivalent to standard Bayesian Matrix Factorization (BPMF).
 However, if available using side information can significantly improve the model accuracy.
 In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.60.</p>
+</div>
+<div class="section" id="tensor-factorization">
+<h2>Tensor Factorization<a class="headerlink" href="#tensor-factorization" title="Permalink to this headline">¶</a></h2>
+<p>Macau also supports tensor factorization with and without side information on any of the modes.
+Tensor can be thought as generalization of matrix to relations with more than two items.
+For example 3-tensor of <code class="code python docutils literal"><span class="name"><span class="pre">drug</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">cell</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">gene</span></span></code> could express the effect of a drug on the given cell and gene.</p>
+<p>For tensors Macau packages uses Pandas <code class="code python docutils literal"><span class="name"><span class="pre">DataFrame</span></span></code> as a data format,
+where all integer columns specify the tensor cell coordinate and <code class="code python docutils literal"><span class="name builtin"><span class="pre">float</span></span></code> (or double) column
+stores the value in the cell.
+Here is a simple toy example with factorizing a 3-tensor with side information on the first mode.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span>
+<span class="kn">import</span> <span class="nn">macau</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="c1">## generating toy data</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                              <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                              <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">)</span>
+<span class="n">df</span>  <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">])</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span> <span class="p">])</span>
+
+<span class="c1">## side information is again a sparse matrix</span>
+<span class="n">Acoo</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
+<span class="c1">## assigning 20% of the cells to test set</span>
+<span class="n">Ytrain</span><span class="p">,</span> <span class="n">Ytest</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">make_train_test_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+
+<span class="c1">## for artificial dataset using small values for burnin, nsamples and num_latents is fine</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">Ytrain</span><span class="p">,</span> <span class="n">Ytest</span> <span class="o">=</span> <span class="n">Ytest</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="p">[</span><span class="n">Acoo</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+                      <span class="n">verbose</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">burnin</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+                      <span class="n">univariate</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">precision</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The side informatoin added here is very informative, thus, using it will significantly increase
+the accuracy. The factorization can be executed also without the side information by removing
+<code class="code python docutils literal"><span class="name"><span class="pre">side</span></span><span class="operator"><span class="pre">=</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">Acoo</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name builtin pseudo"><span class="pre">None</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="name builtin pseudo"><span class="pre">None</span></span><span class="punctuation"><span class="pre">]</span></span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1">## tensor factorization without side information</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">Ytrain</span><span class="p">,</span> <span class="n">Ytest</span> <span class="o">=</span> <span class="n">Ytest</span><span class="p">,</span> <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+                      <span class="n">verbose</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">burnin</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+                      <span class="n">univariate</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">precision</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Tensor factorization also supports the univariate sampler. To execute that set <code class="code python docutils literal"><span class="name"><span class="pre">univariate</span></span> <span class="operator"><span class="pre">=</span></span> <span class="name builtin pseudo"><span class="pre">True</span></span></code>, for example</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">macau</span><span class="o">.</span><span class="n">macau</span><span class="p">(</span><span class="n">Y</span> <span class="o">=</span> <span class="n">Ytrain</span><span class="p">,</span> <span class="n">Ytest</span> <span class="o">=</span> <span class="n">Ytest</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="p">[</span><span class="n">Acoo</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">num_latent</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+                      <span class="n">verbose</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">burnin</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+                      <span class="n">univariate</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">precision</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -214,6 +268,7 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
 </ul>
 </li>
 <li><a class="reference internal" href="#matrix-factorization-without-side-information">Matrix Factorization without Side Information</a></li>
+<li><a class="reference internal" href="#tensor-factorization">Tensor Factorization</a></li>
 </ul>
 </li>
 </ul>
@@ -260,7 +315,7 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
         <li class="right" >
           <a href="../index.html" title="Welcome to Macau’s documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
