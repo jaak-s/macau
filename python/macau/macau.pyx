@@ -106,6 +106,13 @@ cdef vecview(VectorXd *v):
     return np.asarray(view)
 
 def make_train_test(Y, ntest):
+    """Splits a sparse matrix Y into a train and a test matrix.
+       Y      scipy sparse matrix (coo_matrix, csr_matrix or csc_matrix)
+       ntest  either a float below 1.0 or integer.
+              if float, then indicates the ratio of test cells
+              if integer, then indicates the number of test cells
+       returns Ytrain, Ytest (type coo_matrix)
+    """
     if type(Y) not in [scipy.sparse.coo.coo_matrix, scipy.sparse.csr.csr_matrix, scipy.sparse.csc.csc_matrix]:
         raise TypeError("Unsupported Y type: %s" + type(Y))
     if not isinstance(ntest, numbers.Real) or ntest < 0:
@@ -122,6 +129,13 @@ def make_train_test(Y, ntest):
     return Ytrain, Ytest
 
 def make_train_test_df(Y, ntest):
+    """Splits rows of dataframe Y into a train and a test dataframe.
+       Y      pandas dataframe
+       ntest  either a float below 1.0 or integer.
+              if float, then indicates the ratio of test cells
+              if integer, then indicates the number of test cells
+       returns Ytrain, Ytest (type coo_matrix)
+    """
     if type(Y) != pd.core.frame.DataFrame:
         raise TypeError("Y should be DataFrame.")
     if not isinstance(ntest, numbers.Real) or ntest < 0:
@@ -332,6 +346,30 @@ def macau(Y,
           sn_max     = 10.0,
           save_prefix= None,
           verbose    = True):
+    """
+    Matrix and tensor factorization with side information.
+      Y          training data to factorize (sparse matrix or DataFrame)
+      Ytest      either:
+                 number below 1.0, how much training data to move to test
+                 sparse matrix or DataFrame of test data
+      side       list of side information matrices.
+                 If Y is matrix, then need 2 side matrices (first for rows, second for columns)
+      lambda_beta  initial precision (regularization) for the link matrix
+                   connecting side matrices to Y
+      num_latent   number of latent dimensions
+      precision    precision of observations of Y, can be
+                   scalar     - specifies the precision (1 / noise_variance)
+                   "adaptive" - automatically learn precision
+                   "probit"   - probit model for binary matrices
+      burnin       number of Gibbs samples to drop (burn-in)
+      nsamples     number of Gibbs samples to collect
+      univariate   whether to use univariate sampler (faster than standard sampler)
+      tol          error tolerance for conjugate gradient solver
+      sn_max       maximum signal-to-noise ratio for observation precision
+                   only used if precision="adaptive"
+      save_prefix  prefix for model files or None if not saving the model
+      verbose      whether to print output for each Gibbs iteration
+    """
     data = Data(Y, Ytest)
 
     ## side information
@@ -350,11 +388,13 @@ def macau(Y,
     cdef int Nmodes = len(data.shape)
     if isinstance(precision, str):
       if precision == "adaptive" or precision == "sample":
-        macau = make_macau_adaptive(Nmodes, D, np.float64(1.0), np.float64(sn_max))
+          macau = make_macau_adaptive(Nmodes, D, np.float64(1.0), np.float64(sn_max))
       elif precision == "probit":
-        macau = make_macau_probit(Nmodes, D)
+          if univariate == True:
+              raise ValueError("Univariate sampler for probit model is not yet implemented.")
+          macau = make_macau_probit(Nmodes, D)
       else:
-        raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
+          raise ValueError("Parameter 'precision' has to be either a number or \"adaptive\" for adaptive precision, or \"probit\" for binary matrices.")
     else:
       macau = make_macau_fixed(Nmodes, D, np.float64(precision))
 
