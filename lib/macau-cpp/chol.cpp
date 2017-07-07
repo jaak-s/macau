@@ -19,7 +19,14 @@ void chol_decomp(double* A, int n) {
 void chol_decomp(Eigen::MatrixXd & A) {
   int info, n = A.rows();
   dpotrf_(&lower, &n, A.data(), &n, &info);
-  if(info != 0){ throw std::runtime_error("c++ error: Cholesky decomp failed (for eigen matrix)"); }
+  if(info != 0) {
+    throw std::runtime_error(
+        std::string("c++ error: Cholesky decomp failed (for ")
+        + std::to_string(n)
+        + " x "
+        + std::to_string(n)
+        + " eigen matrix)");
+  }
 }
 
 void chol_solve(double* A, int n, double* B, int nrhs) {

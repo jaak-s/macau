@@ -170,3 +170,67 @@ To run matrix factorization without side information you can just drop the :pyth
 Without side information Macau is equivalent to standard Bayesian Matrix Factorization (BPMF).
 However, if available using side information can significantly improve the model accuracy.
 In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.60.
+
+
+Tensor Factorization
+---------------------
+Macau also supports tensor factorization with and without side information on any of the modes.
+Tensor can be thought as generalization of matrix to relations with more than two items.
+For example 3-tensor of :python:`drug x cell x gene` could express the effect of a drug on the given cell and gene.
+
+For tensors Macau packages uses Pandas :python:`DataFrame` as a data format,
+where all integer columns specify the tensor cell coordinate and :python:`float` (or double) column
+stores the value in the cell.
+Here is a simple toy example with factorizing a 3-tensor with side information on the first mode.
+
+.. code-block:: python
+
+    import numpy as np
+    import pandas as pd
+    import scipy.sparse
+    import macau
+    import itertools
+
+    ## generating toy data
+    A = np.random.randn(15, 2)
+    B = np.random.randn(3, 2)
+    C = np.random.randn(2, 2)
+
+    idx = list( itertools.product(np.arange(A.shape[0]),
+                                  np.arange(B.shape[0]),
+                                  np.arange(C.shape[0])) )
+    df  = pd.DataFrame( np.asarray(idx), columns=["A", "B", "C"])
+    df["value"] = np.array([ np.sum(A[i[0], :] * B[i[1], :] * C[i[2], :]) for i in idx ])
+
+    ## side information is again a sparse matrix
+    Acoo = scipy.sparse.coo_matrix(A)
+
+    ## assigning 20% of the cells to test set
+    Ytrain, Ytest = macau.make_train_test_df(df, 0.2)
+
+    ## for artificial dataset using small values for burnin, nsamples and num_latents is fine
+    results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
+                          verbose = True, burnin = 20, nsamples = 20,
+                          univariate = False, precision = 50)
+
+The side informatoin added here is very informative, thus, using it will significantly increase
+the accuracy. The factorization can be executed also without the side information by removing
+:python:`side=[Acoo, None, None]`:
+
+.. code-block:: python
+
+    ## tensor factorization without side information
+    results = macau.macau(Y = Ytrain, Ytest = Ytest, num_latent = 4,
+                          verbose = True, burnin = 20, nsamples = 20,
+                          univariate = False, precision = 50)
+
+
+Tensor factorization also supports the univariate sampler. To execute that set :python:`univariate = True`, for example
+
+.. code-block:: python
+
+    results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[Acoo, None, None], num_latent = 4,
+                          verbose = True, burnin = 20, nsamples = 20,
+                          univariate = True, precision = 50)
+
+

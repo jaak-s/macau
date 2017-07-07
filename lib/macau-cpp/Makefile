@@ -2,7 +2,7 @@ CXX=g++
 CXXFLAGS=-g -std=c++11 -Wall -Wno-unknown-pragmas -O0 -fopenmp -fstrict-aliasing
 LINK.o=$(CXX) $(CXXFLAGS)
 
-INCLUDES := -I ../eigen3 -I ../libfastsparse
+INCLUDES := -I ../eigen3.3.3 -I ../libfastsparse
 LIBLOCS := -L/opt/OpenBLAS/lib -L/usr/local/lib -L/usr/lib/openblas-base
 LDFLAGS := -lm -lopenblas -lpthread
 

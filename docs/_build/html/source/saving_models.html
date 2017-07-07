@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Saving models &mdash; Macau 0.3.4 documentation</title>
+    <title>Saving models &mdash; Macau 0.4.2 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.4',
+        VERSION:     '0.4.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Macau 0.3.4 documentation" href="../index.html" />
+    <link rel="top" title="Macau 0.4.2 documentation" href="../index.html" />
     <link rel="prev" title="Examples" href="examples.html" /> 
   </head>
   <body role="document">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="examples.html" title="Examples"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -53,7 +53,7 @@ This option will store all samples of the latent vectors, their mean vectors and
 Additionally, the global mean-value that Macau adds to all predictions is also stored.</p>
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">macau</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
 <span class="c1">## loading data</span>
@@ -86,7 +86,7 @@ Additionally, the global mean-value that Macau adds to all predictions is also s
 <div class="section" id="using-the-saved-model-to-make-predictions">
 <h2>Using the saved model to make predictions<a class="headerlink" href="#using-the-saved-model-to-make-predictions" title="Permalink to this headline">¶</a></h2>
 <p>These files can be loaded with numpy and used to make predictions.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="c1">## global mean value (common for all samples)</span>
 <span class="n">meanvalue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;chembl19-meanvalue.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
@@ -108,7 +108,7 @@ This can be accomplished by looping over all of the samples and averaging the pr
 <div class="section" id="using-the-saved-model-to-predict-new-rows-compounds">
 <h3>Using the saved model to predict new rows (compounds)<a class="headerlink" href="#using-the-saved-model-to-predict-new-rows-compounds" title="Permalink to this headline">¶</a></h3>
 <p>Here we show an example how to make a new prediction for a compound (row) that was not in the dataset, by using its side information and saved link matrices.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
 <span class="c1">## loading side info for arbitrary compound (can be outside of the training set)</span>
@@ -188,7 +188,7 @@ This can be accomplished by looping over all of the samples and averaging the pr
         <li class="right" >
           <a href="examples.html" title="Examples"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.3.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

@@ -432,7 +432,18 @@ Eigen::MatrixXd A_mul_B(Eigen::MatrixXd & A, SparseDoubleFeat & B) {
   return out;
 }
 
+MacauPrior<Eigen::MatrixXd>* make_dense_prior(int nlatent, double* ptr, int nrows, int ncols, bool colMajor, bool comp_FtF) {
+	MatrixXd* Fmat = new MatrixXd(0, 0);
+	if (colMajor) {
+		*Fmat = Map<Matrix<double, Dynamic, Dynamic, ColMajor> >(ptr, nrows, ncols);
+	} else {
+		*Fmat = Map<Matrix<double, Dynamic, Dynamic, RowMajor> >(ptr, nrows, ncols);
+	}
+	unique_ptr<MatrixXd> Fmat_ptr = unique_ptr<MatrixXd>(Fmat);
+	return new MacauPrior<MatrixXd>(nlatent, Fmat_ptr, comp_FtF);
+}
+
 template class MacauPrior<SparseFeat>;
 template class MacauPrior<SparseDoubleFeat>;
-//template class MacauPrior<Eigen::MatrixXd>;
+template class MacauPrior<Eigen::MatrixXd>;
 

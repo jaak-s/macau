@@ -38,6 +38,28 @@ class TestMacau(unittest.TestCase):
         F.data[:] = 1
         macau.macau(X, Xt, side=[F, None], num_latent = 5, burnin=10, nsamples=5, verbose = False)
 
+    def test_macau_dense(self):
+        Y  = scipy.sparse.rand(15, 10, 0.2)
+        Yt = scipy.sparse.rand(15, 10, 0.1)
+        F  = np.random.randn(15, 2)
+        macau.macau(Y, Yt, side=[F, None], num_latent = 5, burnin=10, nsamples=5, verbose = False)
+
+    def test_macau_dense_probit(self):
+        A = np.random.randn(25, 2)
+        B = np.random.randn(3, 2)
+
+        idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0])) )
+        df  = pd.DataFrame( np.asarray(idx), columns=["A", "B"])
+        df["value"] = (np.array([ np.sum(A[i[0], :] * B[i[1], :]) for i in idx ]) > 0.0).astype(np.float64)
+        Ytrain, Ytest = macau.make_train_test_df(df, 0.2)
+
+        results = macau.macau(Y = Ytrain, Ytest = Ytest, side=[A, None], num_latent = 4,
+                             verbose = False, burnin = 20, nsamples = 20,
+                             univariate = False, precision = "probit")
+
+        self.assertTrue( (results.prediction.columns[0:2] == ["A", "B"]).all() )
+        self.assertTrue(results.rmse_test > 0.55,
+                        msg="Probit factorization (with dense side) gave AUC below 0.55 (%f)." % results.rmse_test)
 
     def test_macau_univariate(self):
         Y = scipy.sparse.rand(10, 20, 0.2)

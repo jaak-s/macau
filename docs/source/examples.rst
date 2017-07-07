@@ -175,7 +175,7 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
 Tensor Factorization
 ---------------------
 Macau also supports tensor factorization with and without side information on any of the modes.
-Tensor can be thought as generalizations of matrices into more two items.
+Tensor can be thought as generalization of matrix to relations with more than two items.
 For example 3-tensor of :python:`drug x cell x gene` could express the effect of a drug on the given cell and gene.
 
 For tensors Macau packages uses Pandas :python:`DataFrame` as a data format,

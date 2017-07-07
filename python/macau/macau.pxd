@@ -52,6 +52,7 @@ cdef extern from "latentprior.h":
         MacauPrior(int nlatent, unique_ptr[FType] & Fmat, bool comp_FtF)
         void setLambdaBeta(double lb)
         void setTol(double t)
+    MacauPrior[MatrixXd]* make_dense_prior(int nlatent, double* ptr, int nrows, int ncols, bool colMajor, bool comp_FtF)
 
 cdef extern from "macauoneprior.h":
     cdef cppclass MacauOnePrior[FType](ILatentPrior):
