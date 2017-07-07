@@ -18,7 +18,7 @@ RUN mkdir $HOME/git && \
     cd $HOME/git && \
     git clone https://github.com/jaak-s/macau.git && \
     cd $HOME/git/macau && \
-    git checkout v0.4.4 && \
+    git checkout v0.5.0 && \
     python3 setup.py install --user && \
     cd $HOME && rm -rf git
 
