@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Macau 0.4.2 documentation</title>
+    <title>Examples &#8212; Macau 0.4.2 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,14 +17,16 @@
         VERSION:     '0.4.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Macau 0.4.2 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Saving models" href="saving_models.html" />
     <link rel="prev" title="Welcome to Macau’s documentation!" href="../index.html" /> 
   </head>
@@ -41,7 +43,7 @@
         <li class="right" >
           <a href="../index.html" title="Welcome to Macau’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -201,10 +203,12 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
 <p>Macau also supports tensor factorization with and without side information on any of the modes.
 Tensor can be thought as generalization of matrix to relations with more than two items.
 For example 3-tensor of <code class="code python docutils literal"><span class="name"><span class="pre">drug</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">cell</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">gene</span></span></code> could express the effect of a drug on the given cell and gene.</p>
-<p>For tensors Macau packages uses Pandas <code class="code python docutils literal"><span class="name"><span class="pre">DataFrame</span></span></code> as a data format,
-where all integer columns specify the tensor cell coordinate and <code class="code python docutils literal"><span class="name builtin"><span class="pre">float</span></span></code> (or double) column
-stores the value in the cell.
-Here is a simple toy example with factorizing a 3-tensor with side information on the first mode.</p>
+<p>For tensors Macau packages uses Pandas <code class="code python docutils literal"><span class="name"><span class="pre">DataFrame</span></span></code> where each <strong>row</strong> stores the coordinate and the value of a known
+cell in the tensor.
+Specifically, the integer columns in the DataFrame give the coordinate of the cell and <code class="code python docutils literal"><span class="name builtin"><span class="pre">float</span></span></code> (or double) column
+stores the value in the cell (the order of the columns does not matter).
+The coordinates are 0-based.</p>
+<p>Here is a simple toy example with factorizing a 3-tensor with side information on the first mode.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">scipy.sparse</span>
@@ -282,21 +286,18 @@ the accuracy. The factorization can be executed also without the side informatio
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/source/examples.txt"
+      <li><a href="../_sources/source/examples.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -315,12 +316,12 @@ the accuracy. The factorization can be executed also without the side informatio
         <li class="right" >
           <a href="../index.html" title="Welcome to Macau’s documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Jaak Simm.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2016, Jaak Simm.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
     </div>
   </body>
 </html>
