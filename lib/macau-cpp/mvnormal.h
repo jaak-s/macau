@@ -19,6 +19,9 @@ void bmrandn_single(Eigen::VectorXd & x);
 void init_bmrng();
 void init_bmrng(int seed);
 
+double rand_unif();
+double rand_unif(double low, double high);
+
 double rgamma(double shape, double scale);
 
 auto nrandn(int n) -> decltype( Eigen::VectorXd::NullaryExpr(n, std::cref(randn)) ); 

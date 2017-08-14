@@ -11,6 +11,7 @@
 #include "sparsetensor.h"
 #include "macauoneprior.h"
 #include "inv_norm_cdf.h"
+#include "truncnorm.h"
 
 TEST_CASE( "SparseFeat/At_mul_A_bcsr", "[At_mul_A] for BinaryCSR" ) {
   int rows[9] = { 0, 3, 3, 2, 5, 4, 1, 2, 4 };
@@ -888,4 +889,22 @@ TEST_CASE("inv_norm_cdf/inv_norm_cdf", "Inverse normal CDF") {
 	REQUIRE( inv_norm_cdf(0.5)  == Approx(0) );
 	REQUIRE( inv_norm_cdf(0.9)  == Approx(1.2815515655446004) );
 	REQUIRE( inv_norm_cdf(0.01) == Approx(-2.3263478740408408) );
+}
+
+TEST_CASE("truncnorm/norm_cdf", "Normal CDF") {
+	REQUIRE( norm_cdf(0.0)  == Approx(0.5));
+	REQUIRE( norm_cdf(-1.0) == Approx(0.15865525393145707) );
+	REQUIRE( norm_cdf(-3.0) == Approx(0.0013498980316300933) );
+	REQUIRE( norm_cdf(4.0)  == Approx(0.99996832875816688) );
+}
+
+TEST_CASE( "truncnorm/rand_truncnorm", "generaring random truncnorm variable" ) {
+  init_bmrng(1234);
+  for (int i = 0; i < 10; i++) {
+    REQUIRE( rand_truncnorm(2.0) >= 2.0 );
+    REQUIRE( rand_truncnorm(3.0) >= 3.0 );
+    REQUIRE( rand_truncnorm(5.0) >= 5.0 );
+    REQUIRE( rand_truncnorm(50.0) >= 50.0 );
+    REQUIRE( rand_truncnorm(30, 2.0, 50.0) >= 50.0 );
+  }
 }

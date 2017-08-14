@@ -101,6 +101,18 @@ void bmrandn(double* x, long n) {
   }
 }
 
+double rand_unif() {
+  std::uniform_real_distribution<double> unif(0.0, 1.0);
+	std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
+	return unif(*bmrng);
+}
+
+double rand_unif(double low, double high) {
+  std::uniform_real_distribution<double> unif(low, high);
+	std::mt19937* bmrng = bmrngs[omp_get_thread_num()];
+	return unif(*bmrng);
+}
+
 void bmrandn(MatrixXd & X) {
   long n = X.rows() * (long)X.cols();
   bmrandn(X.data(), n);
