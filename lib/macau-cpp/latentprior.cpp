@@ -9,6 +9,7 @@
 #include "chol.h"
 #include "linop.h"
 #include "noisemodels.h"
+#include "truncnorm.h"
 extern "C" {
   #include <sparse.h>
 }
@@ -394,7 +395,8 @@ void sample_latent_blas_probit(MatrixXd &s, int mm, const SparseMatrix<double> &
     for (SparseMatrix<double>::InnerIterator it(mat, mm); it; ++it) {
       auto col = samples.col(it.row());
       MM.triangularView<Eigen::Lower>() += col * col.transpose();
-      z = (2 * it.value() - 1) * fabs(col.dot(u) + bmrandn_single());
+			double y = 2 * it.value() - 1;
+      z = y * rand_truncnorm(y * col.dot(u), 1.0, 0.0);
       rr.noalias() += col * z;
     }
   Eigen::LLT<MatrixXd> chol = MM.llt();
