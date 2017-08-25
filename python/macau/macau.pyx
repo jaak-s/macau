@@ -280,8 +280,8 @@ class Data:
                 raise TypeError("Y.dtypes and Ytest.dtypes must be the same.")
             int_cols   = list(filter(lambda c: Ytrain[c].dtype==np.int64 or Ytrain[c].dtype==np.int32, Ytrain.columns))
             float_cols = list(filter(lambda c: Ytrain[c].dtype==np.float32 or Ytrain[c].dtype==np.float64, Ytrain.columns))
-            if len(int_cols) > 6:
-                raise ValueError("Y has too many index(int) columns (%d), maximum is 6." % len(int_cols))
+            if len(int_cols) > 10:
+                raise ValueError("Y has too many index(int) columns (%d), maximum is 10." % len(int_cols))
             if len(int_cols) < 2:
                 raise ValueError("Y must have at least 2 index (int) columns.")
             if len(float_cols) != 1:
