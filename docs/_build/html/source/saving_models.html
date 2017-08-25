@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Saving models &mdash; Macau 0.4.2 documentation</title>
+    <title>Saving models &mdash; Macau 0.5.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.4.2',
+        VERSION:     '0.5.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Macau 0.4.2 documentation" href="../index.html" />
+    <link rel="top" title="Macau 0.5.1 documentation" href="../index.html" />
     <link rel="prev" title="Examples" href="examples.html" /> 
   </head>
   <body role="document">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="examples.html" title="Examples"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.5.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -134,7 +134,7 @@ This can be accomplished by looping over all of the samples and averaging the pr
 <h3>Tensor models<a class="headerlink" href="#tensor-models" title="Permalink to this headline">¶</a></h3>
 <p>As in the matrix case the tensor factorization can be saved using <code class="code python docutils literal"><span class="name"><span class="pre">save_prefix</span></span></code> argument
 and later loaded from disk to make predictions.
-To make predictions we recall that the value of a tensor model is given by a tensor contraction of all latent matrices, which for example for the rank-3 case the prediction for the element <code class="code python docutils literal"><span class="name"><span class="pre">Yhat</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">i</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">j</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">k</span></span><span class="punctuation"><span class="pre">]</span></span></code> is given by</p>
+To make predictions we recall that the value of a tensor model is given by a tensor contraction of all latent matrices. Specifically, the prediction for the element <code class="code python docutils literal"><span class="name"><span class="pre">Yhat</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">i</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">j</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">k</span></span><span class="punctuation"><span class="pre">]</span></span></code> of a rank-3 tensor is given by</p>
 <div class="math">
 \[\hat{Y}_{ijk} = \sum_{d=1}^D u^{(1)}_{d,i} u^{(2)}_{d,j} u^{(3)}_{d,k} + mean\]</div>
 <p>Next we show how to compute this prediction using <code class="code python docutils literal"><span class="name"><span class="pre">numpy</span></span></code>.
@@ -160,7 +160,7 @@ we can load the latent matrices and make predictions using <code class="code pyt
 </div>
 <p>As before this is a prediction from a single sample. For better predictions we should loop over all of the samples
 and average their predictions (their Yhat&#8217;s).</p>
-<p>It is also possible to predict only slices of the full tensors using <code class="code python docutils literal"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">einsum</span></span></code>:</p>
+<p>It is also possible to predict only <strong>slices</strong> of the full tensors using <code class="code python docutils literal"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">einsum</span></span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1">## predict the slice Y[7, :, :] from sample 1</span>
 <span class="n">Yhat_7xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="n">U1</span><span class="p">[:,</span><span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">U2</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">U3</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="o">+</span> <span class="n">meanvalue</span>
 
@@ -233,11 +233,11 @@ To get the prediction for a slice we replaced the full latent matrix (<code clas
         <li class="right" >
           <a href="examples.html" title="Examples"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.4.2 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Macau 0.5.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Jaak Simm.
+        &copy; Copyright 2016-2017, Jaak Simm.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
     </div>
   </body>

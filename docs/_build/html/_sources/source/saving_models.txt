@@ -98,7 +98,7 @@ Tensor models
 ~~~~~~~~~~~~~
 As in the matrix case the tensor factorization can be saved using :python:`save_prefix` argument
 and later loaded from disk to make predictions.
-To make predictions we recall that the value of a tensor model is given by a tensor contraction of all latent matrices, which for example for the rank-3 case the prediction for the element :python:`Yhat[i,j,k]` is given by
+To make predictions we recall that the value of a tensor model is given by a tensor contraction of all latent matrices. Specifically, the prediction for the element :python:`Yhat[i,j,k]` of a rank-3 tensor is given by
 
 .. math::
 
@@ -131,7 +131,7 @@ we can load the latent matrices and make predictions using :python:`np.einsum` f
 As before this is a prediction from a single sample. For better predictions we should loop over all of the samples
 and average their predictions (their Yhat's).
 
-It is also possible to predict only slices of the full tensors using :python:`np.einsum`:
+It is also possible to predict only **slices** of the full tensors using :python:`np.einsum`:
 
 .. code-block:: python
 
