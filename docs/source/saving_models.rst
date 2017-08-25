@@ -145,4 +145,4 @@ It is also possible to predict only slices of the full tensors using :python:`np
    Yhat_xx1 = np.einsum(U1, [0, 1], U2, [0, 2], U3[:,1], [0]) + meanvalue
 
 All 3 examples above give a matrix (rank-2 tensor) as a result.
-To get the prediction for a slice we replaced the full latent matrix (:python:`U1`) with a single specific latent vector (:python:`U1[:,7]`) and changed its indexing from :python:`[0, 1]` to :python:`[0]` as we now are indexing over a vector.
+To get the prediction for a slice we replaced the full latent matrix (:python:`U1`) with a single specific latent vector (:python:`U1[:,7]`) and changed its indexing from :python:`[0, 1]` to :python:`[0]` as the indexing now over a vector.
