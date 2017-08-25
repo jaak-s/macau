@@ -93,3 +93,56 @@ Here we show an example how to make a new prediction for a compound (row) that w
    Yhat = uhat.dot(V) + meanvalue
 
 Again, to make good predictions you would have to change the example to loop over all of the samples (and compute the mean of Yhat's).
+
+Tensor models
+~~~~~~~~~~~~~
+As in the matrix case the tensor factorization can be saved using :python:`save_prefix` argument
+and later loaded from disk to make predictions.
+To make predictions we recall that the value of a tensor model is given by a tensor contraction of all latent matrices, which for example for the rank-3 case the prediction for the element :python:`Yhat[i,j,k]` is given by
+
+.. math::
+
+   \hat{Y}_{ijk} = \sum_{d=1}^D u^{(1)}_{d,i} u^{(2)}_{d,j} u^{(3)}_{d,k} + mean
+
+Next we show how to compute this prediction using :python:`numpy`.
+Assuming we have run and saved a model named :python:`save_prefix = "mytensor"` of tensor of rank :python:`3`
+we can load the latent matrices and make predictions using :python:`np.einsum` function.
+
+.. code-block:: python
+
+   import numpy as np
+
+   ## global mean value (common for all samples)
+   meanvalue = np.loadtxt("mytensor-meanvalue.csv").tolist()
+
+   ## loading latent matrices for sample 1
+   N = 1
+   U1 = np.loadtxt("mytensor-sample%d-U1-latents.csv" % N, delimiter=",")
+   U2 = np.loadtxt("mytensor-sample%d-U2-latents.csv" % N, delimiter=",")
+   U3 = np.loadtxt("mytensor-sample%d-U3-latents.csv" % N, delimiter=",")
+
+   ## predicting Y[7, 0, 1] from sample 1
+   Yhat_701 = sum(U1[:,7] * U2[:,0] * U3[:,1]) + meanvalue
+
+   ## predict the whole tensor from sample 1, using np.einsum
+   Yhat = np.einsum(U1, [0, 1], U2, [0, 2], U3, [0, 3]) + meanvalue
+
+
+As before this is a prediction from a single sample. For better predictions we should loop over all of the samples
+and average their predictions (their Yhat's).
+
+It is also possible to predict only slices of the full tensors using :python:`np.einsum`:
+
+.. code-block:: python
+
+   ## predict the slice Y[7, :, :] from sample 1
+   Yhat_7xx = np.einsum(U1[:,7], [0], U2, [0, 2], U3, [0, 3]) + meanvalue
+
+   ## predict the slice Y[:, 0, :] from sample 1
+   Yhat_x0x = np.einsum(U1, [0, 1], U2[:,0], [0], U3, [0, 3]) + meanvalue
+
+   ## predict the slice Y[:, :, 1] from sample 1
+   Yhat_xx1 = np.einsum(U1, [0, 1], U2, [0, 2], U3[:,1], [0]) + meanvalue
+
+All 3 examples above give a matrix (rank-2 tensor) as a result.
+To get the prediction for a slice we replaced the full latent matrix (:python:`U1`) with a single specific latent vector (:python:`U1[:,7]`) and changed its indexing from :python:`[0, 1]` to :python:`[0]` as we now are indexing over a vector.

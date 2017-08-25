@@ -178,9 +178,12 @@ Macau also supports tensor factorization with and without side information on an
 Tensor can be thought as generalization of matrix to relations with more than two items.
 For example 3-tensor of :python:`drug x cell x gene` could express the effect of a drug on the given cell and gene.
 
-For tensors Macau packages uses Pandas :python:`DataFrame` as a data format,
-where all integer columns specify the tensor cell coordinate and :python:`float` (or double) column
-stores the value in the cell.
+For tensors Macau packages uses Pandas :python:`DataFrame` where each **row** stores the coordinate and the value of a known
+cell in the tensor.
+Specifically, the integer columns in the DataFrame give the coordinate of the cell and :python:`float` (or double) column
+stores the value in the cell (the order of the columns does not matter).
+The coordinates are 0-based.
+
 Here is a simple toy example with factorizing a 3-tensor with side information on the first mode.
 
 .. code-block:: python
