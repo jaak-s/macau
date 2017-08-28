@@ -26,7 +26,7 @@ class TestMacau(unittest.TestCase):
         side1   = scipy.sparse.coo_matrix( np.random.rand(10, 2) )
         side2   = scipy.sparse.coo_matrix( np.random.rand(20, 3) )
 
-        results = macau.bpmf(Y, Ytest = Ytest, side = [side1, side2], num_latent = 4,
+        results = macau.macau(Y, Ytest = Ytest, side = [side1, side2], num_latent = 4,
                              verbose = False, burnin = 50, nsamples = 50,
                              univariate = False)
         self.assertEqual(Ytest.nnz, results.prediction.shape[0])
