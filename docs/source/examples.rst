@@ -1,8 +1,8 @@
 .. role:: python(code)
    :language: python
 
-Examples
-===========
+Macau Tutorial
+==============
 In these examples we use ChEMBL dataset for compound-proteins activities (IC50). The IC50 values and ECFP fingerprints can be downloaded from these two urls:
 
 .. code-block:: bash
@@ -10,10 +10,23 @@ In these examples we use ChEMBL dataset for compound-proteins activities (IC50).
    wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-346targets.mm
    wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm
 
+Matrix Factorization Model
+---------------------------
+
+The matrix factorization models cell :python:`Y[i,j]` by the inner product of the latents
+
+.. math::
+
+   Y_{ij} \sim \mathcal{N}(\mathbf{u}_i ^ \top \mathbf{v}_j + mean, \alpha^{-1})
+
+where :math:`\mathbf{u}_i` and :math:`\mathbf{v}_j` are the latent vector for i-th row and j-th column, and :math:`\alpha` is the precision of the observation noise.
+The model also uses a fixed global mean for the whole matrix.
+
+
 Matrix Factorization with Side Information
 -------------------------------------------
 
-In this example we use MCMC (Gibbs) sampling to perform factorization of the `compound x protein` IC50 matrix by using side information on the compounds.
+In this example we use MCMC (Gibbs) sampling to perform factorization of the `compound x protein` IC50 matrix by using ECFP features as side information on the compounds.
 
 .. code-block:: python
 
@@ -177,6 +190,21 @@ Tensor Factorization
 Macau also supports tensor factorization with and without side information on any of the modes.
 Tensor can be thought as generalization of matrix to relations with more than two items.
 For example 3-tensor of :python:`drug x cell x gene` could express the effect of a drug on the given cell and gene.
+In this case the prediction for the element :python:`Yhat[i,j,k]` is given by
+
+.. math::
+
+   \hat{Y}_{ijk} = \sum_{d=1}^D u^{(1)}_{d,i} u^{(2)}_{d,j} u^{(3)}_{d,k} + mean
+
+Visually the model can be represented as follows:
+
+.. figure:: tensor-model.png
+   :scale: 65 %
+   :alt: Tensor model
+   :align: center
+   
+   Tensor model predicts :python:`Yhat[i,j,k]` by element-wise multiplication of all latent vectors together and taking the sum (figure omits the global mean).
+
 
 For tensors Macau packages uses Pandas :python:`DataFrame` where each **row** stores the coordinate and the value of a known
 cell in the tensor.

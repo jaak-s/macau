@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Macau 0.5.1 documentation</title>
+    <title>Macau Tutorial &mdash; Macau 0.5.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -50,16 +50,24 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="macau-tutorial">
+<h1>Macau Tutorial<a class="headerlink" href="#macau-tutorial" title="Permalink to this headline">¶</a></h1>
 <p>In these examples we use ChEMBL dataset for compound-proteins activities (IC50). The IC50 values and ECFP fingerprints can be downloaded from these two urls:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-346targets.mm
 wget http://homes.esat.kuleuven.be/~jsimm/chembl-IC50-compound-feat.mm
 </pre></div>
 </div>
+<div class="section" id="matrix-factorization-model">
+<h2>Matrix Factorization Model<a class="headerlink" href="#matrix-factorization-model" title="Permalink to this headline">¶</a></h2>
+<p>The matrix factorization models cell <code class="code python docutils literal"><span class="name"><span class="pre">Y</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">i</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">j</span></span><span class="punctuation"><span class="pre">]</span></span></code> by the inner product of the latents</p>
+<div class="math">
+\[Y_{ij} \sim \mathcal{N}(\mathbf{u}_i ^ \top \mathbf{v}_j + mean, \alpha^{-1})\]</div>
+<p>where <span class="math">\(\mathbf{u}_i\)</span> and <span class="math">\(\mathbf{v}_j\)</span> are the latent vector for i-th row and j-th column, and <span class="math">\(\alpha\)</span> is the precision of the observation noise.
+The model also uses a fixed global mean for the whole matrix.</p>
+</div>
 <div class="section" id="matrix-factorization-with-side-information">
 <h2>Matrix Factorization with Side Information<a class="headerlink" href="#matrix-factorization-with-side-information" title="Permalink to this headline">¶</a></h2>
-<p>In this example we use MCMC (Gibbs) sampling to perform factorization of the <cite>compound x protein</cite> IC50 matrix by using side information on the compounds.</p>
+<p>In this example we use MCMC (Gibbs) sampling to perform factorization of the <cite>compound x protein</cite> IC50 matrix by using ECFP features as side information on the compounds.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">macau</span>
 <span class="kn">import</span> <span class="nn">scipy.io</span>
 
@@ -200,7 +208,15 @@ In the case of IC50 data the accuracy improves from RMSE of 0.90 to close to 0.6
 <h2>Tensor Factorization<a class="headerlink" href="#tensor-factorization" title="Permalink to this headline">¶</a></h2>
 <p>Macau also supports tensor factorization with and without side information on any of the modes.
 Tensor can be thought as generalization of matrix to relations with more than two items.
-For example 3-tensor of <code class="code python docutils literal"><span class="name"><span class="pre">drug</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">cell</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">gene</span></span></code> could express the effect of a drug on the given cell and gene.</p>
+For example 3-tensor of <code class="code python docutils literal"><span class="name"><span class="pre">drug</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">cell</span></span> <span class="name"><span class="pre">x</span></span> <span class="name"><span class="pre">gene</span></span></code> could express the effect of a drug on the given cell and gene.
+In this case the prediction for the element <code class="code python docutils literal"><span class="name"><span class="pre">Yhat</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">i</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">j</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">k</span></span><span class="punctuation"><span class="pre">]</span></span></code> is given by</p>
+<div class="math">
+\[\hat{Y}_{ijk} = \sum_{d=1}^D u^{(1)}_{d,i} u^{(2)}_{d,j} u^{(3)}_{d,k} + mean\]</div>
+<p>Visually the model can be represented as follows:</p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="../_images/tensor-model.png"><img alt="Tensor model" src="../_images/tensor-model.png" style="width: 502.45px; height: 361.4px;" /></a>
+<p class="caption"><span class="caption-text">Tensor model predicts <code class="code python docutils literal"><span class="name"><span class="pre">Yhat</span></span><span class="punctuation"><span class="pre">[</span></span><span class="name"><span class="pre">i</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">j</span></span><span class="punctuation"><span class="pre">,</span></span><span class="name"><span class="pre">k</span></span><span class="punctuation"><span class="pre">]</span></span></code> by element-wise multiplication of all latent vectors together and taking the sum (figure omits the global mean).</span></p>
+</div>
 <p>For tensors Macau packages uses Pandas <code class="code python docutils literal"><span class="name"><span class="pre">DataFrame</span></span></code> where each <strong>row</strong> stores the coordinate and the value of a known
 cell in the tensor.
 Specifically, the integer columns in the DataFrame give the coordinate of the cell and <code class="code python docutils literal"><span class="name builtin"><span class="pre">float</span></span></code> (or double) column
@@ -262,7 +278,8 @@ the accuracy. The factorization can be executed also without the side informatio
         <div class="sphinxsidebarwrapper">
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Examples</a><ul>
+<li><a class="reference internal" href="#">Macau Tutorial</a><ul>
+<li><a class="reference internal" href="#matrix-factorization-model">Matrix Factorization Model</a></li>
 <li><a class="reference internal" href="#matrix-factorization-with-side-information">Matrix Factorization with Side Information</a><ul>
 <li><a class="reference internal" href="#univariate-sampler">Univariate sampler</a></li>
 <li><a class="reference internal" href="#adaptive-noise">Adaptive noise</a></li>
