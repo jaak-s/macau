@@ -203,7 +203,7 @@ Visually the model can be represented as follows:
    :alt: Tensor model
    :align: center
    
-   Tensor model predicts :python:`Yhat[i,j,k]` by element-wise multiplication of all latent vectors together and taking the sum (figure omits the global mean).
+   Tensor model predicts :python:`Yhat[i,j,k]` by multiplying all latent vectors together element-wise and then taking the sum along the latent dimension (figure omits the global mean).
 
 
 For tensors Macau packages uses Pandas :python:`DataFrame` where each **row** stores the coordinate and the value of a known
