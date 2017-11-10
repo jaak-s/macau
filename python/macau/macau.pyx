@@ -434,7 +434,13 @@ def macau(Y,
     df["y_pred_std"] = pd.Series(yhat_sd)
 
     result = MacauResult()
-    result.rmse_test  = macau.getRmseTest()
+    if precision == "probit":
+        result.rmse_test = np.nan
+        result.auc_test  = macau.getRmseTest()
+    else:
+        result.rmse_test = macau.getRmseTest()
+        result.auc_test  = np.nan
+
     result.Yshape     = data.shape
     result.ntrain     = data.valTrain.shape[0]
     result.ntest      = data.valTest.shape[0] if Ytest is not None else 0

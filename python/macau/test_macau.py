@@ -58,7 +58,7 @@ class TestMacau(unittest.TestCase):
                              univariate = False, precision = "probit")
 
         self.assertTrue( (results.prediction.columns[0:2] == ["A", "B"]).all() )
-        self.assertTrue(results.rmse_test > 0.55,
+        self.assertTrue(results.auc_test > 0.55,
                         msg="Probit factorization (with dense side) gave AUC below 0.55 (%f)." % results.rmse_test)
 
     def test_macau_univariate(self):
