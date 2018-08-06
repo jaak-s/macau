@@ -45,7 +45,7 @@ pip install scipy
 pip install pandas
 pip install cython
 # install brew (http://brew.sh/)
-brew install homebrew/science/openblas
+brew install homebrew/core/openblas
 brew install gcc
 
 # checkout and install Macau
