@@ -8,7 +8,6 @@ from distutils.sysconfig import get_python_inc
 from setuptools          import setup
 from setuptools          import Extension
 
-import Cython
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
@@ -111,7 +110,7 @@ def is_openblas_installed(libraries):
     assert isinstance(compiler, distutils.ccompiler.CCompiler)
     distutils.sysconfig.customize_compiler(compiler)
     compiler.add_include_dir("/usr/local/opt/openblas/include")
-    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
+    ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/lib/gcc/7", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
 
     try:
         compiler.link_executable(
@@ -235,7 +234,7 @@ eigen_inner = "eigen-eigen-67e894c6cd8f"
 
 blas_libs = get_blas_libs()
 inc = ['lib/macau-cpp', eigen_dest, 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]
-ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5"]
+ldirs = ["/opt/OpenBLAS/lib", "/usr/local/lib", "/usr/lib/openblas-base", "/usr/local/opt/openblas/lib", "/usr/local/opt/gcc/lib/gcc/5", "/usr/lib/x86_64-linux-gnu"]
 
 libmacau = ('macau-cpp', dict(
     package='macau',
@@ -273,7 +272,7 @@ CLASSIFIERS = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Operating System :: Unix",
-    "Operating System :: MacOS"
+    "Operating System :: MacOS",
 ]
 
 ## reading __version__:
@@ -284,23 +283,24 @@ def main():
     checkout_libfastsparse()
 
     setup(
-        name = 'macau',
-        version = __version__,
-        requires = ['numpy', 'scipy', 'cython', 'pandas'],
-        libraries = [libmacau],
-        packages = ["macau"],
-        package_dir = {'' : 'python'},
-        url = "http://github.com/jaak-s/macau",
-        license = "MIT",
-        description = 'Bayesian Factorization Methods',
+        name             = 'macau',
+        version          = __version__,
+        setup_requires   = ['setuptools>=18.0', 'cython'],
+        requires         = ['numpy', 'scipy', 'cython', 'pandas'],
+        libraries        = [libmacau],
+        packages         = ["macau"],
+        package_dir      = {'' : 'python'},
+        url              = "http://github.com/jaak-s/macau",
+        license          = "MIT",
+        description      = 'Bayesian Factorization Methods',
         long_description = 'Highly optimized and parallelized methods for Bayesian Factorization, including BPMF and Macau. The package uses optimized OpenMP/C++ code with a Cython wrapper to factorize large scale matrices. Macau method provides also the ability to incorporate high-dimensional side information to the factorization.',
-        author = "Jaak Simm",
-        author_email = "jaak.simm@gmail.com",
-        cmdclass = {'build_clib': build_clibx, 'build_ext': build_ext},
-        ext_modules = cythonize(ext_modules, include_path=sys.path),
-        classifiers = CLASSIFIERS,
-        keywords = "bayesian factorization machine-learning high-dimensional side-information",
-        install_requires=['numpy', 'scipy', 'pandas']
+        author           = "Jaak Simm",
+        author_email     = "jaak.simm@gmail.com",
+        cmdclass         = {'build_clib': build_clibx, 'build_ext': build_ext},
+        ext_modules      = cythonize(ext_modules, include_path=sys.path),
+        classifiers      = CLASSIFIERS,
+        keywords         = "bayesian factorization machine-learning high-dimensional side-information",
+        install_requires = ['numpy', 'scipy', 'pandas', 'cython'],
     )
 
 if __name__ == '__main__':

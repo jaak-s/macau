@@ -21,19 +21,17 @@ cd macau
 python setup.py install --user
 ```
 
-## Source installation on any Linux
-Make sure that `pip` is available and OpenBLAS or some other BLAS is installed.
-Then install following packages using pip: `numpy scipy pandas cython`, e.g. by
-```
-# skip any of them if already available
-pip install numpy --user
-pip install scipy --user
-pip install pandas --user
-pip install cython --user
-
-# checkout and install Macau
+## Installing with pip
+If you have openblas installed (package libopenblas-dev in Ubuntu) available and `gcc` and `g++` installed,
+then following steps install macau:
+```bash
 git clone https://github.com/jaak-s/macau.git
 cd macau
+pip install .
+```
+
+Instead of `pip install .` one can use
+```bash
 python setup.py install --user
 ```
 
@@ -62,7 +60,7 @@ Without mounting a local directory the docker can be executed by
 docker run -it --rm -p 8888:8888 stadius/macau
 ```
 
-To mount a local directory add `-v ~/my_data_dir:/data` where 
+To mount a local directory add `-v ~/my_data_dir:/data` where
 `~/my_data_dir` is on the local system and `/data` will be the folder
 in the container:
 ```bash
@@ -77,4 +75,3 @@ There is a plan to support Python wheel packages. Currently, we do not have one 
 - Adam Arany (Probit noise model)
 - Tom Vander Aa (OpenMP optimized BPMF)
 - Tom Haber (Original BPMF code)
-
