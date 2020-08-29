@@ -173,15 +173,15 @@ cdef ILatentPrior* make_prior(side, int num_latent, int max_ff_size, double lamb
         dense_prior.setTol(tol)
         return dense_prior
 
-    ## binary CSR
-    cdef unique_ptr[SparseFeat] sf_ptr
-    cdef MacauPrior[SparseFeat]* sf_prior
-    if (side.data == 1).all():
-        sf_ptr   = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
-        sf_prior = new MacauPrior[SparseFeat](num_latent, sf_ptr, compute_ff)
-        sf_prior.setLambdaBeta(lambda_beta)
-        sf_prior.setTol(tol)
-        return sf_prior
+    ## binary CSR (not working with Cholesky)
+    #cdef unique_ptr[SparseFeat] sf_ptr
+    #cdef MacauPrior[SparseFeat]* sf_prior
+    #if (side.data == 1).all():
+    #    sf_ptr   = unique_ptr[SparseFeat]( sparse2SparseBinFeat(side) )
+    #    sf_prior = new MacauPrior[SparseFeat](num_latent, sf_ptr, compute_ff)
+    #    sf_prior.setLambdaBeta(lambda_beta)
+    #    sf_prior.setTol(tol)
+    #    return sf_prior
 
     ## double CSR
     cdef unique_ptr[SparseDoubleFeat] sdf_ptr

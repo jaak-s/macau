@@ -169,8 +169,8 @@ class TestMacau(unittest.TestCase):
                              univariate = False, precision = 50)
 
     def test_macau_tensor(self):
-        A = np.random.randn(15, 2)
-        B = np.random.randn(3, 2)
+        A = np.random.randn(30, 2)
+        B = np.random.randn(4, 2)
         C = np.random.randn(2, 2)
 
         idx = list( itertools.product(np.arange(A.shape[0]), np.arange(B.shape[0]), np.arange(C.shape[0])) )

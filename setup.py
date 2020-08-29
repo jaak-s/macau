@@ -19,10 +19,7 @@ import tempfile
 import tarfile
 import shutil
 
-if sys.version_info[0] >= 3:
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
+import requests
 
 
 # checking out libfastsparse
@@ -172,8 +169,11 @@ def download_eigen_if_needed(dest, url, eigen_inner):
     print("Downloading Eigen (v3.3)...")
     tmpdir = tempfile.mkdtemp()
     bzfile = tmpdir + "/eigen.tar.bz2"
-    urlretrieve(url, bzfile)
-    print("Download complete. Extracting Eigen ...")
+    #urlretrieve(url, bzfile)
+    r = requests.get(url)
+    with open(bzfile, "wb") as outfile:
+        outfile.write(r.content)
+    print(f"Download complete to '{bzfile}'. Extracting Eigen ...")
     tf = tarfile.open(bzfile, "r:bz2")
     if not os.path.exists(dest):
         os.makedirs(dest)
@@ -228,9 +228,9 @@ class build_clibx(build_clib):
                                             output_dir = self.build_clib,
                                             debug=self.debug)
 
-eigen_dest = "lib/eigen3.3.3"
-eigen_url  = "http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2"
-eigen_inner = "eigen-eigen-67e894c6cd8f"
+eigen_dest = "lib/eigen3.3.7"
+eigen_url  = "https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.bz2"
+eigen_inner = "eigen-3.3.7"
 
 blas_libs = get_blas_libs()
 inc = ['lib/macau-cpp', eigen_dest, 'lib/libfastsparse', np.get_include(), get_python_inc(), "/usr/local/include", "/usr/local/opt/openblas/include"]

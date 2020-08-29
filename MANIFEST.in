@@ -4,7 +4,7 @@ global-include *.h
 global-include *.pyx
 global-include *.pxd
 
-graft lib/eigen3.3.3
+graft lib/eigen3.3.7
 graft lib/libfastsparse
 exclude lib/libfastsparse/.git
 exclude lib/libfastsparse/.gitignore
