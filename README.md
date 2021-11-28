@@ -13,7 +13,7 @@ To install Macau it possible to use pre-compiled binaries or compile it from sou
 ```bash
 # install dependencies:
 sudo apt-get install libopenblas-dev autoconf gfortran
-pip install numpy scipy cython
+pip install numpy scipy cython pandas
 pip install requests
 
 # checkout and install Macau
